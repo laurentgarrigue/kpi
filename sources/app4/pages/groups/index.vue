@@ -347,7 +347,7 @@ const isLastInSection = (group: Group, sectionGroups: Group[]) => {
     >
       <template v-if="groupsBySection.length > 1" #left>
         <button
-          class="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-header-900 dark:text-header-50 hover:text-header-900 dark:hover:text-header-50 bg-white dark:bg-header-900 border border-header-300 dark:border-header-700 rounded-md hover:bg-header-50 dark:hover:bg-header-800 transition-colors disabled:opacity-40 disabled:cursor-default"
+          class="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-header-900 dark:text-header-50 hover:text-header-900 dark:hover:text-header-50 bg-white dark:bg-header-900 border border-header-300 dark:border-header-700 rounded-md hover:bg-header-50 dark:hover:bg-header-800 transition-colors disabled:opacity-40 disabled:cursor-default"
           :disabled="collapsedSections.size === groupsBySection.length"
           @click="collapseAll"
         >
@@ -355,7 +355,7 @@ const isLastInSection = (group: Group, sectionGroups: Group[]) => {
           {{ t('common.collapse_all') }}
         </button>
         <button
-          class="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-header-900 dark:text-header-50 hover:text-header-900 dark:hover:text-header-50 bg-white dark:bg-header-900 border border-header-300 dark:border-header-700 rounded-md hover:bg-header-50 dark:hover:bg-header-800 transition-colors disabled:opacity-40 disabled:cursor-default"
+          class="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-header-900 dark:text-header-50 hover:text-header-900 dark:hover:text-header-50 bg-white dark:bg-header-900 border border-header-300 dark:border-header-700 rounded-md hover:bg-header-50 dark:hover:bg-header-800 transition-colors disabled:opacity-40 disabled:cursor-default"
           :disabled="collapsedSections.size === 0"
           @click="expandAll"
         >
@@ -392,32 +392,32 @@ const isLastInSection = (group: Group, sectionGroups: Group[]) => {
               :class="{ 'rotate-90': !isSectionCollapsed(section.section) }"
             />
             <span class="text-sm font-semibold text-header-900 dark:text-header-50">{{ section.sectionName }}</span>
-            <span class="text-xs text-header-600 dark:text-header-300">({{ section.groups.length }})</span>
+            <span class="text-sm text-header-600 dark:text-header-300">({{ section.groups.length }})</span>
           </button>
 
           <!-- Table for this section -->
           <table v-show="!isSectionCollapsed(section.section)" class="min-w-full divide-y divide-header-200 dark:divide-header-700">
             <thead class="bg-header-50 dark:bg-header-900">
               <tr>
-                <th class="px-4 py-2 text-left text-xs font-medium text-header-600 dark:text-header-300 uppercase tracking-wider w-20">
+                <th class="px-4 py-2 text-left text-sm font-medium text-header-600 dark:text-header-300 uppercase tracking-wider w-20">
                   {{ t('groups.columns.ordre') }}
                 </th>
-                <th class="px-4 py-2 text-left text-xs font-medium text-header-600 dark:text-header-300 uppercase tracking-wider w-24">
+                <th class="px-4 py-2 text-left text-sm font-medium text-header-600 dark:text-header-300 uppercase tracking-wider w-24">
                   {{ t('groups.columns.niveau') }}
                 </th>
-                <th class="px-4 py-2 text-left text-xs font-medium text-header-600 dark:text-header-300 uppercase tracking-wider w-28">
+                <th class="px-4 py-2 text-left text-sm font-medium text-header-600 dark:text-header-300 uppercase tracking-wider w-28">
                   {{ t('groups.columns.code') }}
                 </th>
-                <th class="px-4 py-2 text-left text-xs font-medium text-header-600 dark:text-header-300 uppercase tracking-wider">
+                <th class="px-4 py-2 text-left text-sm font-medium text-header-600 dark:text-header-300 uppercase tracking-wider">
                   {{ t('groups.columns.libelle') }}
                 </th>
-                <th class="px-4 py-2 text-left text-xs font-medium text-header-600 dark:text-header-300 uppercase tracking-wider">
+                <th class="px-4 py-2 text-left text-sm font-medium text-header-600 dark:text-header-300 uppercase tracking-wider">
                   {{ t('groups.columns.libelle_en') }}
                 </th>
-                <th class="px-4 py-2 text-center text-xs font-medium text-header-600 dark:text-header-300 uppercase tracking-wider w-24" :title="t('groups.columns.codes_total_hint')">
+                <th class="px-4 py-2 text-center text-sm font-medium text-header-600 dark:text-header-300 uppercase tracking-wider w-24" :title="t('groups.columns.codes_total_hint')">
                   {{ t('groups.columns.competitions') }}
                 </th>
-                <th class="px-4 py-2 text-right text-xs font-medium text-header-600 dark:text-header-300 uppercase tracking-wider w-36">
+                <th class="px-4 py-2 text-right text-sm font-medium text-header-600 dark:text-header-300 uppercase tracking-wider w-36">
                   {{ t('groups.columns.actions') }}
                 </th>
               </tr>
@@ -434,23 +434,23 @@ const isLastInSection = (group: Group, sectionGroups: Group[]) => {
                   <div class="flex items-center gap-1">
                     <button
                       v-if="!isFirstInSection(group, section.groups)"
-                      class="p-0.5 text-header-600 dark:text-header-300 hover:text-primary-600 dark:hover:text-primary-300"
+                      class="p-2 text-header-600 dark:text-header-300 hover:text-primary-600 dark:hover:text-primary-300"
                       :title="'Move up'"
                       @click="reorder(group, 'up')"
                     >
-                      <UIcon name="heroicons:chevron-up" class="w-4 h-4" />
+                      <UIcon name="heroicons:chevron-up" class="w-5 h-5" />
                     </button>
                     <span v-else class="w-5" />
                     <button
                       v-if="!isLastInSection(group, section.groups)"
-                      class="p-0.5 text-header-600 dark:text-header-300 hover:text-primary-600 dark:hover:text-primary-300"
+                      class="p-2 text-header-600 dark:text-header-300 hover:text-primary-600 dark:hover:text-primary-300"
                       :title="'Move down'"
                       @click="reorder(group, 'down')"
                     >
-                      <UIcon name="heroicons:chevron-down" class="w-4 h-4" />
+                      <UIcon name="heroicons:chevron-down" class="w-5 h-5" />
                     </button>
                     <span v-else class="w-5" />
-                    <span class="text-header-600 dark:text-header-300 text-xs ml-1">{{ group.ordre }}</span>
+                    <span class="text-header-600 dark:text-header-300 text-sm ml-1">{{ group.ordre }}</span>
                   </div>
                 </td>
 
@@ -462,7 +462,7 @@ const isLastInSection = (group: Group, sectionGroups: Group[]) => {
                       'text-success-700 dark:text-success-300 bg-success-100 dark:bg-success-950': group.codeNiveau === 'NAT',
                       'text-amber-700 dark:text-amber-300 bg-amber-100 dark:bg-amber-950': group.codeNiveau === 'REG'
                     }"
-                    class="px-2 py-0.5 rounded-full text-xs font-medium"
+                    class="px-2 py-0.5 rounded-full text-sm font-medium"
                   >
                     {{ group.codeNiveau }}
                   </span>
@@ -487,7 +487,7 @@ const isLastInSection = (group: Group, sectionGroups: Group[]) => {
                 <td class="px-4 py-2 text-sm text-center">
                   <span
                     v-if="group.competitionCount > 0"
-                    class="inline-flex items-center gap-1 text-xs text-header-900 dark:text-header-50"
+                    class="inline-flex items-center gap-1 text-sm text-header-900 dark:text-header-50"
                     :title="`${group.distinctCodeCount} code(s), ${group.competitionCount} compétition(s)`"
                   >
                     <span class="px-1.5 py-0.5 rounded-full bg-header-200 dark:bg-header-700 font-medium">{{ group.distinctCodeCount }}</span>
@@ -509,7 +509,7 @@ const isLastInSection = (group: Group, sectionGroups: Group[]) => {
                     </button>
                     <button
                       v-if="authStore.isSuperAdmin && group.competitionCount === 0"
-                      class="p-1.5 text-danger-600 dark:text-danger-400"
+                      class="p-1.5 text-danger-600 dark:text-danger-300"
                       :title="t('common.delete')"
                       @click="openDeleteModal(group)"
                     >
@@ -548,7 +548,7 @@ const isLastInSection = (group: Group, sectionGroups: Group[]) => {
             :class="{ 'rotate-90': !isSectionCollapsed(section.section) }"
           />
           <span class="text-sm font-semibold text-header-900 dark:text-header-50">{{ section.sectionName }}</span>
-          <span class="text-xs text-header-600 dark:text-header-300">({{ section.groups.length }})</span>
+          <span class="text-sm text-header-600 dark:text-header-300">({{ section.groups.length }})</span>
         </button>
 
         <template v-if="!isSectionCollapsed(section.section)">
@@ -566,20 +566,20 @@ const isLastInSection = (group: Group, sectionGroups: Group[]) => {
                   'text-success-700 dark:text-success-300 bg-success-100 dark:bg-success-950': group.codeNiveau === 'NAT',
                   'text-amber-700 dark:text-amber-300 bg-amber-100 dark:bg-amber-950': group.codeNiveau === 'REG'
                 }"
-                class="px-2 py-0.5 rounded-full text-xs font-medium"
+                class="px-2 py-0.5 rounded-full text-sm font-medium"
               >
                 {{ group.codeNiveau }}
               </span>
             </div>
           </template>
           <template #header-right>
-            <span class="text-xs text-header-600 dark:text-header-300">{{ t('groups.columns.ordre') }}: {{ group.ordre }}</span>
+            <span class="text-sm text-header-600 dark:text-header-300">{{ t('groups.columns.ordre') }}: {{ group.ordre }}</span>
           </template>
 
           <!-- Content -->
           <div class="text-sm text-header-900 dark:text-header-50">{{ group.libelle }}</div>
           <div v-if="group.libelleEn" class="text-sm text-header-600 dark:text-header-300">{{ group.libelleEn }}</div>
-          <div class="text-xs text-header-600 dark:text-header-300 mt-1">
+          <div class="text-sm text-header-600 dark:text-header-300 mt-1">
             {{ t('groups.codes_count', { count: group.distinctCodeCount }) }} / {{ t('groups.competition_count', { count: group.competitionCount }) }}
           </div>
 
@@ -588,17 +588,17 @@ const isLastInSection = (group: Group, sectionGroups: Group[]) => {
             <div class="flex items-center gap-1">
               <button
                 v-if="!isFirstInSection(group, section.groups)"
-                class="p-1 text-header-600 dark:text-header-300 hover:text-primary-600 dark:hover:text-primary-300 border border-header-200 dark:border-header-700 rounded"
+                class="p-2 text-header-600 dark:text-header-300 hover:text-primary-600 dark:hover:text-primary-300 border border-header-200 dark:border-header-700 rounded"
                 @click="reorder(group, 'up')"
               >
-                <UIcon name="heroicons:chevron-up" class="w-4 h-4" />
+                <UIcon name="heroicons:chevron-up" class="w-5 h-5" />
               </button>
               <button
                 v-if="!isLastInSection(group, section.groups)"
-                class="p-1 text-header-600 dark:text-header-300 hover:text-primary-600 dark:hover:text-primary-300 border border-header-200 dark:border-header-700 rounded"
+                class="p-2 text-header-600 dark:text-header-300 hover:text-primary-600 dark:hover:text-primary-300 border border-header-200 dark:border-header-700 rounded"
                 @click="reorder(group, 'down')"
               >
-                <UIcon name="heroicons:chevron-down" class="w-4 h-4" />
+                <UIcon name="heroicons:chevron-down" class="w-5 h-5" />
               </button>
             </div>
           </template>
@@ -651,7 +651,7 @@ const isLastInSection = (group: Group, sectionGroups: Group[]) => {
           <div class="grid grid-cols-2 gap-4">
             <div>
               <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">
-                {{ t('groups.form.section') }} <span class="text-danger-500 dark:text-danger-400">*</span>
+                {{ t('groups.form.section') }} <span class="text-danger-600 dark:text-danger-300">*</span>
               </label>
               <select
                 v-model="formData.section"
@@ -666,7 +666,7 @@ const isLastInSection = (group: Group, sectionGroups: Group[]) => {
             </div>
             <div>
               <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">
-                {{ t('groups.form.ordre') }} <span class="text-danger-500 dark:text-danger-400">*</span>
+                {{ t('groups.form.ordre') }} <span class="text-danger-600 dark:text-danger-300">*</span>
               </label>
               <input
                 v-model.number="formData.ordre"
@@ -683,7 +683,7 @@ const isLastInSection = (group: Group, sectionGroups: Group[]) => {
           <div class="grid grid-cols-2 gap-4">
             <div>
               <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">
-                {{ t('groups.form.groupe') }} <span class="text-danger-500 dark:text-danger-400">*</span>
+                {{ t('groups.form.groupe') }} <span class="text-danger-600 dark:text-danger-300">*</span>
               </label>
               <input
                 v-model="formData.groupe"
@@ -697,7 +697,7 @@ const isLastInSection = (group: Group, sectionGroups: Group[]) => {
             </div>
             <div>
               <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">
-                {{ t('groups.form.code_niveau') }} <span class="text-danger-500 dark:text-danger-400">*</span>
+                {{ t('groups.form.code_niveau') }} <span class="text-danger-600 dark:text-danger-300">*</span>
               </label>
               <select
                 v-model="formData.codeNiveau"
@@ -725,7 +725,7 @@ const isLastInSection = (group: Group, sectionGroups: Group[]) => {
           <!-- Libelle FR -->
           <div>
             <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">
-              {{ t('groups.form.libelle') }} <span class="text-danger-500 dark:text-danger-400">*</span>
+              {{ t('groups.form.libelle') }} <span class="text-danger-600 dark:text-danger-300">*</span>
             </label>
             <input
               v-model="formData.libelle"

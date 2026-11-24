@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Saison 2027 — les nouveautés</title>
+<!-- PDF A4 informatif (sans appel à l'action) : npm run pdf presentation (README.md).
+     Les <img data-visuel="nom"> reçoivent le PNG exporté (hors dépôt) au moment de l'export. -->
+<style>
+  @font-face { font-family: Raleway; src: url("../../../../sources/kpi-layer/public/fonts/raleway/raleway-latin-wght-normal.woff2") format("woff2"); font-weight: 100 900; }
+  @font-face { font-family: "Agency FB"; src: url("../../../../sources/kpi-layer/public/fonts/agency-fb/agencyfb.ttf") format("truetype"); }
+  @page { size: A4; margin: 0; }
+  :root { --bleu: #69b9e6; --bleu-fonce: #357b9c; --rouge: #c94a4c; --noir: #1e1e1c; --gris: #c6c7c7; --gris-texte: #555; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #fff; color: var(--noir); font-family: Raleway, system-ui, sans-serif; font-size: 10.5pt; line-height: 1.45; }
+  .page { width: 210mm; height: 297mm; padding: 16mm 16mm 12mm; position: relative; overflow: hidden;
+          page-break-after: always; display: flex; flex-direction: column; }
+  .page:last-child { page-break-after: auto; }
+  .page::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 4mm;
+                  background: linear-gradient(90deg, var(--bleu-fonce), var(--bleu)); }
+  .kicker { color: var(--bleu-fonce); font-weight: 800; font-size: 10pt; letter-spacing: .12em; text-transform: uppercase; }
+  h1 { font-family: "Agency FB", Raleway, sans-serif; font-weight: 700; font-size: 50pt; line-height: 1; margin: 2mm 0 5mm; }
+  h2 { font-family: "Agency FB", Raleway, sans-serif; font-weight: 700; font-size: 28pt; line-height: 1.05; margin: 1mm 0 6mm; }
+  h1 em, h2 em { font-style: normal; color: var(--bleu-fonce); }
+  h3 { font-size: 11.5pt; font-weight: 800; margin-bottom: 1.5mm; }
+  .lead { font-size: 13pt; color: #333; max-width: 170mm; }
+  b { font-weight: 700; }
+  footer { margin-top: auto; padding-top: 4mm; border-top: .3mm solid var(--gris); display: flex; justify-content: space-between;
+           font-size: 8.5pt; color: var(--gris-texte); }
+
+  /* Couverture */
+  .apercu { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5mm; margin-top: 10mm; }
+  .apercu img { width: 100%; display: block; border-radius: 1.5mm; box-shadow: 0 .8mm 2.5mm rgba(0,0,0,.25); }
+  .themes { display: flex; flex-direction: column; gap: 6mm; margin-top: 10mm; }
+  .themes > div { border-left: 1.5mm solid var(--bleu-fonce); padding: 1mm 0 1mm 5mm; }
+  .themes > div.europe { border-left-color: var(--rouge); }
+  .themes p { color: #333; }
+
+  /* Pages visuel */
+  .visuel { display: block; width: 146mm; margin: 0 auto; border-radius: 2.5mm; box-shadow: 0 1.2mm 4mm rgba(0,0,0,.28); }
+  .points { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6mm; margin-top: 9mm; }
+  .points > div { border-top: 1mm solid var(--bleu); padding-top: 2.5mm; font-size: 9.8pt; color: #333; }
+  .points h3 { color: var(--noir); }
+</style>
+</head>
+<body>
+
+<!-- Couverture -->
+<section class="page">
+  <div class="kicker">Plénières kayak-polo · 21-22 novembre 2026</div>
+  <h1>Saison 2027 :<br><em>ce qui arrive</em></h1>
+  <p class="lead">Les résultats en direct au bord du plan d'eau, un site public entièrement renouvelé, et les championnats
+    d'Europe en France : la saison 2027 en un coup d'œil.</p>
+
+  <div class="apercu">
+    <img data-visuel="kit-relais-1-application-bord-de-terrain" alt="L'application bord de terrain">
+    <img data-visuel="kit-relais-2-site-public" alt="Le site public">
+    <img data-visuel="kit-relais-3-saison-2027" alt="La saison 2027">
+  </div>
+
+  <div class="themes">
+    <div><h3>L'application bord de terrain</h3>
+      <p>Tous les matchs en direct : scores, classements, et chaque match minute par minute. Gratuite, sans compte.</p></div>
+    <div><h3>Le site public fait peau neuve</h3>
+      <p>La carte des clubs, le palmarès des compétitions, les dates de chaque compétition dans son agenda.</p></div>
+    <div class="europe"><h3>Les championnats d'Europe en France</h3>
+      <p>À Thury-Harcourt (14), du 22 au 26 septembre 2027, point d'orgue de la saison.</p></div>
+  </div>
+
+  <footer><span>Saison 2027 · kayak-polo.info</span><span>1 / 4</span></footer>
+</section>
+
+<!-- L'application bord de terrain -->
+<section class="page">
+  <div class="kicker">L'application bord de terrain · app.kayak-polo.info</div>
+  <h2>Tous les matchs, <em>en direct</em></h2>
+  <img class="visuel" data-visuel="kit-relais-1-application-bord-de-terrain" alt="Visuel : tous les matchs, en direct">
+  <div class="points">
+    <div><h3>Le match minute par minute</h3>La feuille de match et sa chronologie : chaque but et chaque carton, période par période.</div>
+    <div><h3>Toute la compétition</h3>Programme, résultats, classements et progression de chaque équipe, par catégorie.</div>
+    <div><h3>Au bord du plan d'eau</h3>Installable sur l'écran d'accueil, en français ou en anglais, consultable même sans réseau.</div>
+  </div>
+  <footer><span>Saison 2027 · kayak-polo.info</span><span>2 / 4</span></footer>
+</section>
+
+<!-- Le site public -->
+<section class="page">
+  <div class="kicker">Le site public · kayak-polo.info</div>
+  <h2>Le site public <em>fait peau neuve</em></h2>
+  <img class="visuel" data-visuel="kit-relais-2-site-public" alt="Visuel : trouve ton club, et tous les autres">
+  <div class="points">
+    <div><h3>Les clubs</h3>Plus de 200 clubs sur une carte, chacun avec sa fiche et ses équipes.</div>
+    <div><h3>L'histoire</h3>L'historique et le palmarès de toutes les compétitions.</div>
+    <div><h3>Les compétitions</h3>Matchs, classements et calendrier, avec les dates dans son agenda.</div>
+  </div>
+  <footer><span>Saison 2027 · kayak-polo.info</span><span>3 / 4</span></footer>
+</section>
+
+<!-- La saison 2027 -->
+<section class="page">
+  <div class="kicker">Les rendez-vous</div>
+  <h2>La saison <em>2027</em></h2>
+  <img class="visuel" data-visuel="kit-relais-3-saison-2027" alt="Visuel : la saison 2027">
+  <div class="points">
+    <div><h3>Janvier</h3>Formation arbitre national (16-17), puis La nuit du kayak-polo à Moreuil (23-24).</div>
+    <div><h3>Mars</h3>1<sup>re</sup> journée du championnat de France, les 13 et 14 mars.</div>
+    <div><h3>Septembre</h3>Championnats d'Europe à Thury-Harcourt, du 22 au 26 septembre.</div>
+  </div>
+  <footer><span>Saison 2027 · kayak-polo.info</span><span>4 / 4</span></footer>
+</section>
+
+</body>
+</html>

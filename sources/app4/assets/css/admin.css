@@ -239,6 +239,20 @@ h1, h2 {
   font-family: 'Agency FB', 'Arial Narrow', Arial, sans-serif;
 }
 
+/**
+ * Scoring digits (console, scoreboard, shot clock): a heavy neo-grotesque with lining,
+ * **tabular figures**, so every digit keeps the same advance width and a countdown never
+ * wobbles — Raleway's old-style figures and the monospace fallback both read poorly at a
+ * glance. No web font on purpose: the displays must start instantly and work offline (PWA).
+ */
+.scoring-digits {
+  font-family: 'Helvetica Neue', Helvetica, Arial, 'Liberation Sans', system-ui, sans-serif;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums lining-nums;
+  font-feature-settings: 'tnum' 1, 'lnum' 1;
+  letter-spacing: 0;
+}
+
 /* ===== Color scheme ===== */
 :root {
   color-scheme: light;
@@ -777,6 +791,45 @@ label[for] {
   background-color: var(--color-header-800);
 }
 
+/* ===== Match score chip (normalised like app3/app2, compact for operational use) =====
+   Navy block, white tabular figures; the loser's figure is dimmed (header-300 on header-900 = 5.6:1, AA).
+   Winner / loser only once the game is over (see scoreChipClass in games and rankings). */
+.score-chip {
+  display: inline-block;
+  min-width: 2.25rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: 0.375rem;
+  background-color: var(--color-header-900);
+  color: #fff;
+  font-size: 1.125rem;
+  font-weight: 700;
+  line-height: 1.5rem;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.dark .score-chip {
+  background-color: var(--color-header-950);
+  box-shadow: inset 0 0 0 1px var(--color-header-700);
+}
+
+.score-chip--loser {
+  color: var(--color-header-300);
+  font-weight: 600;
+}
+
+.score-chip.editable-cell {
+  background-color: var(--color-header-900);
+  border: 1.5px dashed var(--color-header-300);
+  padding: 0.125rem 0.5rem;
+}
+
+.score-chip.editable-cell:hover {
+  background-color: var(--color-header-800);
+  border-color: #fff;
+}
+
+
 .dark .editable-cell:hover {
   background-color: var(--color-header-700);
   border-color: var(--color-primary-400);
@@ -858,4 +911,28 @@ label[for] {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
+}
+/* ===== Fonts: Arial for VALUES, Raleway for LABELS (brand) =====
+   Values = what comes from the database or from user input: table cells, form controls, and anything flagged
+   `.font-ops` (cards, lists, modals). Raleway keeps titles, subtitles, column headers and field labels.
+   Reason: Raleway's old-style numerals sit below the baseline, which hurts reading dates, scores and codes. */
+:root {
+  --font-data: Arial, Helvetica, sans-serif;
+  --font-brand: 'Raleway', sans-serif;
+}
+
+td,
+input,
+select,
+textarea,
+.font-ops,
+.font-ops button {
+  font-family: var(--font-data);
+}
+
+th,
+label,
+legend,
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-brand);
 }

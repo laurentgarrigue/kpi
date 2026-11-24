@@ -115,7 +115,7 @@
     "Teams": "Equipes",
     "Refs": "Arbitres",
     "ShowRefs": "Voir les arbitres",
-    "ShowShotclock": "Voir le shotclock",
+    "ShowShotclock": "Voir le chrono tir",
     "ShowFlags": "Voir les logos",
     "Dates": "Dates",
     "Time": "Heure",
@@ -136,7 +136,7 @@
     "Score": "Score",
     "Ref": "Arb.",
     "Referee": "Arbitrage",
-    "Shotclock": "Shotclock",
+    "Shotclock": "Chrono tir",
     "GameReport": "Feuille de marque",
     "MatchSheet": "Ouvrir la feuille de marque",
     "Status": {

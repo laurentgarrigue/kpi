@@ -7,6 +7,7 @@ use App\Security\GoogleOAuthClient;
 use App\Security\KnownDeviceService;
 use App\Security\LoginAttemptLogger;
 use App\Security\LoginRateLimiter;
+use App\Security\PasswordRenewalService;
 use App\Security\RefreshTokenService;
 use App\Security\UserProvider;
 use App\Service\NotificationService;
@@ -52,6 +53,7 @@ class OAuthController extends AbstractController
         private readonly LoginAttemptLogger $loginLogger,
         private readonly LoginRateLimiter $loginRateLimiter,
         private readonly NotificationService $notificationService,
+        private readonly PasswordRenewalService $passwordRenewals,
         private readonly string $app4Url,
     ) {
     }
@@ -453,6 +455,11 @@ class OAuthController extends AbstractController
      */
     private function issueSession(string $userCode, Request $request, bool $legacyMd5, string $method): Response
     {
+        // Google ne dispense pas du renouvellement imposé : le mot de passe faible resterait utilisable (AUTH-RN-06).
+        if ($this->passwordRenewals->isRequired($userCode)) {
+            return $this->redirectLogin('password_renewal_required');
+        }
+
         /** @var User $user */
         $user = $this->userProvider->loadUserByIdentifier($userCode);
         $this->loginLogger->logSuccess($userCode, $method, $legacyMd5, $request);

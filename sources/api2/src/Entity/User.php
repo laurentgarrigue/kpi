@@ -11,6 +11,7 @@ use Symfony\Component\Security\Core\User\UserInterface;
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     /** Profile 10 "Contrôle équipement": scrutineering and presence sheets of every team (PAGE_SCRUTINEERING.md § 2). */
+    public const SCORER_NIVEAU = 9;
     public const SCRUTINEER_NIVEAU = 10;
 
     private string $code;
@@ -179,6 +180,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function getEffectiveNiveau(): int
     {
         return $this->mandateNiveau ?? $this->niveau;
+    }
+
+    /** Effective profile 9 "Table de marque": score sheets and match presence sheets */
+    public function isScorer(): bool
+    {
+        return $this->getEffectiveNiveau() === self::SCORER_NIVEAU;
     }
 
     /** Effective profile 10: outside the linear hierarchy, see DOC/developer/reference/PROFILE_ROLES.md */

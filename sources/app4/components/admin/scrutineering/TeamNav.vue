@@ -16,7 +16,7 @@ const slots = useSlots()
 const { t } = useI18n()
 const hasTeams = computed(() => props.navigation.teams.value.length > 0)
 const otherView = computed<TeamView>(() => (props.view === 'presence' ? 'scrutineering' : 'presence'))
-const chipClass = 'px-2 py-1 text-xs rounded-full border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 hover:border-primary-400 hover:bg-primary-50 dark:hover:bg-primary-950'
+const chipClass = 'px-2 py-1 text-sm rounded-full border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 hover:border-primary-400 hover:bg-primary-50 dark:hover:bg-primary-950'
 const arrowClass = 'p-2 rounded-lg border border-header-300 dark:border-header-700 text-header-900 dark:text-header-50 hover:bg-header-50 dark:hover:bg-header-800 disabled:opacity-40 disabled:cursor-not-allowed'
 </script>
 
@@ -73,9 +73,9 @@ const arrowClass = 'p-2 rounded-lg border border-header-300 dark:border-header-7
     </div>
 
     <div v-if="navigation.sameClub.value.length > 0" class="flex flex-wrap items-center gap-1.5">
-      <span class="text-xs font-medium text-header-600 dark:text-header-300">{{ t('scrutineering.nav.same_club') }}</span>
+      <span class="text-sm font-medium text-header-600 dark:text-header-300">{{ t('scrutineering.nav.same_club') }}</span>
       <button v-for="team in navigation.sameClub.value" :key="team.team_id" type="button" :class="chipClass" @click="navigation.go(team.team_id)">
-        {{ team.label }} <span class="text-header-500">· {{ team.competition_code }}</span>
+        {{ team.label }} <span class="text-header-600">· {{ team.competition_code }}</span>
       </button>
     </div>
   </div>

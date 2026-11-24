@@ -33,9 +33,13 @@ const eligibility = computed(() => presenceStore.eligibility)
 const minPagaie = computed(() => eligibility.value?.minPagaieECA ?? null)
 const canOverride = computed(() => authStore.profile <= (eligibility.value?.forceMaxProfile ?? 2))
 
+// Errors that block: the advisory ones of the season (2027: paddle colour) are only reported
+const blockingErrors = (player: Player): string[] =>
+  (player.eligibilityErrors ?? []).filter(code => !(eligibility.value?.advisoryErrors ?? []).includes(code))
+
 // Blocking rules: a non-compliant player cannot take a playing status (-, C) unless forced
 const isPlayingStatusLocked = (player: Player): boolean =>
-  eligibility.value?.enforcement === 'block' && !!player.eligibilityErrors?.length && !canOverride.value
+  eligibility.value?.enforcement === 'block' && !!blockingErrors(player).length && !canOverride.value
 
 // Forced status change (profile <= forceMaxProfile) for a non-compliant player
 const forceStatusTarget = ref<{ matric: number; value: string; name: string; errors: string[] } | null>(null)
@@ -665,7 +669,7 @@ const pdfLinks = computed(() => {
         <div v-if="presenceStore.competition" class="flex items-center gap-2 flex-wrap">
           <span
             v-if="presenceStore.competition.codeNiveau"
-            class="px-2 py-1 text-xs font-medium rounded bg-primary-100 dark:bg-primary-950 text-primary-800 dark:text-primary-200"
+            class="px-2 py-1 text-sm font-medium rounded bg-primary-100 dark:bg-primary-950 text-primary-800 dark:text-primary-200"
           >
             {{ presenceStore.competition.codeNiveau }}
           </span>
@@ -673,7 +677,7 @@ const pdfLinks = computed(() => {
           <!-- National competition badge -->
           <span
             v-if="presenceStore.isNationalCompetition"
-            class="px-2 py-1 text-xs font-medium rounded bg-purple-100 dark:bg-purple-950 text-purple-800 dark:text-purple-200 flex items-center gap-1"
+            class="px-2 py-1 text-sm font-medium rounded bg-purple-100 dark:bg-purple-950 text-purple-800 dark:text-purple-200 flex items-center gap-1"
             :title="t('presence.national_validation_required')"
           >
             <UIcon name="i-heroicons-shield-check" class="w-3 h-3" />
@@ -683,7 +687,7 @@ const pdfLinks = computed(() => {
           <!-- Regional competition badge (eligibility rules as warnings only) -->
           <span
             v-if="presenceStore.isRegionalCompetition"
-            class="px-2 py-1 text-xs font-medium rounded bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-200 flex items-center gap-1"
+            class="px-2 py-1 text-sm font-medium rounded bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-200 flex items-center gap-1"
             :title="t('presence.regional_validation_warning')"
           >
             <UIcon name="i-heroicons-shield-exclamation" class="w-3 h-3" />
@@ -697,7 +701,7 @@ const pdfLinks = computed(() => {
             :title="t('presence.competition_locked')"
           >
             <UIcon name="heroicons:lock-closed-solid" class="w-6 h-6" />
-            <span class="text-xs font-medium">{{ t('common.locked') }}</span>
+            <span class="text-sm font-medium">{{ t('common.locked') }}</span>
           </div>
           <UIcon
             v-else
@@ -823,17 +827,17 @@ const pdfLinks = computed(() => {
                 @change="toggleSelectAll"
               >
             </th>
-            <th class="w-16 px-3 py-1 text-center text-xs font-medium text-header-600 dark:text-header-300 uppercase">#</th>
-            <th class="w-24 px-3 py-1 text-left text-xs font-medium text-header-600 dark:text-header-300 uppercase">{{ t('presence.status') }}</th>
-            <th class="px-3 py-1 text-left text-xs font-medium text-header-600 dark:text-header-300 uppercase">{{ t('common.last_name') }}</th>
-            <th class="px-3 py-1 text-left text-xs font-medium text-header-600 dark:text-header-300 uppercase">{{ t('common.first_name') }}</th>
-            <th class="px-3 py-1 text-center text-xs font-medium text-header-600 dark:text-header-300 uppercase">{{ t('common.license') }}</th>
-            <th class="px-3 py-1 text-center text-xs font-medium text-header-600 dark:text-header-300 uppercase">{{ t('common.club') }}</th>
-            <th class="px-3 py-1 text-center text-xs font-medium text-header-600 dark:text-header-300 uppercase">{{ t('common.category') }}</th>
-            <th v-if="presenceStore.isNationalCompetition" class="px-3 py-1 text-center text-xs font-medium text-header-600 dark:text-header-300 uppercase" :title="t('presence.surclassement')">{{ t('presence.surclassement') }}</th>
-            <th class="px-3 py-1 text-center text-xs font-medium text-header-600 dark:text-header-300 uppercase">{{ t('common.paddle') }}</th>
-            <th class="px-3 py-1 text-center text-xs font-medium text-header-600 dark:text-header-300 uppercase">{{ t('common.certificate') }}</th>
-            <th class="px-3 py-1 text-center text-xs font-medium text-header-600 dark:text-header-300 uppercase">{{ t('presence.status_referee') }}</th>
+            <th class="w-16 px-3 py-1 text-center text-sm font-medium text-header-600 dark:text-header-300 uppercase">#</th>
+            <th class="w-24 px-3 py-1 text-left text-sm font-medium text-header-600 dark:text-header-300 uppercase">{{ t('presence.status') }}</th>
+            <th class="px-3 py-1 text-left text-sm font-medium text-header-600 dark:text-header-300 uppercase">{{ t('common.last_name') }}</th>
+            <th class="px-3 py-1 text-left text-sm font-medium text-header-600 dark:text-header-300 uppercase">{{ t('common.first_name') }}</th>
+            <th class="px-3 py-1 text-center text-sm font-medium text-header-600 dark:text-header-300 uppercase">{{ t('common.license') }}</th>
+            <th class="px-3 py-1 text-center text-sm font-medium text-header-600 dark:text-header-300 uppercase">{{ t('common.club') }}</th>
+            <th class="px-3 py-1 text-center text-sm font-medium text-header-600 dark:text-header-300 uppercase">{{ t('common.category') }}</th>
+            <th v-if="presenceStore.isNationalCompetition" class="px-3 py-1 text-center text-sm font-medium text-header-600 dark:text-header-300 uppercase" :title="t('presence.surclassement')">{{ t('presence.surclassement') }}</th>
+            <th class="px-3 py-1 text-center text-sm font-medium text-header-600 dark:text-header-300 uppercase">{{ t('common.paddle') }}</th>
+            <th class="px-3 py-1 text-center text-sm font-medium text-header-600 dark:text-header-300 uppercase">{{ t('common.certificate') }}</th>
+            <th class="px-3 py-1 text-center text-sm font-medium text-header-600 dark:text-header-300 uppercase">{{ t('presence.status_referee') }}</th>
             <th v-if="canEdit" class="w-16 px-3 py-1"/>
           </tr>
         </thead>
@@ -901,10 +905,10 @@ const pdfLinks = computed(() => {
               </select>
             </td>
 
-            <td class="px-3 py-1 text-sm font-medium text-header-900 dark:text-header-50">{{ formatNom(player.nom) }}<AdminEligibilityBadge :errors="player.eligibilityErrors" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" :playing="['-', 'C'].includes(player.capitaine)" /></td>
+            <td class="px-3 py-1 text-sm font-medium text-header-900 dark:text-header-50">{{ formatNom(player.nom) }}<AdminEligibilityBadge :errors="player.eligibilityErrors" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" :advisory-errors="eligibility?.advisoryErrors" :playing="['-', 'C'].includes(player.capitaine)" /></td>
             <td class="px-3 py-1 text-sm text-header-900 dark:text-header-50">{{ formatPrenom(player.prenom) }}</td>
             <td class="px-3 py-1 text-sm text-header-600 dark:text-header-300 font-mono text-center">
-              <AdminPresenceComplianceCell :player="player" :season="presenceStore.team?.codeSaison ?? ''" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" field="licence" />
+              <AdminPresenceComplianceCell :player="player" :season="presenceStore.team?.codeSaison ?? ''" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" :advisory-errors="eligibility?.advisoryErrors" field="licence" />
             </td>
             <td class="px-3 py-1 text-sm text-header-600 dark:text-header-300 text-center">
               <NuxtLink
@@ -922,22 +926,22 @@ const pdfLinks = computed(() => {
               <UIcon
                 v-if="player.surclassementNeeded && !player.surclassementOk"
                 name="i-heroicons-x-circle-solid"
-                class="w-7 h-7 align-middle text-danger-600 dark:text-danger-400"
+                class="w-7 h-7 align-middle text-danger-600 dark:text-danger-300"
                 :title="t('presence.surclassement_missing')"
               />
               <UIcon
                 v-else-if="player.surclassementNeeded && player.surclassementOk"
                 name="i-heroicons-check-circle-solid"
-                class="w-7 h-7 align-middle text-success-500 dark:text-success-400"
+                class="w-7 h-7 align-middle text-success-700 dark:text-success-300"
                 :title="t('presence.surclassement_ok')"
               />
             </td>
 
             <!-- Pagaie with validation -->
-            <td class="px-3 py-1 text-sm text-center"><AdminPresenceComplianceCell :player="player" :season="presenceStore.team?.codeSaison ?? ''" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" field="pagaie" /></td>
+            <td class="px-3 py-1 text-sm text-center"><AdminPresenceComplianceCell :player="player" :season="presenceStore.team?.codeSaison ?? ''" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" :advisory-errors="eligibility?.advisoryErrors" field="pagaie" /></td>
 
             <!-- Certificate -->
-            <td class="px-3 py-1 text-sm text-center"><AdminPresenceComplianceCell :player="player" :season="presenceStore.team?.codeSaison ?? ''" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" field="certif" /></td>
+            <td class="px-3 py-1 text-sm text-center"><AdminPresenceComplianceCell :player="player" :season="presenceStore.team?.codeSaison ?? ''" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" :advisory-errors="eligibility?.advisoryErrors" field="certif" /></td>
 
             <!-- Arbitre -->
             <td class="px-3 py-1 text-sm text-header-600 dark:text-header-300 text-center font-mono">
@@ -947,7 +951,7 @@ const pdfLinks = computed(() => {
             <!-- Actions -->
             <td v-if="canEdit" class="px-3 py-1 text-right">
               <button
-                class="text-danger-600 dark:text-danger-400 hover:text-danger-800 dark:hover:text-danger-200"
+                class="text-danger-600 dark:text-danger-300 hover:text-danger-800 dark:hover:text-danger-200"
                 @click="deletePlayer(player.matric)"
               >
                 <UIcon name="i-heroicons-trash" class="w-6 h-6" />
@@ -958,7 +962,7 @@ const pdfLinks = computed(() => {
           <!-- Coaches (E) -->
           <template v-if="coaches.length > 0">
             <tr class="bg-header-800">
-              <td :colspan="(canEdit ? 12 : 11) + (presenceStore.isNationalCompetition ? 1 : 0)" class="px-3 py-1 text-xs text-header-50 text-center">
+              <td :colspan="(canEdit ? 12 : 11) + (presenceStore.isNationalCompetition ? 1 : 0)" class="px-3 py-1 text-sm text-header-50 text-center">
                 {{ t('presence.section_coaches') }}
               </td>
             </tr>
@@ -1013,10 +1017,10 @@ const pdfLinks = computed(() => {
                   <option value="X">{{ t('presence.status_inactive') }}</option>
                 </select>
               </td>
-              <td class="px-3 py-1 text-sm font-medium text-header-900 dark:text-header-50">{{ formatNom(player.nom) }}<AdminEligibilityBadge :errors="player.eligibilityErrors" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" :playing="['-', 'C'].includes(player.capitaine)" /></td>
+              <td class="px-3 py-1 text-sm font-medium text-header-900 dark:text-header-50">{{ formatNom(player.nom) }}<AdminEligibilityBadge :errors="player.eligibilityErrors" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" :advisory-errors="eligibility?.advisoryErrors" :playing="['-', 'C'].includes(player.capitaine)" /></td>
               <td class="px-3 py-1 text-sm text-header-900 dark:text-header-50">{{ formatPrenom(player.prenom) }}</td>
               <td class="px-3 py-1 text-sm text-header-600 dark:text-header-300 font-mono text-center">
-                <AdminPresenceComplianceCell :player="player" :season="presenceStore.team?.codeSaison ?? ''" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" field="licence" />
+                <AdminPresenceComplianceCell :player="player" :season="presenceStore.team?.codeSaison ?? ''" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" :advisory-errors="eligibility?.advisoryErrors" field="licence" />
               </td>
               <td class="px-3 py-1 text-sm text-header-600 dark:text-header-300 text-center">
                 <NuxtLink
@@ -1032,23 +1036,23 @@ const pdfLinks = computed(() => {
                 <UIcon
                   v-if="player.surclassementNeeded && !player.surclassementOk"
                   name="i-heroicons-x-circle-solid"
-                  class="w-7 h-7 align-middle text-danger-600 dark:text-danger-400"
+                  class="w-7 h-7 align-middle text-danger-600 dark:text-danger-300"
                   :title="t('presence.surclassement_missing')"
                 />
                 <UIcon
                   v-else-if="player.surclassementNeeded && player.surclassementOk"
                   name="i-heroicons-check-circle-solid"
-                  class="w-7 h-7 align-middle text-success-500 dark:text-success-400"
+                  class="w-7 h-7 align-middle text-success-700 dark:text-success-300"
                   :title="t('presence.surclassement_ok')"
                 />
               </td>
-              <td class="px-3 py-1 text-sm text-center"><AdminPresenceComplianceCell :player="player" :season="presenceStore.team?.codeSaison ?? ''" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" field="pagaie" /></td>
-              <td class="px-3 py-1 text-sm text-center"><AdminPresenceComplianceCell :player="player" :season="presenceStore.team?.codeSaison ?? ''" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" field="certif" /></td>
+              <td class="px-3 py-1 text-sm text-center"><AdminPresenceComplianceCell :player="player" :season="presenceStore.team?.codeSaison ?? ''" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" :advisory-errors="eligibility?.advisoryErrors" field="pagaie" /></td>
+              <td class="px-3 py-1 text-sm text-center"><AdminPresenceComplianceCell :player="player" :season="presenceStore.team?.codeSaison ?? ''" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" :advisory-errors="eligibility?.advisoryErrors" field="certif" /></td>
               <td class="px-3 py-1 text-sm text-header-600 dark:text-header-300 text-center font-mono">
                 {{ [player.arbitre, player.niveau].filter(Boolean).join('-') || '' }}
               </td>
               <td v-if="canEdit" class="px-3 py-1 text-right">
-                <button class="text-danger-600 dark:text-danger-400 hover:text-danger-800 dark:hover:text-danger-200" @click="deletePlayer(player.matric)">
+                <button class="text-danger-600 dark:text-danger-300 hover:text-danger-800 dark:hover:text-danger-200" @click="deletePlayer(player.matric)">
                   <UIcon name="i-heroicons-trash" class="w-6 h-6" />
                 </button>
               </td>
@@ -1058,7 +1062,7 @@ const pdfLinks = computed(() => {
           <!-- Referees (A) -->
           <template v-if="referees.length > 0">
             <tr class="bg-header-800">
-              <td :colspan="(canEdit ? 12 : 11) + (presenceStore.isNationalCompetition ? 1 : 0)" class="px-3 py-1 text-xs text-header-50 text-center">
+              <td :colspan="(canEdit ? 12 : 11) + (presenceStore.isNationalCompetition ? 1 : 0)" class="px-3 py-1 text-sm text-header-50 text-center">
                 {{ t('presence.section_referees') }}
               </td>
             </tr>
@@ -1113,10 +1117,10 @@ const pdfLinks = computed(() => {
                   <option value="X">{{ t('presence.status_inactive') }}</option>
                 </select>
               </td>
-              <td class="px-3 py-1 text-sm font-medium text-header-900 dark:text-header-50">{{ formatNom(player.nom) }}<AdminEligibilityBadge :errors="player.eligibilityErrors" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" :playing="['-', 'C'].includes(player.capitaine)" /></td>
+              <td class="px-3 py-1 text-sm font-medium text-header-900 dark:text-header-50">{{ formatNom(player.nom) }}<AdminEligibilityBadge :errors="player.eligibilityErrors" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" :advisory-errors="eligibility?.advisoryErrors" :playing="['-', 'C'].includes(player.capitaine)" /></td>
               <td class="px-3 py-1 text-sm text-header-900 dark:text-header-50">{{ formatPrenom(player.prenom) }}</td>
               <td class="px-3 py-1 text-sm text-header-600 dark:text-header-300 font-mono text-center">
-                <AdminPresenceComplianceCell :player="player" :season="presenceStore.team?.codeSaison ?? ''" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" field="licence" />
+                <AdminPresenceComplianceCell :player="player" :season="presenceStore.team?.codeSaison ?? ''" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" :advisory-errors="eligibility?.advisoryErrors" field="licence" />
               </td>
               <td class="px-3 py-1 text-sm text-header-600 dark:text-header-300 text-center">
                 <NuxtLink
@@ -1132,23 +1136,23 @@ const pdfLinks = computed(() => {
                 <UIcon
                   v-if="player.surclassementNeeded && !player.surclassementOk"
                   name="i-heroicons-x-circle-solid"
-                  class="w-7 h-7 align-middle text-danger-600 dark:text-danger-400"
+                  class="w-7 h-7 align-middle text-danger-600 dark:text-danger-300"
                   :title="t('presence.surclassement_missing')"
                 />
                 <UIcon
                   v-else-if="player.surclassementNeeded && player.surclassementOk"
                   name="i-heroicons-check-circle-solid"
-                  class="w-7 h-7 align-middle text-success-500 dark:text-success-400"
+                  class="w-7 h-7 align-middle text-success-700 dark:text-success-300"
                   :title="t('presence.surclassement_ok')"
                 />
               </td>
-              <td class="px-3 py-1 text-sm text-center"><AdminPresenceComplianceCell :player="player" :season="presenceStore.team?.codeSaison ?? ''" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" field="pagaie" /></td>
-              <td class="px-3 py-1 text-sm text-center"><AdminPresenceComplianceCell :player="player" :season="presenceStore.team?.codeSaison ?? ''" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" field="certif" /></td>
+              <td class="px-3 py-1 text-sm text-center"><AdminPresenceComplianceCell :player="player" :season="presenceStore.team?.codeSaison ?? ''" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" :advisory-errors="eligibility?.advisoryErrors" field="pagaie" /></td>
+              <td class="px-3 py-1 text-sm text-center"><AdminPresenceComplianceCell :player="player" :season="presenceStore.team?.codeSaison ?? ''" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" :advisory-errors="eligibility?.advisoryErrors" field="certif" /></td>
               <td class="px-3 py-1 text-sm text-header-600 dark:text-header-300 text-center font-mono">
                 {{ [player.arbitre, player.niveau].filter(Boolean).join('-') || '' }}
               </td>
               <td v-if="canEdit" class="px-3 py-1 text-right">
-                <button class="text-danger-600 dark:text-danger-400 hover:text-danger-800 dark:hover:text-danger-200" @click="deletePlayer(player.matric)">
+                <button class="text-danger-600 dark:text-danger-300 hover:text-danger-800 dark:hover:text-danger-200" @click="deletePlayer(player.matric)">
                   <UIcon name="i-heroicons-trash" class="w-6 h-6" />
                 </button>
               </td>
@@ -1158,7 +1162,7 @@ const pdfLinks = computed(() => {
           <!-- Inactive players (X) -->
           <template v-if="inactivePlayers.length > 0">
             <tr class="bg-header-800">
-              <td :colspan="(canEdit ? 12 : 11) + (presenceStore.isNationalCompetition ? 1 : 0)" class="px-3 py-1 text-xs text-header-50 text-center">
+              <td :colspan="(canEdit ? 12 : 11) + (presenceStore.isNationalCompetition ? 1 : 0)" class="px-3 py-1 text-sm text-header-50 text-center">
                 {{ t('presence.section_inactive') }}
               </td>
             </tr>
@@ -1213,10 +1217,10 @@ const pdfLinks = computed(() => {
                   <option value="X">{{ t('presence.status_inactive') }}</option>
                 </select>
               </td>
-              <td class="px-3 py-1 text-sm font-medium text-header-900 dark:text-header-50">{{ formatNom(player.nom) }}<AdminEligibilityBadge :errors="player.eligibilityErrors" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" :playing="['-', 'C'].includes(player.capitaine)" /></td>
+              <td class="px-3 py-1 text-sm font-medium text-header-900 dark:text-header-50">{{ formatNom(player.nom) }}<AdminEligibilityBadge :errors="player.eligibilityErrors" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" :advisory-errors="eligibility?.advisoryErrors" :playing="['-', 'C'].includes(player.capitaine)" /></td>
               <td class="px-3 py-1 text-sm text-header-900 dark:text-header-50">{{ formatPrenom(player.prenom) }}</td>
               <td class="px-3 py-1 text-sm text-header-600 dark:text-header-300 font-mono text-center">
-                <AdminPresenceComplianceCell :player="player" :season="presenceStore.team?.codeSaison ?? ''" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" field="licence" />
+                <AdminPresenceComplianceCell :player="player" :season="presenceStore.team?.codeSaison ?? ''" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" :advisory-errors="eligibility?.advisoryErrors" field="licence" />
               </td>
               <td class="px-3 py-1 text-sm text-header-600 dark:text-header-300 text-center">
                 <NuxtLink
@@ -1232,23 +1236,23 @@ const pdfLinks = computed(() => {
                 <UIcon
                   v-if="player.surclassementNeeded && !player.surclassementOk"
                   name="i-heroicons-x-circle-solid"
-                  class="w-7 h-7 align-middle text-danger-600 dark:text-danger-400"
+                  class="w-7 h-7 align-middle text-danger-600 dark:text-danger-300"
                   :title="t('presence.surclassement_missing')"
                 />
                 <UIcon
                   v-else-if="player.surclassementNeeded && player.surclassementOk"
                   name="i-heroicons-check-circle-solid"
-                  class="w-7 h-7 align-middle text-success-500 dark:text-success-400"
+                  class="w-7 h-7 align-middle text-success-700 dark:text-success-300"
                   :title="t('presence.surclassement_ok')"
                 />
               </td>
-              <td class="px-3 py-1 text-sm text-center"><AdminPresenceComplianceCell :player="player" :season="presenceStore.team?.codeSaison ?? ''" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" field="pagaie" /></td>
-              <td class="px-3 py-1 text-sm text-center"><AdminPresenceComplianceCell :player="player" :season="presenceStore.team?.codeSaison ?? ''" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" field="certif" /></td>
+              <td class="px-3 py-1 text-sm text-center"><AdminPresenceComplianceCell :player="player" :season="presenceStore.team?.codeSaison ?? ''" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" :advisory-errors="eligibility?.advisoryErrors" field="pagaie" /></td>
+              <td class="px-3 py-1 text-sm text-center"><AdminPresenceComplianceCell :player="player" :season="presenceStore.team?.codeSaison ?? ''" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" :advisory-errors="eligibility?.advisoryErrors" field="certif" /></td>
               <td class="px-3 py-1 text-sm text-header-600 dark:text-header-300 text-center font-mono">
                 {{ [player.arbitre, player.niveau].filter(Boolean).join('-') || '' }}
               </td>
               <td v-if="canEdit" class="px-3 py-1 text-right">
-                <button class="text-danger-600 dark:text-danger-400 hover:text-danger-800 dark:hover:text-danger-200" @click="deletePlayer(player.matric)">
+                <button class="text-danger-600 dark:text-danger-300 hover:text-danger-800 dark:hover:text-danger-200" @click="deletePlayer(player.matric)">
                   <UIcon name="i-heroicons-trash" class="w-6 h-6" />
                 </button>
               </td>
@@ -1269,7 +1273,7 @@ const pdfLinks = computed(() => {
 
     <!-- Notice + last update (desktop & mobile) -->
     <div v-if="!presenceStore.loading && filteredPlayers.length >= 0" class="mt-3 space-y-2">
-      <div class="px-4 py-3 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-900 rounded-lg text-xs text-blue-800 dark:text-blue-200 text-center space-y-1">
+      <div class="px-4 py-3 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-900 rounded-lg text-sm text-blue-800 dark:text-blue-200 text-center space-y-1">
         <p>{{ t('presence.notice_inactive') }}</p>
         <p>{{ t('presence.notice_staff_referee') }}</p>
       </div>
@@ -1294,8 +1298,8 @@ const pdfLinks = computed(() => {
               class="rounded border-header-300 dark:border-header-700"
             >
             <div>
-              <div class="font-bold text-header-900 dark:text-header-50">{{ formatNom(player.nom) }} {{ formatPrenom(player.prenom) }}<AdminEligibilityBadge :errors="player.eligibilityErrors" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" :playing="['-', 'C'].includes(player.capitaine)" /></div>
-              <AdminPresenceComplianceCell :player="player" :season="presenceStore.team?.codeSaison ?? ''" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" field="licence" />
+              <div class="font-bold text-header-900 dark:text-header-50">{{ formatNom(player.nom) }} {{ formatPrenom(player.prenom) }}<AdminEligibilityBadge :errors="player.eligibilityErrors" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" :advisory-errors="eligibility?.advisoryErrors" :playing="['-', 'C'].includes(player.capitaine)" /></div>
+              <AdminPresenceComplianceCell :player="player" :season="presenceStore.team?.codeSaison ?? ''" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" :advisory-errors="eligibility?.advisoryErrors" field="licence" />
             </div>
           </div>
           <!-- Numero + Capitaine badges -->
@@ -1303,7 +1307,7 @@ const pdfLinks = computed(() => {
             <!-- Numero (inline edit on mobile) -->
             <span
               v-if="!canEdit || editingCell?.matric !== player.matric || editingCell?.field !== 'numero'"
-              class="px-2 py-1 text-xs font-medium rounded bg-header-50 dark:bg-header-900 border border-dashed border-header-300 dark:border-header-700"
+              class="px-2 py-1 text-sm font-medium rounded bg-header-50 dark:bg-header-900 border border-dashed border-header-300 dark:border-header-700"
               :class="canEdit ? 'cursor-pointer hover:border-primary-400 hover:bg-primary-50 dark:hover:bg-primary-950' : ''"
               @click="canEdit && startEdit(player, 'numero')"
             >
@@ -1316,14 +1320,14 @@ const pdfLinks = computed(() => {
               type="number"
               min="0"
               max="99"
-              class="w-14 px-2 py-1 border border-primary-400 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded text-xs focus:ring-2 focus:ring-primary-500"
+              class="w-14 px-2 py-1 border border-primary-400 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded text-sm focus:ring-2 focus:ring-primary-500"
               @keydown="handleInlineKeydown"
               @blur="saveInlineEdit"
             >
             <!-- Capitaine (inline edit on mobile) -->
             <span
               v-if="!canEdit || editingCell?.matric !== player.matric || editingCell?.field !== 'capitaine'"
-              class="px-2 py-1 text-xs font-medium rounded"
+              class="px-2 py-1 text-sm font-medium rounded"
               :class="[
                 player.capitaine === 'C' ? 'bg-warning-200 dark:bg-warning-800 text-warning-800 dark:text-warning-100' : 'bg-header-200 dark:bg-header-700 text-header-900 dark:text-header-50',
                 canEdit ? 'cursor-pointer border border-dashed border-transparent hover:border-primary-400 hover:bg-primary-50 dark:hover:bg-primary-950' : ''
@@ -1336,7 +1340,7 @@ const pdfLinks = computed(() => {
               v-else
               :id="`mobile-edit-${player.matric}-capitaine`"
               v-model="editingValue"
-              class="px-2 py-1 text-xs border border-primary-400 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded focus:ring-2 focus:ring-primary-500"
+              class="px-2 py-1 text-sm border border-primary-400 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded focus:ring-2 focus:ring-primary-500"
               @change="saveInlineEdit"
               @blur="saveInlineEdit"
             >
@@ -1360,23 +1364,23 @@ const pdfLinks = computed(() => {
           </div>
           <div v-if="presenceStore.isNationalCompetition && player.surclassementNeeded" class="flex items-center gap-2">
             <span class="text-header-600 dark:text-header-300">{{ t('presence.surclassement') }}:</span>
-            <span class="flex items-center gap-1 font-semibold" :class="player.surclassementOk ? 'text-success-500 dark:text-success-400' : 'text-danger-600 dark:text-danger-400'">
+            <span class="flex items-center gap-1 font-semibold" :class="player.surclassementOk ? 'text-success-700 dark:text-success-300' : 'text-danger-600 dark:text-danger-300'">
               <UIcon :name="player.surclassementOk ? 'i-heroicons-check-circle-solid' : 'i-heroicons-x-circle-solid'" class="w-6 h-6" />
               {{ player.surclassementOk ? t('presence.surclassement_ok') : t('presence.surclassement_missing') }}
             </span>
           </div>
           <div class="flex items-center gap-2">
             <span class="text-header-600 dark:text-header-300">{{ t('common.paddle') }}:</span>
-            <AdminPresenceComplianceCell :player="player" :season="presenceStore.team?.codeSaison ?? ''" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" field="pagaie" />
+            <AdminPresenceComplianceCell :player="player" :season="presenceStore.team?.codeSaison ?? ''" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" :advisory-errors="eligibility?.advisoryErrors" field="pagaie" />
           </div>
           <div class="flex items-center gap-2">
             <span class="text-header-600 dark:text-header-300">{{ t('common.certificate') }}:</span>
-            <AdminPresenceComplianceCell :player="player" :season="presenceStore.team?.codeSaison ?? ''" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" field="certif" />
+            <AdminPresenceComplianceCell :player="player" :season="presenceStore.team?.codeSaison ?? ''" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" :advisory-errors="eligibility?.advisoryErrors" field="certif" />
           </div>
         </div>
 
         <div v-if="canEdit" class="mt-3 pt-3 border-t border-header-200 dark:border-header-700 flex justify-end">
-          <button class="text-danger-600 dark:text-danger-400 hover:text-danger-800 dark:hover:text-danger-200 text-sm" @click="deletePlayer(player.matric)">
+          <button class="text-danger-600 dark:text-danger-300 hover:text-danger-800 dark:hover:text-danger-200 text-sm" @click="deletePlayer(player.matric)">
             <UIcon name="i-heroicons-trash" class="w-6 h-6 inline mr-1" />
             {{ t('common.delete') }}
           </button>
@@ -1451,10 +1455,10 @@ const pdfLinks = computed(() => {
               class="p-3 bg-amber-50 dark:bg-amber-950 border border-amber-300 dark:border-amber-800 rounded-lg text-sm text-amber-900 dark:text-amber-100 space-y-3"
             >
               <div class="flex items-start gap-2">
-                <UIcon name="i-heroicons-shield-exclamation" class="w-5 h-5 shrink-0 mt-0.5 text-amber-600 dark:text-amber-300" />
+                <UIcon name="i-heroicons-shield-exclamation" class="w-5 h-5 shrink-0 mt-0.5 text-amber-700 dark:text-amber-300" />
                 <div>
                   <p class="font-semibold">{{ t('presence.override_allowed_title') }}</p>
-                  <p class="text-xs mt-0.5 text-amber-800 dark:text-amber-200">{{ t('presence.override_allowed_notice') }}</p>
+                  <p class="text-sm mt-0.5 text-amber-800 dark:text-amber-200">{{ t('presence.override_allowed_notice') }}</p>
                 </div>
               </div>
               <div class="flex items-center gap-3">
@@ -1522,16 +1526,16 @@ const pdfLinks = computed(() => {
             <!-- Filters -->
             <div class="grid grid-cols-3 gap-2">
               <div>
-                <label class="block text-xs font-medium text-header-900 dark:text-header-50 mb-1">{{ t('common.club') }}</label>
+                <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">{{ t('common.club') }}</label>
                 <AdminClubAutocomplete
                   v-model="searchFilterClub"
                 />
               </div>
               <div>
-                <label class="block text-xs font-medium text-header-900 dark:text-header-50 mb-1">{{ t('presence.sex') }}</label>
+                <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">{{ t('presence.sex') }}</label>
                 <select
                   v-model="searchFilterSexe"
-                  class="w-full px-2 py-1 border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded text-xs focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
+                  class="w-full px-2 py-1 border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded text-sm focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
                 >
                   <option value="">-</option>
                   <option value="M">M</option>
@@ -1539,10 +1543,10 @@ const pdfLinks = computed(() => {
                 </select>
               </div>
               <div>
-                <label class="block text-xs font-medium text-header-900 dark:text-header-50 mb-1">{{ t('presence.referee_qualification') }}</label>
+                <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">{{ t('presence.referee_qualification') }}</label>
                 <select
                   v-model="searchFilterArbitre"
-                  class="w-full px-2 py-1 border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded text-xs focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
+                  class="w-full px-2 py-1 border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded text-sm focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
                 >
                   <option value="">-</option>
                   <option value="INT">INT</option>
@@ -1602,7 +1606,7 @@ const pdfLinks = computed(() => {
                       <li v-for="dup in duplicateMatches" :key="dup.matric">
                         <button
                           type="button"
-                          class="text-xs text-amber-800 dark:text-amber-200 underline hover:text-amber-950 dark:hover:text-amber-100 cursor-pointer"
+                          class="text-sm text-amber-800 dark:text-amber-200 underline hover:text-amber-950 dark:hover:text-amber-100 cursor-pointer"
                           @click="selectDuplicate(dup)"
                         >
                           {{ formatNom(dup.nom) }} {{ formatPrenom(dup.prenom) }} ({{ dup.matric }}) - {{ dup.club }}
@@ -1788,7 +1792,7 @@ const pdfLinks = computed(() => {
             >
               <div class="flex items-center justify-between">
                 <span class="font-medium">{{ comp.competitionCode }} - {{ comp.competitionLibelle }}</span>
-                <span class="text-xs text-header-600 dark:text-header-300">{{ comp.playerCount }} {{ t('presence.players_count_short') }}</span>
+                <span class="text-sm text-header-600 dark:text-header-300">{{ comp.playerCount }} {{ t('presence.players_count_short') }}</span>
               </div>
             </button>
           </div>

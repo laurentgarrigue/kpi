@@ -54,9 +54,10 @@
 		# Transport persistant : sans lui, le défaut est `local` (buffer mémoire
 		# sans historique) et un abonné déconnecté perd définitivement les updates
 		# publiés pendant sa coupure — son Last-Event-ID n'a rien à rejouer.
-		# bolt écrit les updates sur disque. ⚠️ Le FICHIER survit à un restart, mais
-		# pas le point de reprise : après `make api2_restart`, plus aucun rattrapage
-		# (mesuré 2026-07-17) — la resync applicative à onopen reste obligatoire.
+		# bolt écrit les updates sur disque ; le rattrapage survit à un restart
+		# (mesuré 2026-11-07, FrankenPHP 1.13). ⚠️ Il ne se demande que par l'EN-TÊTE
+		# Last-Event-ID : le paramètre d'URL `lastEventID` est ignoré par ce hub.
+		# La resync applicative à onopen reste obligatoire (historique borné).
 		# /data doit être inscriptible par ${USER_ID} (le conteneur tourne non-root).
 		#
 		# ⚠️ Syntaxe : `transport <module> { … }`. L'ancienne forme `transport_url

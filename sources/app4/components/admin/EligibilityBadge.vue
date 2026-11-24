@@ -7,6 +7,8 @@ interface Props {
   errors?: string[]
   enforcement?: 'block' | 'warn' | null
   minPagaie?: string | null
+  // Errors reported without blocking for the season (2027 national rule: paddle colour)
+  advisoryErrors?: string[]
   // Player holds a playing status (-, C): the rules matter, highlight the icon
   playing?: boolean
 }
@@ -15,6 +17,7 @@ const props = withDefaults(defineProps<Props>(), {
   errors: () => [],
   enforcement: null,
   minPagaie: null,
+  advisoryErrors: () => [],
   playing: true
 })
 
@@ -26,10 +29,11 @@ const title = computed(() =>
 )
 
 const colorClass = computed(() => {
-  if (!props.playing) return 'text-header-500 dark:text-header-400'
-  return props.enforcement === 'block'
-    ? 'text-danger-600 dark:text-danger-400'
-    : 'text-amber-600 dark:text-amber-300'
+  if (!props.playing) return 'text-header-600 dark:text-header-300'
+  const blocking = props.errors.some(code => !props.advisoryErrors.includes(code))
+  return props.enforcement === 'block' && blocking
+    ? 'text-danger-600 dark:text-danger-300'
+    : 'text-amber-700 dark:text-amber-300'
 })
 </script>
 

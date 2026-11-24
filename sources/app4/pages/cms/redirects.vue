@@ -64,10 +64,10 @@ onMounted(load)
         </thead>
         <tbody class="divide-y divide-header-200 dark:divide-header-700">
           <tr v-for="redirect in visible" :key="redirect.id">
-            <td class="px-4 py-2 font-mono text-xs">{{ redirect.from_path }}</td>
-            <td class="px-4 py-2 font-mono text-xs">{{ redirect.to_path }}</td>
+            <td class="px-4 py-2 font-mono text-sm">{{ redirect.from_path }}</td>
+            <td class="px-4 py-2 font-mono text-sm">{{ redirect.to_path }}</td>
             <td class="px-4 py-2 text-right tabular-nums">{{ redirect.hits }}</td>
-            <td class="px-4 py-2 text-right"><UButton size="xs" variant="ghost" color="error" icon="heroicons:trash" :aria-label="t('common.delete')" @click="remove(redirect.id)" /></td>
+            <td class="px-4 py-2 text-right"><UButton size="sm" variant="ghost" color="error" icon="heroicons:trash" :aria-label="t('common.delete')" @click="remove(redirect.id)" /></td>
           </tr>
         </tbody>
       </table>

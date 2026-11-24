@@ -1,6 +1,6 @@
 -- Requête de contrôle : réalignement des structures fédérales et des codes régionaux sur le PCE
 -- Date : 2026-10-29
--- Spec : DOC/developer/in-progress/REALIGNEMENT_STRUCTURES_FFCK.md (« Script de remise à plat »)
+-- Spec : DOC/developer/archive/features/REALIGNEMENT_STRUCTURES_FFCK.md (« Script de remise à plat »)
 -- ADR  : DOC/developer/reference/adr/0001-codes-regionaux-alignes-sur-les-cr-actuels.md
 --
 -- LECTURE SEULE (tables temporaires de session uniquement). À lancer AVANT et APRÈS

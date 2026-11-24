@@ -39,7 +39,7 @@ const formatTimeRange = (start: string | null, end: string | null) => {
             {{ phase.phase }}
             <span
               v-if="(showMatchCount && phase.nbMatchs) || (showTimeSlots && formatTimeRange(phase.startTime, phase.endTime))"
-              class="font-normal text-header-600 dark:text-header-300 text-xs"
+              class="font-normal text-header-600 dark:text-header-300 text-sm"
             >
               ·
               <template v-if="showMatchCount">{{ phase.nbMatchs }} {{ t('schema.phase_games', { count: phase.nbMatchs }, phase.nbMatchs) }}</template>

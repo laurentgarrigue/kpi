@@ -199,7 +199,7 @@ onMounted(() => {
             <h2 class="text-lg font-semibold text-header-900 dark:text-header-50">
               {{ competition.libelle }}
               <!-- Season badge -->
-              <span class="px-2 py-1 text-xs font-medium rounded bg-primary-50 dark:bg-primary-950 text-primary-700 dark:text-primary-200">
+              <span class="px-2 py-1 text-sm font-medium rounded bg-primary-50 dark:bg-primary-950 text-primary-700 dark:text-primary-200">
                 {{ competition.codeSaison }}
               </span>
             </h2>
@@ -212,39 +212,39 @@ onMounted(() => {
 
       <!-- Badges -->
       <div class="flex flex-wrap items-center gap-2 ml-auto">
-        <span class="px-2 py-1 text-xs font-medium rounded" :class="getLevelColor(competition.codeNiveau)">
+        <span class="px-2 py-1 text-sm font-medium rounded" :class="getLevelColor(competition.codeNiveau)">
           {{ competition.codeNiveau }}
         </span>
-        <span class="px-2 py-1 text-xs font-medium rounded" :class="getTypeColor(competition.codeTypeclt)">
+        <span class="px-2 py-1 text-sm font-medium rounded" :class="getTypeColor(competition.codeTypeclt)">
           {{ competition.codeTypeclt }}
         </span>
         <NuxtLink
           to="/teams"
-          class="px-2 py-1 text-xs font-medium rounded bg-header-200 dark:bg-header-700 text-header-900 dark:text-header-50 hover:bg-header-200 dark:hover:bg-header-600 transition-colors"
+          class="px-2 py-1 text-sm font-medium rounded bg-header-200 dark:bg-header-700 text-header-900 dark:text-header-50 hover:bg-header-200 dark:hover:bg-header-600 transition-colors"
         >
           {{ t('documents.summary.teams_count', { count: competition.nbEquipes }, competition.nbEquipes) }}
         </NuxtLink>
         <NuxtLink
           to="/gamedays"
-          class="px-2 py-1 text-xs font-medium rounded bg-header-200 dark:bg-header-700 text-header-900 dark:text-header-50 hover:bg-header-200 dark:hover:bg-header-600 transition-colors"
+          class="px-2 py-1 text-sm font-medium rounded bg-header-200 dark:bg-header-700 text-header-900 dark:text-header-50 hover:bg-header-200 dark:hover:bg-header-600 transition-colors"
         >
           {{ t('documents.summary.phases_count', { count: competition.nbJournees }, competition.nbJournees) }}
         </NuxtLink>
         <NuxtLink
           to="/games"
-          class="px-2 py-1 text-xs font-medium rounded bg-header-200 dark:bg-header-700 text-header-900 dark:text-header-50 hover:bg-header-200 dark:hover:bg-header-600 transition-colors"
+          class="px-2 py-1 text-sm font-medium rounded bg-header-200 dark:bg-header-700 text-header-900 dark:text-header-50 hover:bg-header-200 dark:hover:bg-header-600 transition-colors"
         >
           {{ t('documents.summary.matches_count', { count: competition.nbMatchs }, competition.nbMatchs) }}
         </NuxtLink>
         <span
           v-if="competition.qualifies > 0"
-          class="px-2 py-1 text-xs font-medium rounded bg-emerald-50 dark:bg-emerald-950 text-emerald-900 dark:text-emerald-200"
+          class="px-2 py-1 text-sm font-medium rounded bg-emerald-50 dark:bg-emerald-950 text-emerald-900 dark:text-emerald-200"
         >
           {{ t('documents.summary.qualified', { count: competition.qualifies }) }}
         </span>
         <span
           v-if="competition.elimines > 0"
-          class="px-2 py-1 text-xs font-medium rounded bg-danger-50 dark:bg-danger-950 text-danger-900 dark:text-danger-200"
+          class="px-2 py-1 text-sm font-medium rounded bg-danger-50 dark:bg-danger-950 text-danger-900 dark:text-danger-200"
         >
           {{ t('documents.summary.eliminated', { count: competition.elimines }) }}
         </span>
@@ -279,14 +279,14 @@ onMounted(() => {
             >
                 <div class="flex items-center justify-center gap-1.5">
                 <span
-                  class="inline-block w-5 h-5 text-center text-xs font-bold leading-5 rounded"
+                  class="inline-block w-5 h-5 text-center text-sm font-bold leading-5 rounded"
                   :class="phase.type === 'C' ? 'bg-primary-100 dark:bg-primary-900 text-primary-900 dark:text-primary-100' : 'bg-amber-100 dark:bg-amber-900 text-amber-900 dark:text-amber-100'"
                 >
                   {{ phase.type }}
                 </span>
                 <span class="text-sm font-medium text-header-900 dark:text-header-50 truncate">{{ phase.phase }}</span>
                 </div>
-              <div class="flex items-center justify-center text-xs text-header-900 dark:text-header-50">
+              <div class="flex items-center justify-center text-sm text-header-900 dark:text-header-50">
                 <span v-if="phase.nbequipes">{{ phase.nbequipes }} {{ t('documents.summary.teams_short', { count: phase.nbequipes }, phase.nbequipes) }} - </span>{{ phase.nbMatchs }} {{ t('documents.summary.matches_short', { count: phase.nbMatchs }, phase.nbMatchs) }}
               </div>
             </NuxtLink>
@@ -303,7 +303,7 @@ onMounted(() => {
           class="px-3 py-2 bg-header-50 dark:bg-header-900 rounded-lg hover:bg-header-200 dark:hover:bg-header-700 transition-colors"
         >
           <div class="text-sm font-medium text-header-900 dark:text-header-50">{{ phase.nom || phase.phase }}</div>
-          <div class="text-xs text-header-900 dark:text-header-50 mt-0.5 space-y-0.5">
+          <div class="text-sm text-header-900 dark:text-header-50 mt-0.5 space-y-0.5">
             <div v-if="formatDateRange(phase.dateDebut, phase.dateFin)" class="flex items-center gap-1">
               <UIcon name="heroicons:calendar" class="w-3 h-3 text-header-900 dark:text-header-50" />
               {{ formatDateRange(phase.dateDebut, phase.dateFin) }}

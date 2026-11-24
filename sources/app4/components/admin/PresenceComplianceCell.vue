@@ -11,6 +11,7 @@ interface Props {
   field: 'licence' | 'pagaie' | 'certif'
   season: string
   enforcement?: 'block' | 'warn' | null
+  advisoryErrors?: string[]
   minPagaie?: string | null
 }
 
@@ -25,8 +26,9 @@ const { errorLabel } = useEligibilityMessages()
 const hasError = (code: string) => !!props.player.eligibilityErrors?.includes(code)
 
 // Red when the rule blocks, amber when it only warns
+const warnClass = 'bg-amber-500 text-white dark:bg-amber-500 dark:text-header-950'
 const issueClass = computed(() => props.enforcement === 'warn'
-  ? 'bg-amber-500 text-white dark:bg-amber-500 dark:text-header-950'
+  ? warnClass
   : 'bg-danger-600 text-white dark:bg-danger-500')
 
 const licenceNumber = computed(() => props.player.icf ? `ICF-${props.player.icf}` : props.player.matric.toString())
@@ -59,12 +61,12 @@ const isOldLicence = computed(() => !!props.player.origine && !!props.season && 
       <span
         v-if="hasError('Pagaie_couleur')"
         class="issue-pill"
-        :class="issueClass"
+        :class="advisoryErrors?.includes('Pagaie_couleur') ? warnClass : issueClass"
         :title="errorLabel('Pagaie_couleur', minPagaie)"
       >{{ player.pagaieLabel || t('presence.paddle_none') }}</span>
       <span
         v-else-if="!enforcement && player.pagaieValide === 0"
-        class="text-danger-600 dark:text-danger-400"
+        class="text-danger-600 dark:text-danger-300"
         :title="t('presence.invalid_paddle')"
       >({{ player.pagaieLabel }})</span>
       <span v-else class="text-header-900 dark:text-header-50">{{ player.pagaieLabel }}</span>
@@ -78,8 +80,8 @@ const isOldLicence = computed(() => !!props.player.origine && !!props.season && 
         :class="issueClass"
         :title="errorLabel('Certif')"
       >{{ t('common.no') }}</span>
-      <span v-else-if="player.certifCK === 'OUI'" class="text-success-500 dark:text-success-400">{{ t('common.yes') }}</span>
-      <span v-else class="text-danger-600 dark:text-danger-400">{{ t('common.no') }}</span>
+      <span v-else-if="player.certifCK === 'OUI'" class="text-success-700 dark:text-success-300">{{ t('common.yes') }}</span>
+      <span v-else class="text-danger-600 dark:text-danger-300">{{ t('common.no') }}</span>
     </template>
   </span>
 </template>

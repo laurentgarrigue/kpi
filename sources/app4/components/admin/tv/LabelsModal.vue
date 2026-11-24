@@ -71,7 +71,7 @@ function save() {
             :key="n"
             class="flex items-center gap-2"
           >
-            <span class="text-xs text-header-600 dark:text-header-300 w-12 text-right">Ch. {{ n }}</span>
+            <span class="text-sm text-header-600 dark:text-header-300 w-12 text-right">Ch. {{ n }}</span>
             <input
               v-model="localChannels[n]"
               type="text"
@@ -92,7 +92,7 @@ function save() {
             :key="n"
             class="flex items-center gap-2"
           >
-            <span class="text-xs text-header-600 dark:text-header-300 w-12 text-right">Sc. {{ n }}</span>
+            <span class="text-sm text-header-600 dark:text-header-300 w-12 text-right">Sc. {{ n }}</span>
             <input
               v-model="localScenarios[n]"
               type="text"

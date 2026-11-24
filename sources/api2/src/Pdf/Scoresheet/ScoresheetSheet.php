@@ -5,6 +5,7 @@ namespace App\Pdf\Scoresheet;
 use App\AgeCategory\AgeCategoryRule;
 use App\Pdf\Presence\PresencePlayer;
 use App\PublicResults\CompetitionRules;
+use App\Scoring\ScoringRules;
 
 /**
  * Content of one scoresheet (`scoresheet`, ex-admin/FeuilleMatchMulti.php, PDF_GOTENBERG.md § 7.3.3): same fields and
@@ -12,8 +13,8 @@ use App\PublicResults\CompetitionRules;
  */
 final class ScoresheetSheet
 {
-    /** Lines of each roster: 12 for an international competition, 10 otherwise. */
-    public const ROSTER_LINES = 10;
+    /** Lines of each roster: 12 for an international competition, 11 otherwise (8 players + 3 staff). */
+    public const ROSTER_LINES = 11;
     public const INTERNATIONAL_ROSTER_LINES = 12;
 
     /** Lines of the event grid on the sheet, then on each continuation page (no score nor signatures there). */
@@ -93,6 +94,7 @@ final class ScoresheetSheet
         $lines = [];
         $goals = ['A' => 0, 'B' => 0];
         $halfTime = ['A' => 0, 'B' => 0];
+        $previousPeriod = null;
         foreach ($events as $event) {
             $side = $event['Equipe_A_B'] === 'B' ? 'B' : 'A';
             $prefix = strtolower($side) . '_';
@@ -101,7 +103,11 @@ final class ScoresheetSheet
                 ? sprintf('%s - %s%s', $event['Numero'], self::shortName((string) $event['Nom'], (string) $event['Prenom']), $reason)
                 : $labels['scoresheet.team'] . ' ' . $side;
             $time = substr((string) $event['Temps'], 3, 5);
-            $line = ['time' => $event['Periode'] . ' - ' . ($time === '00:00' ? '' : $time), $prefix . 'player' => $player];
+            $line = ['time' => ScoringRules::periodDisplayCode((string) $event['Periode'], $labels['scoresheet.overtime_short'] ?? ScoringRules::OVERTIME_DISPLAY_PREFIX) . ' - ' . ($time === '00:00' ? '' : $time), $prefix . 'player' => $player];
+            if ($previousPeriod !== null && $previousPeriod !== $event['Periode']) {
+                $line['period_start'] = true;
+            }
+            $previousPeriod = $event['Periode'];
             $type = (string) $event['Id_evt_match'];
             if ($type === self::GOAL) {
                 $line[$prefix . 'goal'] = 'X';

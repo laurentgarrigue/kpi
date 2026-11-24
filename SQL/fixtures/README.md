@@ -31,19 +31,16 @@ par défaut, etc.).
 ## Utilisation
 
 En CI, le job `tests-api2` crée un service MariaDB, charge ces deux fichiers,
-puis lance `composer test-integration`. En local :
+puis lance `composer test-integration`. En local, tout passe par le Makefile —
+la base de test `kpi_fixtures_test` est (re)créée et rechargée automatiquement :
 
 ```bash
-# base de test dédiée, dans le conteneur MariaDB existant
-docker exec -i kpi_db mariadb -uroot -p<pass> -e "CREATE DATABASE IF NOT EXISTS kpi_test"
-docker exec -i kpi_db mariadb -uroot -p<pass> kpi_test < SQL/fixtures/schema.sql
-docker exec -i kpi_db mariadb -uroot -p<pass> kpi_test < SQL/fixtures/data.sql
-
-# puis, en pointant api2 sur cette base :
-docker exec -e API2_TEST_DB=1 \
-  -e DATABASE_URL='mysql://root:<pass>@kpi_db:3306/kpi_test?serverVersion=11.5.2-MariaDB&charset=utf8mb4' \
-  kpi_api2 sh -lc 'cd /app && composer test-integration'
+make api2_test_fixtures       # (re)charge schema.sql puis data.sql
+make api2_test_integration    # recharge les fixtures, puis joue la suite integration
 ```
+
+Inutile de taper les `docker exec` à la main : les cibles gèrent la création de la
+base, le chargement des deux fichiers et le `DATABASE_URL` de la suite.
 
 ⚠️ **Ne jamais pointer la suite `integration` sur la base de dev/préprod/prod** :
 les tests supposent ces fixtures et n'ont aucune raison d'y trouver leurs ids.
@@ -78,6 +75,27 @@ Consommé par `tests/Integration/PublicSiteEndpointsTest.php`
 Les fichiers de référence JSON sont dans `sources/api2/tests/Integration/__snapshots__/` ; un changement voulu
 se régénère avec `UPDATE_SNAPSHOTS=1` et se relit dans le diff.
 
+## Jeu « scoring » (refonte live, lots 1 à 4)
+
+Ces lignes servent `ScoringPublicEndpointsTest`, qui vérifie le **contrôle d'accès** du
+chemin de lecture public des incrustations. Elles réutilisent l'événement `77` (publié) et
+l'événement `78` (non publié) du jeu « résultats publics » ci-dessous : un seul jeu d'ids,
+pas de tournoi dédié au scoring.
+
+| Ligne | Cas couvert |
+|---|---|
+| `tsttok-valid-event-77` | jeton valide, portée événement → accès accordé sur tous les terrains de `77` |
+| `tsttok-valid-pitch1` | valide mais restreint au terrain `1` → refusé sur un autre terrain |
+| `tsttok-expired` | expiré → refusé |
+| `tsttok-revoked` | révoqué (expiration lointaine : c'est bien la révocation qui tranche) |
+| `tsttok-other-event` | valide pour l'événement `78` → n'ouvre rien sur `77` |
+
+Les tables `scoring_display_settings` et `scoring_live_state` sont créées mais **vides** :
+les tests d'accès doivent échouer **avant** toute lecture de données de match, le programme
+doit savoir répondre avec les seuls réglages par défaut, et `/scoring/state/{id}` doit
+renvoyer un 404 explicite sur un match sans état live.
+
+
 ## Ajouter un cas
 
 1. Ajouter la ligne dans `data.sql` **avec un commentaire** disant quel test la
@@ -98,7 +116,7 @@ Consommé par `tests/Integration/StaffScrutineeringTest.php`, `PresenceScrutinee
 | `SCB` (verrouillée) | 9384 Scrut Alpha Deux (C001, même équipe de club que 9381 : copie), 9385 Germany Women (`GER-W`) |
 | `SCC` (hors événement) | journée 9273 rattachée à aucun événement ; 9386 Scrut Charlie (C001), joueur 9517 |
 | `kp_scrutineering` | 9381 : un joueur complet et un partiel → « partiel » ; 9382 : ligne remise à 0 → « non contrôlé » |
-| Comptes | `TSCRUT` (profil 10, SCA + SCB + SCC, limité à l'événement 80 donc sans SCC, club C002 ignoré), `TSCRUTA` (profil 10, SCA + SCC, sans limite d'événement), `TDIV` (profil 3), `TCLUB` (profil 7, club C002) |
+| Comptes | `TSCRUT` (profil 10, SCA + SCB + SCC, limité à l'événement 80 donc sans SCC, club C002 ignoré), `TSCRUTA` (profil 10, SCA + SCC, sans limite d'événement), `TDIV` (profil 3), `TCLUB` (profil 7, club C002), `TCLUBA` (profil 7, club C001, SCA + SCB : copie de composition) |
 
 `kp_licence` reprend la définition de production (colonnes lues par la feuille de présence), avec `kp_arbitre`,
 `kp_surclassement` et `kp_categorie` (vides).
@@ -116,7 +134,7 @@ comptes du jeu scrutineering (`TADMIN`, `TVIEW`, `TDIV`, `TCLUB`, `TSCRUT`) et d
 ## Jeu « changer un code compétition » (RSF-03)
 
 Consommé par `tests/Integration/AdminChangeCompetitionCodeTest.php`
-([REALIGNEMENT_STRUCTURES_FFCK.md](../../DOC/developer/in-progress/REALIGNEMENT_STRUCTURES_FFCK.md)), qui renomme
+([REALIGNEMENT_STRUCTURES_FFCK.md](../../DOC/developer/archive/features/REALIGNEMENT_STRUCTURES_FFCK.md)), qui renomme
 `TSTRN` en `TSTRX` (ou `TSTFAIL`). Chaque référence existe en `2999` (saison active) et en `2998` (passée), pour
 distinguer le mode « toutes saisons » du mode « saison active ».
 
@@ -143,7 +161,7 @@ garder les filtres de mandat en dernier.
 
 ## Fichier PCE de fixture (import PCE)
 
-Consommé par `tests/Integration/ImportPceTest.php` ([REALIGNEMENT_STRUCTURES_FFCK.md](../../DOC/developer/in-progress/REALIGNEMENT_STRUCTURES_FFCK.md)),
+Consommé par `tests/Integration/ImportPceTest.php` ([REALIGNEMENT_STRUCTURES_FFCK.md](../../DOC/developer/archive/features/REALIGNEMENT_STRUCTURES_FFCK.md)),
 qui lance `app:import-pce --file=…`. Le fichier n'est pas dans ce dossier mais dans
 `sources/api2/tests/Fixtures/pce/pce-2999.txt` (seul `sources/` est monté dans le conteneur api2).
 
@@ -154,3 +172,16 @@ qui lance `app:import-pce --file=…`. Le fichier n'est pas dans ce dossier mais
 
 Aucune de ces structures n'existe dans `data.sql` : l'import les crée. Pour un cas de mise à jour, insérer la
 structure dans `data.sql` avec un libellé ou un rattachement différent de celui du fichier.
+
+## Jeu « copie de composition de match »
+
+Consommé par `tests/Integration/PresenceMatchCopyTest.php` ([PAGE_PRESENCE.md](../../DOC/specs/PAGE_PRESENCE.md) § 1.2,
+mode match) : la copie vers les matchs de la journée est ouverte aux profils ≤ 6, vers la compétition aux profils ≤ 4 ;
+la feuille de match est éditée par les profils ≤ 7 et 9 ; on n'y ajoute qu'un joueur de la feuille de présence.
+
+| Élément | Cas couverts |
+|---|---|
+| `PCM` (2997, non publiée) | journées 9275 (J1) et 9276 (J2) ; équipes 9395 (C001, sans composition) et 9396 (C002) |
+| Feuille de présence de 9396 | 9513 (E), 9516 (C) et 9518 (-) ajoutables à un match ; 9514 (A), 9517 (X) non ajoutables |
+| Matchs 9471 (J1), 9472 (J1), 9473 (J2), 9474 (J2) | 9471 = source (9395 en A : 9511, 9512) ; 9395 est B dans 9472 ; seul 9474 est validé |
+| `TCOMP` (4), `TORGA` (6), `TTEAMP` (7), `TVIEWP` (8), `TSCOREP` (9) | les deux copies / la copie journée seule / aucune copie / lecture seule / feuille de match sans copie |

@@ -192,13 +192,13 @@ onMounted(async () => {
         <div v-if="workContext.pageCompetition" class="flex items-center gap-2">
           <span
             v-if="workContext.pageCompetition.enActif"
-            class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-primary-100 dark:bg-primary-900 text-primary-800 dark:text-primary-100"
+            class="inline-flex items-center px-2 py-1 rounded text-sm font-medium bg-primary-100 dark:bg-primary-900 text-primary-800 dark:text-primary-100"
           >
             EN
           </span>
           <span
             v-if="workContext.pageCompetition.codeTypeclt"
-            class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-header-200 dark:bg-header-700 text-header-900 dark:text-header-50"
+            class="inline-flex items-center px-2 py-1 rounded text-sm font-medium bg-header-200 dark:bg-header-700 text-header-900 dark:text-header-50"
           >
             {{ workContext.pageCompetition.codeTypeclt }}
           </span>
@@ -312,7 +312,7 @@ onMounted(async () => {
           >
             <UIcon name="heroicons:document-duplicate" class="w-6 h-6 text-header-900 dark:text-header-50" />
             {{ t('documents.matches.match_sheets') }}
-            <span class="text-xs text-header-900 dark:text-header-50 italic ml-auto">{{ matchIds.length }} {{ t('documents.matches.matches_count') }}</span>
+            <span class="text-sm text-header-900 dark:text-header-50 italic ml-auto">{{ matchIds.length }} {{ t('documents.matches.matches_count') }}</span>
           </a>
           <div
             v-else-if="loadingMatchIds"
@@ -327,7 +327,7 @@ onMounted(async () => {
           >
             <UIcon name="heroicons:document-duplicate" class="w-6 h-6" />
             {{ t('documents.matches.match_sheets') }}
-            <span class="text-xs ml-auto">{{ t('documents.matches.no_matches') }}</span>
+            <span class="text-sm ml-auto">{{ t('documents.matches.no_matches') }}</span>
           </div>
         </div>
       </div>
@@ -349,7 +349,7 @@ onMounted(async () => {
           <template v-else>
             <!-- Sub-section: Classement calculé (profiles 1–6, PDF_GOTENBERG.md I5) -->
             <div v-if="canGetAdminPdf(profile, 'ranking')">
-              <p class="px-3 text-xs font-semibold text-header-900 dark:text-header-50 uppercase tracking-wide mb-1">
+              <p class="px-3 text-sm font-semibold text-header-900 dark:text-header-50 uppercase tracking-wide mb-1">
                 {{ t('documents.rankings.computed') }}
               </p>
               <div class="space-y-1">
@@ -430,7 +430,7 @@ onMounted(async () => {
 
             <!-- Sub-section: Classement publié -->
             <div>
-              <p class="px-3 text-xs font-semibold text-header-900 dark:text-header-50 uppercase tracking-wide mb-1">
+              <p class="px-3 text-sm font-semibold text-header-900 dark:text-header-50 uppercase tracking-wide mb-1">
                 {{ t('documents.rankings.published') }}
               </p>
               <div class="space-y-1">
@@ -551,7 +551,7 @@ onMounted(async () => {
         <div class="p-4 space-y-3">
           <!-- Event selector -->
           <div>
-            <label class="block text-xs font-medium text-header-900 dark:text-header-50 mb-1">
+            <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">
               {{ t('documents.event.select') }}
             </label>
             <select

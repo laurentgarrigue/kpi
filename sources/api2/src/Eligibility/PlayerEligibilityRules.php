@@ -93,6 +93,24 @@ final class PlayerEligibilityRules
         'PAGN' => 6,  // Noire
     ];
 
+    /**
+     * Rule 2027 of the national competitions: from this season the minimum paddle colour is still reported but no
+     * longer blocks the presence sheets (the player is flagged, never refused nor deactivated).
+     */
+    public const NATIONAL_PAGAIE_ADVISORY_FROM_SEASON = '2027';
+
+    /**
+     * Errors of a level reported without blocking, for a season, whatever the enforcement.
+     *
+     * @return string[]
+     */
+    public static function advisoryErrors(string $level, string $season): array
+    {
+        return $level === self::LEVEL_NATIONAL && $season >= self::NATIONAL_PAGAIE_ADVISORY_FROM_SEASON
+            ? [self::ERROR_PAGAIE]
+            : [];
+    }
+
     /** Statuses counted as "playing": the only ones subject to the rules on a status change. */
     public const PLAYING_STATUSES = ['-', 'C'];
 

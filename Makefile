@@ -58,7 +58,7 @@ app2_dev app2_dev_restart app2_build app2_generate_dev app2_generate_preprod app
 app2_npm_install app2_npm_ls app2_npm_clean app2_npm_update app2_npm_add app2_npm_add_dev app2_bash \
 app3_dev app3_dev_restart app3_logs app3_test app3_lint app3_bash app3_npm_ci app3_npm_install app3_npm_add app3_npm_add_dev \
 app3_generate_preprod app3_generate_production app3_generate_prod app3_restart \
-app4_dev app4_dev_restart app4_build app4_generate_dev app4_generate_preprod app4_generate_prod app4_generate_production app4_lint \
+app4_dev app4_dev_restart app4_build app4_generate_dev app4_generate_preprod app4_generate_prod app4_generate_production app4_lint app4_test \
 app4_npm_install app4_npm_ls app4_npm_clean app4_npm_update app4_npm_add app4_npm_add_dev app4_bash \
 app_wsm_generate_dev app_wsm_generate_preprod app_wsm_generate_prod \
 app_live_generate_dev app_live_generate_preprod app_live_generate_prod \
@@ -66,7 +66,7 @@ backend_npm_install backend_npm_add backend_npm_update backend_npm_ls backend_np
 backend_composer_install backend_composer_update backend_composer_require backend_composer_require_dev backend_composer_dump backend_bash \
 api2_composer_install api2_composer_update api2_composer_require api2_cache_clear api2_cache_warmup api2_migrations_diff api2_migrations_migrate \
 api2_restart api2_logs api2_logs_errors mercure_generate_secret pdf_tokens_sync gotenberg_logs \
-api2_test api2_test_unit api2_test_integration api2_test_fixtures db_migrate \
+api2_test api2_test_unit api2_test_integration api2_test_fixtures api2_coverage app2_test app2_coverage app3_coverage app4_coverage ci_scripts_test test db_migrate \
 dev dev_status dev_logs dev_down dev_certs app2_logs app4_logs \
 api2_assets_install api2_jwt_generate_keys api2_match_medals_compute api2_match_medals_sync \
 db_bash \
@@ -520,8 +520,17 @@ app3_logs: ## Logs du site public : serveur SSR (préprod/prod) s'il existe, sin
 		docker logs -f --tail $(or $(lines),50) $(NODE3_CONTAINER_NAME); \
 	fi
 
+app2_test: ## Tests unitaires d'app2 (Vitest : utils purs) dans le conteneur de dev
+	$(DOCKER_EXEC_NODE_NON_INTERACTIVE) sh -c "npm test"
+
+app2_coverage: ## Tests d'app2 + rapport de couverture (app2/coverage/)
+	$(DOCKER_EXEC_NODE_NON_INTERACTIVE) sh -c "npm run test:coverage"
+
 app3_test: ## Tests du site public (Vitest : unit, composants, e2e) dans le conteneur de dev
 	$(DOCKER_EXEC_NODE3_NON_INTERACTIVE) sh -c "npm test"
+
+app3_coverage: ## Tests du site public + rapport de couverture (app3/coverage/, sans seuil)
+	$(DOCKER_EXEC_NODE3_NON_INTERACTIVE) sh -c "npm run test:coverage"
 
 app3_lint: ## ESLint + typecheck du site public (app3)
 	$(DOCKER_EXEC_NODE3_NON_INTERACTIVE) sh -c "npm run lint && npm run typecheck"
@@ -621,6 +630,12 @@ app4_generate_production: app4_generate_prod ## Alias production de app4_generat
 
 app4_lint: ## Exécute ESLint sur app4
 	$(DOCKER_EXEC_NODE4) sh -c "npm run lint"
+
+app4_test: ## Tests unitaires d'app4 (Vitest : utils purs, sans Nuxt) dans le conteneur de dev
+	$(DOCKER_EXEC_NODE4_NON_INTERACTIVE) sh -c "npm test"
+
+app4_coverage: ## Tests d'app4 + rapport de couverture (app4/coverage/, sans seuil)
+	$(DOCKER_EXEC_NODE4_NON_INTERACTIVE) sh -c "npm run test:coverage"
 
 app4_bash: ## Ouvre un shell dans le container Node (app4 admin)
 	$(DOCKER_EXEC_NODE4) sh
@@ -1018,7 +1033,8 @@ API2_TEST_DB_NAME  = $(API2_TEST_DB_BASE)_test
 
 api2_test_unit: ## Lance la suite PHPUnit `unit` d'API2 (logique pure, sans base de données)
 	@echo "Tests unitaires API2 (suite unit, sans DB)..."
-	$(DOCKER_EXEC_API2_NON_INTERACTIVE) composer test-unit
+	@$(DOCKER_EXEC_API2_NON_INTERACTIVE) composer test-unit \
+		&& echo "✅ Suite unit passée"
 
 db_migrate: ## Applique un script SQL/migrations/*.sql à la base de l'environnement (make db_migrate file=SQL/migrations/<fichier>.sql)
 	@[ -n "$(file)" ] && [ -f "$(file)" ] || { echo "⛔ Usage : make db_migrate file=SQL/migrations/<fichier>.sql"; exit 1; }
@@ -1041,7 +1057,7 @@ api2_test_fixtures: ## (Re)charge les fixtures SQL dans la base de test dédiée
 		docker exec -i $(DB_CONTAINER_NAME) mariadb -uroot -p'$(DB_ROOT_PASSWORD)' $(API2_TEST_DB_NAME) < "$$f" || exit 1; \
 	done
 	@docker exec -i $(DB_CONTAINER_NAME) mariadb -uroot -p'$(DB_ROOT_PASSWORD)' $(API2_TEST_DB_NAME) < SQL/fixtures/data.sql
-	@echo "Fixtures chargées dans $(API2_TEST_DB_NAME)"
+	@echo "✅ Fixtures chargées dans $(API2_TEST_DB_NAME)"
 
 # Le DATABASE_URL cite $(API2_TEST_DB_BASE) — Doctrine y ajoute `_test` et tombe
 # donc sur $(API2_TEST_DB_NAME), la base réellement créée ci-dessus.
@@ -1051,11 +1067,27 @@ api2_test_integration: api2_test_fixtures ## Lance la suite PHPUnit `integration
 		-e APP_ENV=test \
 		-e API2_TEST_DB=1 \
 		-e DATABASE_URL='mysql://root:$(DB_ROOT_PASSWORD)@$(DB_CONTAINER_NAME):3306/$(API2_TEST_DB_BASE)?serverVersion=11.5.2-MariaDB&charset=utf8mb4' \
-		$(API2_CONTAINER_NAME) composer test-integration
+		$(API2_CONTAINER_NAME) composer test-integration \
+		&& echo "✅ Suite integration passée"
 
 api2_test: api2_test_unit api2_test_integration ## Lance les DEUX suites PHPUnit d'API2 (unit + integration) — ce que fait la CI
-	@echo "✔ Suites unit + integration passées (équivalent local du job CI tests-api2)"
+	@echo "✅ Suites unit + integration passées (équivalent local du job CI tests-api2)"
 
+# Couverture api2 : PCOV n'est pas dans l'image FrankenPHP, on l'ajoute à la volée au conteneur de dev
+# (éphémère : perdu à la recréation du conteneur, c'est voulu — la CI utilise setup-php `coverage: pcov`).
+api2_coverage: api2_test_fixtures ## Tests api2 (unit + integration) + couverture (api2/var/coverage/, sans seuil)
+	@$(DOCKER_EXEC_API2_NON_INTERACTIVE) sh -lc 'php -m | grep -qi "^pcov$$" || install-php-extensions pcov'
+	@docker exec \
+		-e APP_ENV=test \
+		-e API2_TEST_DB=1 \
+		-e DATABASE_URL='mysql://root:$(DB_ROOT_PASSWORD)@$(DB_CONTAINER_NAME):3306/$(API2_TEST_DB_BASE)?serverVersion=11.5.2-MariaDB&charset=utf8mb4' \
+		$(API2_CONTAINER_NAME) composer test-coverage
+
+test: app2_test app3_test app4_test api2_test ci_scripts_test ## TOUS les tests (app2, app3, app4, api2, scripts de CI) — équivalent local de la CI
+	@echo "✅ Tous les tests sont passés"
+
+ci_scripts_test: ## Tests des scripts de CI (scripts/ci/, node --test, sans Docker)
+	node --test scripts/ci/coverage-summary.test.mjs scripts/ci/coverage-check.test.mjs
 
 ## ACCÈS SHELLS
 db_bash: ## Ouvre un shell dans le container MySQL
@@ -1294,7 +1326,7 @@ feature: ## Crée une branche feature depuis main à jour, ou depuis la branche 
 
 version: ## Affiche les versions actuelles de chaque brique + le dernier tag de release
 	@echo "Versions dans le working tree ($$(git rev-parse --abbrev-ref HEAD)) :"
-	@for app in app2 app4; do \
+	@for app in app2 app3 app4; do \
 		f="sources/$$app/package.json"; \
 		[ -f "$$f" ] || continue; \
 		v=$$(grep -oP '(?<="version": ")[^"]+' "$$f" | head -1); \
@@ -1317,24 +1349,52 @@ version: ## Affiche les versions actuelles de chaque brique + le dernier tag de 
 	fi
 	@echo
 	@echo "Versions servies (ce que voient les utilisateurs) :"
-	@echo "  app2  → pied de page de l'accueil       app4 → page de login + pied de page (layouts/admin.vue)"
+	@echo "  app2  → pied de page de l'accueil"
+	@echo "  app3  → <meta name=\"app-version\"> du site public beta (rien d'affiché)"
+	@echo "  app4  → page de login + pied de page (layouts/admin.vue)"
 	@echo "  api2  → /api2/doc, champ info.version"
 	@echo "  (app2/app4 exposent aussi <meta name=\"app-version\"> dans leur index.html, lu ci-dessous)"
 	@echo
 	@echo "Versions DÉPLOYÉES (lu en direct) :"
-	@for env in "préprod|https://preprod.kayak-polo.info|https://app.preprod.kayak-polo.info" \
-	           "prod   |https://kayak-polo.info|https://app.kayak-polo.info"; do \
-		name="$${env%%|*}"; rest="$${env#*|}"; url="$${rest%%|*}"; app2url="$${rest#*|}"; \
+	@for env in "préprod|https://preprod.kayak-polo.info|https://app.preprod.kayak-polo.info|https://beta.preprod.kayak-polo.info" \
+	           "prod   |https://kayak-polo.info|https://app.kayak-polo.info|https://beta.kayak-polo.info"; do \
+		name="$${env%%|*}"; rest="$${env#*|}"; url="$${rest%%|*}"; rest="$${rest#*|}"; app2url="$${rest%%|*}"; app3url="$${rest#*|}"; \
 		semver='[0-9]+\.[0-9]+\.[0-9]+'; \
 		api2=$$(curl -fsS --max-time 8 "$$url/api2/doc.json" 2>/dev/null \
 			| grep -oE "\"version\" *: *\"$$semver\"" | head -1 | grep -oE "$$semver"); \
-		app2=$$(curl -fsS --max-time 8 "$$app2url/" 2>/dev/null \
+		app2=$$(curl -fsSL --max-time 8 "$$app2url/" 2>/dev/null \
 			| grep -oE "<meta[^>]*app-version[^>]*>" | head -1 | grep -oE "$$semver"); \
-		app4=$$(curl -fsS --max-time 8 "$$url/admin2/" 2>/dev/null \
+		app3=$$(curl -fsSL --max-time 8 "$$app3url/" 2>/dev/null \
 			| grep -oE "<meta[^>]*app-version[^>]*>" | head -1 | grep -oE "$$semver"); \
-		printf "  %s  api2 %-8s app2 %-8s app4 %s\n" "$$name" "$${api2:-?}" "$${app2:-?}" "$${app4:-?}"; \
-	done
-	@echo "  (? = injoignable, ou build antérieur à la balise app-version)"
+		app4=$$(curl -fsSL --max-time 8 "$$url/admin2/" 2>/dev/null \
+			| grep -oE "<meta[^>]*app-version[^>]*>" | head -1 | grep -oE "$$semver"); \
+		printf "  %s  api2 %-8s app2 %-8s app3 %-8s app4 %s\n" "$$name" "$${api2:-?}" "$${app2:-?}" "$${app3:-?}" "$${app4:-?}"; \
+		case "$$name" in pré*) k=pre ;; *) k=prod ;; esac; \
+		for b in api2 app2 app3 app4; do eval "$${k}_$$b=\$$b"; done; \
+	done; \
+	echo "  (? = injoignable, ou build antérieur à la balise app-version)"; \
+	echo; \
+	last=$$(git tag --list 'v*' --sort=-v:refname | head -1); \
+	if [ -z "$$last" ]; then echo "Prochaine release : aucun tag existant, choisis la version à la main."; exit 0; fi; \
+	level=0; diffs=""; \
+	for b in api2 app2 app3 app4; do \
+		eval "pv=\$$pre_$$b; qv=\$$prod_$$b"; \
+		[ -n "$$pv" ] && [ -n "$$qv" ] || continue; \
+		[ "$$pv" != "$$qv" ] || continue; \
+		l=1; \
+		[ "$${pv%%.*}" != "$${qv%%.*}" ] && l=3; \
+		[ "$$l" = 1 ] && [ "$${pv%.*}" != "$${qv%.*}" ] && l=2; \
+		[ "$$l" -gt "$$level" ] && level=$$l; \
+		diffs="$$diffs $$b($$qv→$$pv)"; \
+	done; \
+	if [ "$$level" = 0 ]; then \
+		echo "Prochaine release : préprod = prod sur chaque brique lisible, rien à tagger."; \
+	else \
+		cur=$${last#v}; ma=$${cur%%.*}; r=$${cur#*.}; mi=$${r%%.*}; pa=$${r#*.}; \
+		case $$level in 3) ma=$$((ma+1)); mi=0; pa=0 ;; 2) mi=$$((mi+1)); pa=0 ;; *) pa=$$((pa+1)) ;; esac; \
+		echo "Prochaine release (dernier tag $$last ; écarts prod→préprod :$$diffs) :"; \
+		echo "  make release_tag version=$$ma.$$mi.$$pa"; \
+	fi
 
 pr_push: ## Push la branche courante et la suit sur origin (git push -u)
 	git push -u origin $$(git rev-parse --abbrev-ref HEAD)

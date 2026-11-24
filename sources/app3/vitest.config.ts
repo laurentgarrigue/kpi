@@ -21,6 +21,16 @@ function isExpectedSiteNotFound(error: unknown): boolean {
 
 export default defineConfig({
   test: {
+    // COV-01/02: `npm run test:coverage`. Measures the application code of app3 and of the layer it consumes;
+    // files no test imports count as 0 % (v8 `include` lists them). Measure only, no threshold yet (TEST_COVERAGE_STRATEGY.md).
+    coverage: {
+      provider: 'v8',
+      reporter: ['text-summary', 'json-summary', 'lcov'],
+      reportsDirectory: 'coverage',
+      allowExternal: true,
+      include: ['app/**', 'server/**', 'shared/**', '../kpi-layer/app/**'],
+      exclude: ['**/*.d.ts', '**/node_modules/**', '**/.nuxt/**', '**/.output/**'],
+    },
     onUnhandledError: error => !isExpectedSiteNotFound(error),
     projects: [
       {

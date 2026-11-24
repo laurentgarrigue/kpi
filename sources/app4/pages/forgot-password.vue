@@ -92,7 +92,7 @@ async function handleSubmit() {
         <form v-else class="space-y-4" @submit.prevent="handleSubmit">
           <div
             v-if="error"
-            class="p-3 bg-danger-50 dark:bg-danger-950 border border-danger-200 dark:border-danger-800 rounded-lg text-danger-700 dark:text-danger-400 text-sm"
+            class="p-3 bg-danger-50 dark:bg-danger-950 border border-danger-200 dark:border-danger-800 rounded-lg text-danger-700 dark:text-danger-300 text-sm"
           >
             {{ error }}
           </div>

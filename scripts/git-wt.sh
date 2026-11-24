@@ -36,6 +36,8 @@ COPY_FILES=(
   "docker/MyParams.php"
   "docker/MyConfig.php"
   "sources/api2/.env"
+  # Secrets locaux (clé 2FA, Google OAuth) : même clé que le repo principal, la base est partagée.
+  "sources/api2/.env.local"
   "sources/app2/.env.development"
   # app4 utilise .env (pas .env.development comme app2).
   "sources/app4/.env"
@@ -55,7 +57,7 @@ COPY_FILES=(
 # ⚠️ NE PAS remplacer par des symlinks (ce fut le cas, ça cassait le stack) :
 #   1. Docker ne suit pas un symlink dont la cible sort de ses montages. Le
 #      conteneur ne voit qu'un lien pendant → « autoload_runtime.php not found »
-#      (api2), « nuxt: not found » (app2/app4), et boucle de redémarrage.
+#      (api2), « nuxt: not found » (app2/app3/app4), et boucle de redémarrage.
 #   2. Même en montant le repo principal dans le conteneur, ça casse : Vite et
 #      Symfony ÉCRIVENT dans ces dossiers (node_modules/.cache, var/cache via le
 #      projectDir résolu). En lecture seule → EROFS / « Unable to write in the
@@ -64,6 +66,7 @@ COPY_FILES=(
 # Le coût est ~1,8 Go par worktree. C'est le prix de l'isolation.
 COPY_DIRS=(
   "sources/app2/node_modules"
+  "sources/app3/node_modules"
   "sources/app4/node_modules"
   "sources/api2/vendor"
 )

@@ -161,10 +161,10 @@ onUnmounted(() => {
         <button
           v-else-if="searchQuery && !disabled"
           type="button"
-          class="text-header-600 dark:text-header-300 hover:text-header-900 dark:hover:text-header-50"
+          class="text-header-600 dark:text-header-300 hover:text-header-900 dark:hover:text-header-50 p-2"
           @mousedown.prevent="clearSelection"
         >
-          <UIcon name="i-heroicons-x-mark" class="w-4 h-4" />
+          <UIcon name="i-heroicons-x-mark" class="w-5 h-5" />
         </button>
       </div>
     </div>
@@ -182,7 +182,7 @@ onUnmounted(() => {
         @mousedown.prevent="selectItem(item)"
       >
         <div class="text-sm font-medium">{{ item[labelField] }}</div>
-        <div v-if="detailField && item[detailField]" class="text-xs text-header-600 dark:text-header-300">{{ item[detailField] }}</div>
+        <div v-if="detailField && item[detailField]" class="text-sm text-header-600 dark:text-header-300">{{ item[detailField] }}</div>
       </button>
     </div>
   </div>

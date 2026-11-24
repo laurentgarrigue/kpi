@@ -540,6 +540,24 @@ CREATE TABLE `kp_user_known_device` (
   KEY `idx_revoke_token` (`revoke_token_hash`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Jetons « mot de passe oublié » (AdminAuthController::forgotPassword / resetPassword).
+DROP TABLE IF EXISTS `kp_user_token`;
+CREATE TABLE `kp_user_token` (
+  `user` varchar(8) NOT NULL,
+  `token` varchar(64) NOT NULL,
+  `generated_at` datetime NOT NULL,
+  PRIMARY KEY (`user`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
+
+-- Durcissement authentification (AUTH_HARDENING.md § 2bis) : mot de passe à renouveler.
+DROP TABLE IF EXISTS `kp_user_password_renewal`;
+CREATE TABLE `kp_user_password_renewal` (
+  `user_code` varchar(8) NOT NULL,
+  `required_at` datetime DEFAULT NULL,
+  `renewed_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`user_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Durcissement authentification (AUTH_HARDENING.md § 2.3) : journal des tentatives de login,
 -- utilisé par les tests de rate-limit, verrouillage et audit.
 DROP TABLE IF EXISTS `kp_user_login_history`;
@@ -719,6 +737,133 @@ CREATE TABLE `kp_recherche_licence` (
 DROP TABLE IF EXISTS `kp_user_capability`, `kp_cms_album`, `kp_cms_media`, `kp_cms_category`, `kp_cms_article`,
   `kp_cms_article_category`, `kp_cms_article_link`, `kp_cms_page`, `kp_cms_menu_item`, `kp_cms_home_block`,
   `kp_cms_redirect`, `kp_form`, `kp_form_field`, `kp_form_entry`, `kp_mail_log`;
+
+-- ------------------------------------------------------------------ scoring live (refonte scoring, lot 4)
+-- Tables propres à la refonte du scoring. Ici, seules celles nécessaires au CONTRÔLE
+-- D'ACCÈS du chemin de lecture public des incrustations : les jetons d'affichage et les
+-- deux tables que le programme de terrain consulte. Les tables kp_* dont dépend le
+-- scoring (kp_match, kp_evenement_journee, kp_competition_equipe) sont déjà définies
+-- plus haut pour le site public — on ne les redéfinit pas.
+-- Spec : DOC/specs/PAGE_INCRUSTATION.md §11bis.
+
+DROP TABLE IF EXISTS `scoring_display_token`;
+CREATE TABLE `scoring_display_token` (
+  `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `token` varchar(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+  `id_event` int(10) UNSIGNED NOT NULL,
+  `pitch` varchar(30) DEFAULT NULL,
+  `label` varchar(100) DEFAULT NULL,
+  `expires_at` datetime DEFAULT NULL,
+  `revoked_at` datetime DEFAULT NULL,
+  `last_used_at` datetime DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_scoring_display_token` (`token`),
+  KEY `idx_scoring_display_token_event` (`id_event`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+DROP TABLE IF EXISTS `scoring_display_settings`;
+CREATE TABLE `scoring_display_settings` (
+  `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `id_event` int(10) UNSIGNED NOT NULL,
+  `pitch` varchar(30) DEFAULT NULL,
+  `halftime_score_delay` int(11) DEFAULT NULL,
+  `final_score_delay` int(11) DEFAULT NULL,
+  `final_score_duration` int(11) DEFAULT NULL,
+  `next_game_delay` int(11) DEFAULT NULL,
+  `next_game_duration` int(11) DEFAULT NULL,
+  `background` varchar(30) DEFAULT NULL,
+  `style_id` varchar(50) DEFAULT NULL,
+  `updated_at` datetime(3) NOT NULL DEFAULT current_timestamp(3) ON UPDATE current_timestamp(3),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_scoring_display` (`id_event`,`pitch`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+DROP TABLE IF EXISTS `scoring_live_state`;
+CREATE TABLE `scoring_live_state` (
+  `id_match` int(10) UNSIGNED NOT NULL,
+  `score_a` int(11) NOT NULL DEFAULT 0,
+  `score_b` int(11) NOT NULL DEFAULT 0,
+  `periode` varchar(4) NOT NULL DEFAULT 'M1',
+  `statut` enum('ATT','ON','END') NOT NULL DEFAULT 'ATT',
+  `heure_fin` time DEFAULT NULL,
+  `active_source` enum('MANUAL','HARDWARE','SCORE_ONLY','IMPORT') NOT NULL DEFAULT 'MANUAL',
+  `promoted_at` datetime(3) DEFAULT NULL,
+  `tick` bigint(20) UNSIGNED NOT NULL DEFAULT 0,
+  `updated_at` datetime(3) NOT NULL DEFAULT current_timestamp(3) ON UPDATE current_timestamp(3),
+  PRIMARY KEY (`id_match`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+DROP TABLE IF EXISTS `scoring_live_event`;
+CREATE TABLE `scoring_live_event` (
+  `uid` varchar(32) CHARACTER SET ascii COLLATE ascii_general_ci NOT NULL,
+  `id_match` int(10) UNSIGNED NOT NULL,
+  `kind` varchar(10) NOT NULL,
+  `code` varchar(2) DEFAULT NULL,
+  `periode` varchar(4) DEFAULT NULL,
+  `temps` time DEFAULT NULL,
+  `team` char(1) NOT NULL,
+  `id_player` varchar(25) DEFAULT NULL,
+  `numero` varchar(4) DEFAULT NULL,
+  `motif` varchar(10) DEFAULT NULL,
+  `created_at` datetime(3) NOT NULL DEFAULT current_timestamp(3),
+  PRIMARY KEY (`uid`),
+  KEY `idx_scoring_event_match` (`id_match`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+DROP TABLE IF EXISTS `scoring_live_clock`;
+CREATE TABLE `scoring_live_clock` (
+  `id` char(36) CHARACTER SET ascii COLLATE ascii_general_ci NOT NULL,
+  `id_match` int(10) UNSIGNED NOT NULL,
+  `kind` enum('GAME','SHOTCLOCK','PENALTY','BREAK') NOT NULL,
+  `team` char(1) NOT NULL DEFAULT '',
+  `slot` tinyint(4) NOT NULL DEFAULT 0,
+  `id_player` varchar(25) DEFAULT NULL,
+  `card_code` char(1) DEFAULT NULL,
+  `init_ms` int(11) NOT NULL,
+  `elapsed_ms` int(11) NOT NULL DEFAULT 0,
+  `started_at` datetime(3) DEFAULT NULL,
+  `running` tinyint(1) NOT NULL DEFAULT 0,
+  `updated_at` datetime(3) NOT NULL DEFAULT current_timestamp(3) ON UPDATE current_timestamp(3),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_scoring_clock` (`id_match`,`kind`,`team`,`slot`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+DROP TABLE IF EXISTS `scoring_outbox`;
+CREATE TABLE `scoring_outbox` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `id_match` int(10) UNSIGNED NOT NULL,
+  `topic` varchar(190) NOT NULL,
+  `payload` longtext NOT NULL CHECK (json_valid(`payload`)),
+  `tick` bigint(20) UNSIGNED NOT NULL DEFAULT 0,
+  `created_at` datetime(3) NOT NULL DEFAULT current_timestamp(3),
+  `published_at` datetime(3) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_scoring_outbox_unpublished` (`published_at`,`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Horloge de l'événement (ScoringProgramService::eventClock) : le programme de terrain lit
+-- l'horloge simulée du worker de cache quand il tourne. Vide ici → horloge réelle.
+DROP TABLE IF EXISTS `kp_event_worker_config`;
+CREATE TABLE `kp_event_worker_config` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `id_event` int(11) NOT NULL,
+  `date_event` date NOT NULL,
+  `hour_event` time NOT NULL,
+  `hour_event_initial` time NOT NULL,
+  `offset_event` int(11) NOT NULL DEFAULT 15,
+  `pitch_event` int(11) NOT NULL DEFAULT 4,
+  `delay_event` int(11) NOT NULL DEFAULT 10,
+  `status` enum('stopped','running','paused') NOT NULL DEFAULT 'stopped',
+  `last_execution` datetime DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `error_message` text DEFAULT NULL,
+  `execution_count` int(11) NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`),
+  KEY `idx_id_event` (`id_event`),
+  KEY `idx_status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci;
 
 SET FOREIGN_KEY_CHECKS = 1;
 

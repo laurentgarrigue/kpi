@@ -32,6 +32,14 @@ reference (`grep -rn FILE_NAME` across the repo: code comments, workflows, Makef
 `DOC/developer/` as top-level folders: `sources/admin/DocViewer.php` only reads those two.
 
 **Key documents:**
+- **[Target Architecture](DOC/developer/in-progress/TARGET_ARCHITECTURE.md)** - ⭐ **Target of all ongoing projects** (app2, app3, app4, scoring, overlays, PDF, auth, infra): architecture and functional diagrams, legacy greyed out
+- **Living views (claude.ai, owner-only)** - derived from the repo, never a source of their own:
+  - [Architecture cible KPI](https://claude.ai/artifact/WMmVktC2SY3YKHEwYtW3gf) (artifact): **republish it whenever
+    `TARGET_ARCHITECTURE.md` changes** (same URL, `url` parameter of the Artifact tool).
+  - [KPI — Suivi des chantiers](https://claude.ai/artifact/1f7pfsvSq8Zr49ArVgkjja) (Claude Docs): state of every ongoing
+    project and the owner's actions to tick. Update it when a PR merges, a deployment runs, a rollout checklist
+    step completes or a branch is created/deleted (user phrase: « mets à jour le suivi des chantiers »).
+  - Server hosting (Traefik, security, backups) is documented in the private `vps-manager` repo, `docs/SERVER.md`.
 - **[FrankenPHP Migration Analysis](DOC/developer/reference/FRANKENPHP_MIGRATION_ANALYSIS.md)** - ⭐ **Current web architecture**: `/api2` runs on FrankenPHP (worker + Mercure hub), Apache serves the legacy and WordPress
 - **[Deployment Runbook](DOC/developer/infrastructure/DEPLOYMENT_RUNBOOK.md)** - ⭐ How to deploy (preprod auto / prod manual / experimental feature branch), diagnose a failure, and roll back code or database
 - **[Dev environment](DOC/developer/guides/ENVIRONNEMENT_DEV.md)** - `make dev` starts everything; where to read each service's logs
@@ -39,6 +47,12 @@ reference (`grep -rn FILE_NAME` across the repo: code comments, workflows, Makef
 - **[PHP 8.4 Migration Complete](DOC/developer/archive/php8/PHP8_MIGRATION_COMPLETE.md)** - ✅ Final migration report
 
 See [DOC/README.md](DOC/README.md) for the complete index.
+
+## Git conventions
+
+- **Branch names are explicit**: name every new branch after its subject (`claude/test-coverage-baseline`,
+  `fix/mercure-publish-403`), never an auto-generated or random name (`claude/intelligent-shannon-0z5cxe`). Rename
+  with `git branch -m` before the first push if the harness hands out a random one.
 
 ## Engineering principles (apply to every change)
 
@@ -156,6 +170,8 @@ make backend_npm_add package=flatpickr
 - `make mercure_generate_secret` - Print a fresh `MERCURE_JWT_SECRET` line (does not write `.env`)
 - `make pdf_tokens_sync` - Copy the app4/app3 charter (colour tokens, fonts, logos) used by the PDFs into `sources/api2/assets/pdf/`, then commit
 - `make gotenberg_logs` - Logs of the Gotenberg (PDF rendering) container
+- `make api2_coverage` / `make app3_coverage` / `make app4_coverage` - Tests + rapport de couverture (mesure seule, sans seuil ;
+  [TEST_COVERAGE_STRATEGY.md](DOC/developer/in-progress/TEST_COVERAGE_STRATEGY.md)) ; `make ci_scripts_test` teste `scripts/ci/`
 - `make api2_match_medals_compute season=AAAA` - Compute the match medals of ONE season with the current thresholds
   (`sources/api2/config/packages/match_medals.yaml`); `make api2_match_medals_sync` is what the cron runs every 10 min.
   Spec: [FEATURE_MATCH_MEDALS.md](DOC/specs/public/FEATURE_MATCH_MEDALS.md)
@@ -289,7 +305,7 @@ For multiple environments on the same server, use different `APPLICATION_NAME` v
   - Report: game details with events and players
   - WSM: live score management, game events, timer, statistics
 - **Documentation**: See [sources/api2/README.md](sources/api2/README.md)
-- **Status**: ✅ Implemented - FrankenPHP validated in dev; **preprod/prod validation pending**
+- **Status**: ✅ Implemented - FrankenPHP validated in dev, preprod and production (marked resolved on 2026-11-04, v2.10.0)
 
 **⚠️ Symfony version is pinned to 7.4 (LTS). Symfony 8 is not wanted.** The `composer.lock` had
 silently drifted to 8.x while `composer.json` declared `7.4.*`; this was corrected. Preprod and prod
@@ -396,6 +412,16 @@ Traefik terminates TLS and routes between them. See the API2 section above for w
 - **Profile 10 "Contrôle équipement"** is a specialised profile outside the linear hierarchy (`ROLE_SCRUTINEER`):
   scrutineering + team presence sheets of every team, nothing else; assigned by profiles 1–2 only
 - App3 is the new public website, served on `beta.*` until the switch-over (spec-first, TDD)
+- **Live scoring refactoring** (in progress): canonical match state in `scoring_live_*` + outbox →
+  Mercure, a single app4 Scoring console replacing FeuilleMarque V2/V3, and one parameterized
+  overlay page replacing the ~20 legacy ones.
+  Plan and situation report: [DOC/developer/in-progress/LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md](DOC/developer/in-progress/LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md) (§0).
+  Specs: [DOC/specs/PAGE_SCORING.md](DOC/specs/PAGE_SCORING.md), [DOC/specs/PAGE_INCRUSTATION.md](DOC/specs/PAGE_INCRUSTATION.md).
+  Rollout checklist (catch-up in dev → validation gate → preprod → prod pilot):
+  [DOC/developer/in-progress/SCORING_ROLLOUT_CHECKLIST.md](DOC/developer/in-progress/SCORING_ROLLOUT_CHECKLIST.md).
+  ⚠️ Lots 1–3 were tried in dev (Aug/Oct 2026) but never validated end to end; lot 4 never ran in OBS.
+  **Reloading the dev database from a prod dump drops the `scoring_live_*` tables** — re-run the 4
+  scoring migrations (checklist R0.2) or the console answers 500. Do not open a new lot before R1/R2.
 - Legacy Vue.js applications in `app_dev/`, `app_live_dev/`, `app_wsm_dev/` are maintained but not primary focus
 - Configuration files are mounted from Docker directory to avoid committing sensitive data
 - The project uses Traefik for reverse proxy in production environments

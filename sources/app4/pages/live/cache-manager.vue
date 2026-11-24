@@ -245,7 +245,7 @@ onBeforeUnmount(() => {
         <button
           v-if="hasRunning"
           type="button"
-          class="px-3 py-1.5 text-sm font-medium text-red-600 dark:text-red-300 bg-red-50 dark:bg-red-950 rounded-lg hover:bg-red-100 dark:hover:bg-red-900 transition-colors flex items-center gap-1"
+          class="px-3 py-1.5 text-sm font-medium text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-950 rounded-lg hover:bg-red-100 dark:hover:bg-red-900 transition-colors flex items-center gap-1"
           @click="askStopAll"
         >
           <UIcon name="heroicons:stop-circle" class="w-4 h-4" />
@@ -264,10 +264,10 @@ onBeforeUnmount(() => {
             <div class="flex flex-wrap items-center gap-2">
               <span class="font-semibold text-header-900 dark:text-header-50">Event #{{ c.idEvent }}</span>
               <span v-if="eventLabel(c.idEvent)" class="text-sm text-header-600 dark:text-header-300">{{ eventLabel(c.idEvent) }}</span>
-              <span :class="['text-xs font-medium px-2 py-0.5 rounded-full', statusBadgeClass(c)]">
+              <span :class="['text-sm font-medium px-2 py-0.5 rounded-full', statusBadgeClass(c)]">
                 {{ t(`eventCacheManager.status.${c.status}`) }}
               </span>
-              <span :class="['text-xs font-medium px-2 py-0.5 rounded-full flex items-center gap-1', c.isHealthy ? 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300' : 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300']">
+              <span :class="['text-sm font-medium px-2 py-0.5 rounded-full flex items-center gap-1', c.isHealthy ? 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300' : 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300']">
                 <UIcon :name="c.isHealthy ? 'heroicons:check-circle' : 'heroicons:exclamation-triangle'" class="w-3 h-3" />
                 {{ c.isHealthy ? t('eventCacheManager.active_workers.healthy') : t('eventCacheManager.active_workers.unhealthy') }}
               </span>
@@ -290,15 +290,15 @@ onBeforeUnmount(() => {
               <UIcon name="heroicons:magnifying-glass" class="w-4 h-4" />
               {{ t('eventCacheManager.active_workers.monitor') }}
             </button>
-            <button v-if="c.isRunning" type="button" class="px-3 py-1.5 text-sm font-medium text-yellow-600 dark:text-yellow-300 bg-yellow-50 dark:bg-yellow-950 rounded-lg hover:bg-yellow-100 dark:hover:bg-yellow-900 transition-colors flex items-center gap-1" @click="pauseWorker(c.idEvent)">
+            <button v-if="c.isRunning" type="button" class="px-3 py-1.5 text-sm font-medium text-yellow-700 dark:text-yellow-300 bg-yellow-50 dark:bg-yellow-950 rounded-lg hover:bg-yellow-100 dark:hover:bg-yellow-900 transition-colors flex items-center gap-1" @click="pauseWorker(c.idEvent)">
               <UIcon name="heroicons:pause" class="w-4 h-4" />
               {{ t('eventCacheManager.active_workers.pause') }}
             </button>
-            <button v-if="c.isPaused" type="button" class="px-3 py-1.5 text-sm font-medium text-green-600 dark:text-green-300 bg-green-50 dark:bg-green-950 rounded-lg hover:bg-green-100 dark:hover:bg-green-900 transition-colors flex items-center gap-1" @click="resumeWorker(c.idEvent)">
+            <button v-if="c.isPaused" type="button" class="px-3 py-1.5 text-sm font-medium text-green-700 dark:text-green-300 bg-green-50 dark:bg-green-950 rounded-lg hover:bg-green-100 dark:hover:bg-green-900 transition-colors flex items-center gap-1" @click="resumeWorker(c.idEvent)">
               <UIcon name="heroicons:play" class="w-4 h-4" />
               {{ t('eventCacheManager.active_workers.resume') }}
             </button>
-            <button type="button" class="px-3 py-1.5 text-sm font-medium text-red-600 dark:text-red-300 bg-red-50 dark:bg-red-950 rounded-lg hover:bg-red-100 dark:hover:bg-red-900 transition-colors flex items-center gap-1" @click="askStopWorker(c.idEvent)">
+            <button type="button" class="px-3 py-1.5 text-sm font-medium text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-950 rounded-lg hover:bg-red-100 dark:hover:bg-red-900 transition-colors flex items-center gap-1" @click="askStopWorker(c.idEvent)">
               <UIcon name="heroicons:x-circle" class="w-4 h-4" />
               {{ t('eventCacheManager.active_workers.stop') }}
             </button>
@@ -316,7 +316,7 @@ onBeforeUnmount(() => {
       <div class="px-5 py-4 space-y-4">
         <!-- Event select -->
         <div>
-          <label class="block text-xs font-medium text-header-600 dark:text-header-300 mb-1">{{ t('eventCacheManager.form.event') }}</label>
+          <label class="block text-sm font-medium text-header-600 dark:text-header-300 mb-1">{{ t('eventCacheManager.form.event') }}</label>
           <select
             v-model="form.idEvent"
             class="w-full px-3 py-2 text-sm border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
@@ -328,13 +328,13 @@ onBeforeUnmount(() => {
 
         <!-- Quick date buttons -->
         <div v-if="dates.length > 0">
-          <p class="mb-2 text-xs font-medium text-header-600 dark:text-header-300">{{ t('eventCacheManager.form.quick_date') }}</p>
+          <p class="mb-2 text-sm font-medium text-header-600 dark:text-header-300">{{ t('eventCacheManager.form.quick_date') }}</p>
           <div class="flex flex-wrap gap-2">
             <button
               v-for="d in dates"
               :key="d.dateMatch"
               type="button"
-              class="px-2 py-1 text-xs font-medium text-primary-600 dark:text-primary-300 bg-primary-50 dark:bg-primary-950 border border-primary-200 dark:border-primary-900 rounded hover:bg-primary-100 dark:hover:bg-primary-900 transition-colors"
+              class="px-2 py-1 text-sm font-medium text-primary-600 dark:text-primary-300 bg-primary-50 dark:bg-primary-950 border border-primary-200 dark:border-primary-900 rounded hover:bg-primary-100 dark:hover:bg-primary-900 transition-colors"
               @click="setQuickDate(d)"
             >
               {{ d.dateMatch }} ({{ d.heureMatch.slice(0, 5) }})
@@ -344,29 +344,29 @@ onBeforeUnmount(() => {
 
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <div>
-            <label class="block text-xs font-medium text-header-600 dark:text-header-300 mb-1">{{ t('eventCacheManager.form.date') }}</label>
+            <label class="block text-sm font-medium text-header-600 dark:text-header-300 mb-1">{{ t('eventCacheManager.form.date') }}</label>
             <input v-if="!useCurrentTime" v-model="form.dateEvent" type="date" class="w-full px-3 py-2 text-sm border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500" >
             <span v-else class="text-sm text-header-900 dark:text-header-50 block px-3 py-2">{{ t('eventCacheManager.form.date_now_help') }}</span>
           </div>
           <div>
-            <label class="block text-xs font-medium text-header-600 dark:text-header-300 mb-1">{{ t('eventCacheManager.form.hour') }}</label>
+            <label class="block text-sm font-medium text-header-600 dark:text-header-300 mb-1">{{ t('eventCacheManager.form.hour') }}</label>
             <label class="flex items-center gap-2 mb-1.5 text-sm text-header-900 dark:text-header-50 cursor-pointer">
               <input v-model="useCurrentTime" type="checkbox" class="rounded border-header-300 dark:border-header-700 text-primary-600 focus:ring-primary-500" >
               {{ t('eventCacheManager.form.hour_now') }}
             </label>
             <input v-if="!useCurrentTime" v-model="form.hourEvent" type="time" class="w-full px-3 py-2 text-sm border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500" >
-            <span class="text-xs text-header-600 dark:text-header-300 mt-0.5 block">{{ useCurrentTime ? t('eventCacheManager.form.hour_now_help') : t('eventCacheManager.form.hour_help') }}</span>
+            <span class="text-sm text-header-600 dark:text-header-300 mt-0.5 block">{{ useCurrentTime ? t('eventCacheManager.form.hour_now_help') : t('eventCacheManager.form.hour_help') }}</span>
           </div>
           <div>
-            <label class="block text-xs font-medium text-header-600 dark:text-header-300 mb-1">{{ t('eventCacheManager.form.offset') }}</label>
+            <label class="block text-sm font-medium text-header-600 dark:text-header-300 mb-1">{{ t('eventCacheManager.form.offset') }}</label>
             <input v-model.number="form.offsetEvent" type="number" min="0" max="120" class="w-full px-3 py-2 text-sm border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500" >
           </div>
           <div>
-            <label class="block text-xs font-medium text-header-600 dark:text-header-300 mb-1">{{ t('eventCacheManager.form.pitch') }}</label>
+            <label class="block text-sm font-medium text-header-600 dark:text-header-300 mb-1">{{ t('eventCacheManager.form.pitch') }}</label>
             <input v-model.number="form.pitchEvent" type="number" min="1" max="20" class="w-full px-3 py-2 text-sm border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500" >
           </div>
           <div>
-            <label class="block text-xs font-medium text-header-600 dark:text-header-300 mb-1">{{ t('eventCacheManager.form.delay') }}</label>
+            <label class="block text-sm font-medium text-header-600 dark:text-header-300 mb-1">{{ t('eventCacheManager.form.delay') }}</label>
             <input v-model.number="form.delayEvent" type="number" min="5" max="60" class="w-full px-3 py-2 text-sm border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500" >
           </div>
         </div>
@@ -446,7 +446,7 @@ onBeforeUnmount(() => {
                   </tr>
                 </tbody>
               </table>
-              <div class="mt-3 flex items-center justify-between text-xs text-header-600 dark:text-header-300 pt-2 border-t border-header-100 dark:border-header-800">
+              <div class="mt-3 flex items-center justify-between text-sm text-header-600 dark:text-header-300 pt-2 border-t border-header-100 dark:border-header-800">
                 <span v-if="monitorClock">
                   {{ t('eventCacheManager.monitor.time_current') }} <template v-if="monitorConfig && monitorClock.currentDate !== monitorConfig.dateEvent">{{ monitorClock.currentDate }} </template>{{ monitorClock.currentTime }} ·
                   {{ t('eventCacheManager.monitor.time_working') }} {{ monitorClock.workingTime }}

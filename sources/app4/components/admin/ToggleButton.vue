@@ -26,10 +26,10 @@ const emit = defineEmits<{
 }>()
 
 const activeColorClasses = {
-  success: 'text-success-500 dark:text-success-400 hover:text-success-600',
-  primary: 'text-primary-500 dark:text-primary-400 hover:text-primary-600',
-  danger: 'text-danger-500 dark:text-danger-400 hover:text-danger-600',
-  warning: 'text-warning-500 dark:text-warning-400 hover:text-warning-600'
+  success: 'text-success-700 dark:text-success-300 hover:text-success-600',
+  primary: 'text-primary-500 dark:text-primary-300 hover:text-primary-600',
+  danger: 'text-danger-600 dark:text-danger-300 hover:text-danger-600',
+  warning: 'text-warning-600 dark:text-warning-300 hover:text-warning-600'
 }
 
 const sizeClasses = {
@@ -42,8 +42,8 @@ const sizeClasses = {
 <template>
   <button
     :class="[
-      'p-1 transition-colors',
-      active ? activeColorClasses[activeColor] : 'text-header-400 dark:text-header-500',
+      'p-1.5 transition-colors',
+      active ? activeColorClasses[activeColor] : 'text-header-600 dark:text-header-300',
       disabled ? 'opacity-40 cursor-not-allowed' : 'hover:opacity-80'
     ]"
     :title="active ? activeTitle : inactiveTitle"

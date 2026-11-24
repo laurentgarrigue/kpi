@@ -399,7 +399,7 @@ onMounted(async () => {
       <div class="flex flex-wrap gap-4 items-end">
         <!-- Nb Equipes -->
         <div class="w-32">
-          <label class="block text-xs font-medium text-header-600 dark:text-header-300 mb-1">
+          <label class="block text-sm font-medium text-header-600 dark:text-header-300 mb-1">
             {{ t('competitionCopy.search.nbEquipes') }}
           </label>
           <input
@@ -413,7 +413,7 @@ onMounted(async () => {
 
         <!-- Type filter -->
         <div class="w-40">
-          <label class="block text-xs font-medium text-header-600 dark:text-header-300 mb-1">
+          <label class="block text-sm font-medium text-header-600 dark:text-header-300 mb-1">
             {{ t('competitionCopy.search.type') }}
           </label>
           <select
@@ -428,7 +428,7 @@ onMounted(async () => {
 
         <!-- Sort -->
         <div class="w-40">
-          <label class="block text-xs font-medium text-header-600 dark:text-header-300 mb-1">
+          <label class="block text-sm font-medium text-header-600 dark:text-header-300 mb-1">
             {{ t('competitionCopy.search.sortBy') }}
           </label>
           <select
@@ -552,13 +552,13 @@ onMounted(async () => {
                   v-model="filterCode"
                   type="text"
                   :placeholder="t('competitionCopy.table.filterLabel')"
-                  class="w-full px-2 py-1 border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded text-xs font-normal focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
+                  class="w-full px-2 py-1 border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded text-sm font-normal focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
                 >
               </th>
               <th class="sticky top-9.25 z-10 bg-header-50 dark:bg-header-900 border-b border-header-200 dark:border-header-700 px-2 py-1.5">
                 <select
                   v-model="filterType"
-                  class="w-full px-1 py-1 border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded text-xs font-normal focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
+                  class="w-full px-1 py-1 border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded text-sm font-normal focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
                 >
                   <option value="">{{ t('competitionCopy.table.filterAll') }}</option>
                   <option value="CHPT">CHPT</option>
@@ -568,7 +568,7 @@ onMounted(async () => {
               <th class="sticky top-9.25 z-10 bg-header-50 dark:bg-header-900 border-b border-header-200 dark:border-header-700 px-2 py-1.5">
                 <select
                   v-model="filterLevel"
-                  class="w-full px-1 py-1 border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded text-xs font-normal focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
+                  class="w-full px-1 py-1 border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded text-sm font-normal focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
                 >
                   <option value="">{{ t('competitionCopy.table.filterAll') }}</option>
                   <option v-for="lvl in levelOptions" :key="lvl" :value="lvl">{{ lvl }}</option>
@@ -579,7 +579,7 @@ onMounted(async () => {
                   v-model="filterLabel"
                   type="text"
                   :placeholder="t('competitionCopy.table.filterLabel')"
-                  class="w-full px-2 py-1 border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded text-xs font-normal focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
+                  class="w-full px-2 py-1 border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded text-sm font-normal focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
                 >
               </th>
               <th class="sticky top-9.25 z-10 bg-header-50 dark:bg-header-900 border-b border-header-200 dark:border-header-700 px-2 py-1.5" />
@@ -590,7 +590,7 @@ onMounted(async () => {
               <th class="sticky top-9.25 z-10 bg-header-50 dark:bg-header-900 border-b border-header-200 dark:border-header-700 px-2 py-1.5">
                 <select
                   v-model="filterEncoded"
-                  class="w-full px-1 py-1 border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded text-xs font-normal focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
+                  class="w-full px-1 py-1 border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded text-sm font-normal focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
                 >
                   <option value="">{{ t('competitionCopy.table.filterAll') }}</option>
                   <option value="yes">✓</option>
@@ -600,7 +600,7 @@ onMounted(async () => {
               <th class="sticky top-9.25 z-10 bg-header-50 dark:bg-header-900 border-b border-header-200 dark:border-header-700 px-2 py-1.5">
                 <select
                   v-model="filterInfo"
-                  class="w-full px-1 py-1 border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded text-xs font-normal focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
+                  class="w-full px-1 py-1 border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded text-sm font-normal focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
                 >
                   <option value="">{{ t('competitionCopy.table.filterAll') }}</option>
                   <option value="yes">✓</option>
@@ -619,22 +619,22 @@ onMounted(async () => {
               class="border-b border-header-100 dark:border-header-800 hover:bg-header-50 dark:hover:bg-header-800"
             >
               <td class="px-3 py-2 text-header-900 dark:text-header-50 font-medium">{{ schema.season }}</td>
-              <td class="px-3 py-2 text-header-900 dark:text-header-50 font-mono text-xs">{{ schema.code }}</td>
+              <td class="px-3 py-2 text-header-900 dark:text-header-50 font-mono text-sm">{{ schema.code }}</td>
               <td class="px-3 py-2 text-center">
-                <span class="px-1.5 py-0.5 text-xs font-medium rounded bg-header-200 dark:bg-header-700 text-header-900 dark:text-header-50">
+                <span class="px-1.5 py-0.5 text-sm font-medium rounded bg-header-200 dark:bg-header-700 text-header-900 dark:text-header-50">
                   {{ schema.codeTypeclt }}
                 </span>
               </td>
               <td class="px-3 py-2">
-                <span class="px-1.5 py-0.5 text-xs font-medium rounded" :class="getLevelColor(schema.codeNiveau)">
+                <span class="px-1.5 py-0.5 text-sm font-medium rounded" :class="getLevelColor(schema.codeNiveau)">
                   {{ schema.codeNiveau }}
                 </span>
               </td>
               <td class="px-3 py-2">
-                <div v-for="(line, idx) in getDisplayLabel(schema)" :key="idx" class="text-header-900 dark:text-header-50" :class="idx > 0 ? 'text-header-600 dark:text-header-300 text-xs' : ''">
+                <div v-for="(line, idx) in getDisplayLabel(schema)" :key="idx" class="text-header-900 dark:text-header-50" :class="idx > 0 ? 'text-header-600 dark:text-header-300 text-sm' : ''">
                   {{ line }}
                 </div>
-                <div v-if="schema.codeTour === '10'" class="text-xs text-header-600 dark:text-header-300 italic">
+                <div v-if="schema.codeTour === '10'" class="text-sm text-header-600 dark:text-header-300 italic">
                   {{ t('competitionCopy.table.final') }}
                 </div>
               </td>
@@ -647,7 +647,7 @@ onMounted(async () => {
                 <UIcon
                   :name="schema.matchsEncodes ? 'i-heroicons-check-circle-solid' : 'i-heroicons-x-circle-solid'"
                   class="w-6 h-6"
-                  :class="schema.matchsEncodes ? 'text-success-500 dark:text-success-400' : 'text-header-600 dark:text-header-300'"
+                  :class="schema.matchsEncodes ? 'text-success-700 dark:text-success-300' : 'text-header-600 dark:text-header-300'"
                 />
               </td>
               <td class="px-3 py-2 text-center">
@@ -655,7 +655,7 @@ onMounted(async () => {
                   class="p-1 rounded transition-colors"
                   :class="schema.commentaires
                     ? 'bg-primary-600 text-white hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-400 ring-2 ring-primary-300 dark:ring-primary-700'
-                    : 'text-header-400 dark:text-header-500 hover:bg-header-200 dark:hover:bg-header-700'"
+                    : 'text-header-600 dark:text-header-300 hover:bg-header-200 dark:hover:bg-header-700'"
                   :title="schema.commentaires || t('competitionCopy.table.info')"
                   @click="openCommentModal(schema)"
                 >
@@ -677,7 +677,7 @@ onMounted(async () => {
               <!-- Switch to -->
               <td class="px-3 py-2 text-center">
                 <button
-                  class="p-1.5 rounded text-warning-500 dark:text-warning-300 hover:text-warning-600 dark:hover:text-warning-200 hover:bg-warning-50 dark:hover:bg-warning-950 transition-colors"
+                  class="p-1.5 rounded text-warning-600 dark:text-warning-300 hover:text-warning-600 dark:hover:text-warning-200 hover:bg-warning-50 dark:hover:bg-warning-950 transition-colors"
                   :title="t('competitionCopy.table.switchTo')"
                   @click="askSwitch(schema)"
                 >
@@ -759,14 +759,14 @@ onMounted(async () => {
           <div class="flex flex-wrap gap-3 text-sm text-header-900 dark:text-header-50">
             <span class="font-medium text-header-900 dark:text-header-50">{{ copyOrigin.season }}</span>
             <span class="font-mono">{{ copyOrigin.code }}</span>
-            <span class="px-1.5 py-0.5 text-xs font-medium rounded bg-header-200 dark:bg-header-700">{{ copyOrigin.codeTypeclt }}</span>
+            <span class="px-1.5 py-0.5 text-sm font-medium rounded bg-header-200 dark:bg-header-700">{{ copyOrigin.codeTypeclt }}</span>
             <span>{{ copyOrigin.nbEquipes }} {{ t('competitionCopy.copy.teams') }}</span>
             <span>{{ copyOrigin.nbMatchs }} {{ t('competitionCopy.copy.matches') }}</span>
           </div>
           <!-- Phases -->
           <div v-if="copyOrigin.journees.length > 0" class="mt-2">
-            <span class="text-xs font-medium text-header-600 dark:text-header-300">{{ t('competitionCopy.copy.phases') }}:</span>
-            <span class="text-xs text-header-900 dark:text-header-50 ml-1">
+            <span class="text-sm font-medium text-header-600 dark:text-header-300">{{ t('competitionCopy.copy.phases') }}:</span>
+            <span class="text-sm text-header-900 dark:text-header-50 ml-1">
               {{ copyOrigin.journees.map(j => j.phase).join(' > ') }}
             </span>
           </div>
@@ -778,7 +778,7 @@ onMounted(async () => {
           <div class="flex flex-wrap gap-4 items-end">
             <!-- Season -->
             <div class="w-32">
-              <label class="block text-xs font-medium text-header-600 dark:text-header-300 mb-1">{{ t('competitionCopy.copy.season') }}</label>
+              <label class="block text-sm font-medium text-header-600 dark:text-header-300 mb-1">{{ t('competitionCopy.copy.season') }}</label>
               <select
                 v-model="copyDestSeason"
                 class="w-full px-3 py-2 border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded-lg text-sm focus:ring-2 focus:ring-primary-500"
@@ -790,7 +790,7 @@ onMounted(async () => {
             </div>
             <!-- Competition -->
             <div class="flex-1 min-w-48">
-              <label class="block text-xs font-medium text-header-600 dark:text-header-300 mb-1">{{ t('competitionCopy.copy.competition') }}</label>
+              <label class="block text-sm font-medium text-header-600 dark:text-header-300 mb-1">{{ t('competitionCopy.copy.competition') }}</label>
               <select
                 v-model="copyDestCompetition"
                 class="w-full px-3 py-2 border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded-lg text-sm focus:ring-2 focus:ring-primary-500"
@@ -806,7 +806,7 @@ onMounted(async () => {
             </div>
           </div>
           <!-- Destination info -->
-          <div v-if="selectedDestCompetition" class="mt-2 flex flex-wrap gap-3 text-xs text-header-900 dark:text-header-50">
+          <div v-if="selectedDestCompetition" class="mt-2 flex flex-wrap gap-3 text-sm text-header-900 dark:text-header-50">
             <span>{{ t('competitionCopy.copy.type') }}: <strong>{{ selectedDestCompetition.codeTypeclt }}</strong></span>
             <span>{{ selectedDestCompetition.nbEquipes }} {{ t('competitionCopy.copy.teams') }}</span>
             <span>{{ t('competitionCopy.copy.qualified') }}: {{ selectedDestCompetition.qualifies }}</span>
@@ -817,28 +817,28 @@ onMounted(async () => {
         <!-- Common values -->
         <div class="border border-header-200 dark:border-header-700 rounded-lg p-4">
           <h3 class="text-sm font-semibold text-header-900 dark:text-header-50 mb-1">{{ t('competitionCopy.copy.commonValues') }}</h3>
-          <p v-if="!isCpDestination" class="text-xs text-header-600 dark:text-header-300 mb-4 flex items-center gap-1">
+          <p v-if="!isCpDestination" class="text-sm text-header-600 dark:text-header-300 mb-4 flex items-center gap-1">
             <UIcon name="i-heroicons-information-circle" class="w-4 h-4 shrink-0" />
             {{ t('competitionCopy.copy.commonValuesHelp') }}
           </p>
-          <p v-else class="text-xs text-header-600 dark:text-header-300 mb-4 flex items-center gap-1">
+          <p v-else class="text-sm text-header-600 dark:text-header-300 mb-4 flex items-center gap-1">
             <UIcon name="i-heroicons-information-circle" class="w-4 h-4 shrink-0" />
             {{ t('competitionCopy.copy.commonValuesHelpCp') }}
           </p>
 
           <!-- Public params -->
-          <p class="text-xs font-medium text-header-600 dark:text-header-300 mb-2">{{ t('competitionCopy.copy.publicParams') }}</p>
+          <p class="text-sm font-medium text-header-600 dark:text-header-300 mb-2">{{ t('competitionCopy.copy.publicParams') }}</p>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
             <div>
-              <label class="block text-xs text-header-600 dark:text-header-300 mb-1">{{ t('competitionCopy.copy.dateDebut') }}</label>
+              <label class="block text-sm text-header-600 dark:text-header-300 mb-1">{{ t('competitionCopy.copy.dateDebut') }}</label>
               <input v-model="copyDateDebut" type="date" class="w-full px-3 py-1.5 border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded-lg text-sm focus:ring-2 focus:ring-primary-500">
             </div>
             <div>
-              <label class="block text-xs text-header-600 dark:text-header-300 mb-1">{{ t('competitionCopy.copy.dateFin') }}</label>
+              <label class="block text-sm text-header-600 dark:text-header-300 mb-1">{{ t('competitionCopy.copy.dateFin') }}</label>
               <input v-model="copyDateFin" type="date" class="w-full px-3 py-1.5 border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded-lg text-sm focus:ring-2 focus:ring-primary-500">
             </div>
             <div>
-              <label class="block text-xs text-header-600 dark:text-header-300 mb-1">{{ t('competitionCopy.copy.lieu') }}</label>
+              <label class="block text-sm text-header-600 dark:text-header-300 mb-1">{{ t('competitionCopy.copy.lieu') }}</label>
               <AdminTextAutocomplete
                 :model-value="copyLieu"
                 api-url="/admin/gamedays/autocomplete/communes"
@@ -851,24 +851,24 @@ onMounted(async () => {
               />
             </div>
             <div>
-              <label class="block text-xs text-header-600 dark:text-header-300 mb-1">{{ t('competitionCopy.copy.departement') }}</label>
+              <label class="block text-sm text-header-600 dark:text-header-300 mb-1">{{ t('competitionCopy.copy.departement') }}</label>
               <input v-model="copyDepartement" type="text" maxlength="3" class="w-full px-3 py-1.5 border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded-lg text-sm uppercase focus:ring-2 focus:ring-primary-500">
             </div>
             <div class="sm:col-span-2">
-              <label class="block text-xs text-header-600 dark:text-header-300 mb-1">{{ t('competitionCopy.copy.nom') }}</label>
+              <label class="block text-sm text-header-600 dark:text-header-300 mb-1">{{ t('competitionCopy.copy.nom') }}</label>
               <input v-model="copyNom" type="text" class="w-full px-3 py-1.5 border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded-lg text-sm focus:ring-2 focus:ring-primary-500">
             </div>
             <div class="sm:col-span-2">
-              <label class="block text-xs text-header-600 dark:text-header-300 mb-1">{{ t('competitionCopy.copy.planEau') }}</label>
+              <label class="block text-sm text-header-600 dark:text-header-300 mb-1">{{ t('competitionCopy.copy.planEau') }}</label>
               <input v-model="copyPlanEau" type="text" class="w-full px-3 py-1.5 border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 rounded-lg text-sm focus:ring-2 focus:ring-primary-500">
             </div>
           </div>
 
           <!-- Responsables -->
-          <p class="text-xs font-medium text-header-600 dark:text-header-300 mb-2">{{ t('competitionCopy.copy.responsables') }}</p>
+          <p class="text-sm font-medium text-header-600 dark:text-header-300 mb-2">{{ t('competitionCopy.copy.responsables') }}</p>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label class="block text-xs text-header-600 dark:text-header-300 mb-1">{{ t('competitionCopy.copy.organisateur') }}</label>
+              <label class="block text-sm text-header-600 dark:text-header-300 mb-1">{{ t('competitionCopy.copy.organisateur') }}</label>
               <AdminTextAutocomplete
                 :model-value="copyOrganisateur"
                 api-url="/admin/clubs/search-all"
@@ -880,7 +880,7 @@ onMounted(async () => {
               />
             </div>
             <div>
-              <label class="block text-xs text-header-600 dark:text-header-300 mb-1">{{ t('competitionCopy.copy.responsableR1') }}</label>
+              <label class="block text-sm text-header-600 dark:text-header-300 mb-1">{{ t('competitionCopy.copy.responsableR1') }}</label>
               <AdminAthleteAutocomplete
                 :model-value="copyRespR1"
                 :placeholder="t('competitionCopy.copy.responsableR1')"
@@ -888,7 +888,7 @@ onMounted(async () => {
               />
             </div>
             <div>
-              <label class="block text-xs text-header-600 dark:text-header-300 mb-1">{{ t('competitionCopy.copy.responsableInsc') }}</label>
+              <label class="block text-sm text-header-600 dark:text-header-300 mb-1">{{ t('competitionCopy.copy.responsableInsc') }}</label>
               <AdminAthleteAutocomplete
                 :model-value="copyRespInsc"
                 :placeholder="t('competitionCopy.copy.responsableInsc')"
@@ -896,7 +896,7 @@ onMounted(async () => {
               />
             </div>
             <div>
-              <label class="block text-xs text-header-600 dark:text-header-300 mb-1">{{ t('competitionCopy.copy.delegue') }}</label>
+              <label class="block text-sm text-header-600 dark:text-header-300 mb-1">{{ t('competitionCopy.copy.delegue') }}</label>
               <AdminAthleteAutocomplete
                 :model-value="copyDelegue"
                 :placeholder="t('competitionCopy.copy.delegue')"
@@ -918,7 +918,7 @@ onMounted(async () => {
             <label for="initPremierTour" class="text-sm text-header-900 dark:text-header-50 cursor-pointer">
               {{ t('competitionCopy.copy.initFirstRound') }}
             </label>
-            <p class="text-xs text-amber-600 dark:text-amber-300 mt-0.5">
+            <p class="text-sm text-amber-700 dark:text-amber-300 mt-0.5">
               {{ t('competitionCopy.copy.initFirstRoundWarning') }}
             </p>
           </div>

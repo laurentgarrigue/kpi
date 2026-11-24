@@ -91,6 +91,8 @@ export interface CompetitionInfo {
 export interface EligibilityRules {
   level: 'national' | 'regional'
   enforcement: 'block' | 'warn'
+  /** Errors reported without blocking for the season (2027 national rule: minimum paddle colour). */
+  advisoryErrors?: string[]
   forceMaxProfile: number
   forceAddStatuses: string[]
   forceStatusChangeStatuses: string[]
@@ -184,6 +186,15 @@ export interface AddPlayerFormData {
 /**
  * Match Mode: Add player form
  */
+/** Player of the team presence sheet that may join the match (GET /admin/matches/{id}/available-players) */
+export interface AvailableMatchPlayer {
+  matric: number
+  nom: string
+  prenom: string
+  numero: number | null
+  capitaine: '-' | 'C' | 'E'
+}
+
 export interface MatchAddPlayerFormData {
   matric: number
   numero?: number

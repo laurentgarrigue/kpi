@@ -140,7 +140,7 @@ onUnmounted(() => {
         type="text"
         :disabled="disabled"
         :placeholder="placeholder || t('common.search_player_placeholder')"
-        class="w-full px-3 py-2 pr-10 border border-header-300 dark:border-header-700 rounded-lg bg-white dark:bg-header-900 text-header-900 dark:text-header-50 placeholder-header-400 dark:placeholder-header-500 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-header-200 dark:disabled:bg-header-800 disabled:cursor-not-allowed"
+        class="w-full px-3 py-2 pr-10 border border-header-300 dark:border-header-700 rounded-lg bg-white dark:bg-header-900 text-header-900 dark:text-header-50 placeholder-header-600 dark:placeholder-header-300 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 disabled:bg-header-200 dark:disabled:bg-header-800 disabled:cursor-not-allowed"
         @focus="isOpen = results.length > 0"
       >
       <div class="absolute inset-y-0 right-0 flex items-center pr-3">
@@ -151,10 +151,10 @@ onUnmounted(() => {
         <button
           v-else-if="searchQuery && !disabled"
           type="button"
-          class="text-header-600 dark:text-header-300 hover:text-header-900 dark:hover:text-header-50"
+          class="text-header-600 dark:text-header-300 hover:text-header-900 dark:hover:text-header-50 p-2"
           @click="clearSelection"
         >
-          <UIcon name="i-heroicons-x-mark" class="w-4 h-4" />
+          <UIcon name="i-heroicons-x-mark" class="w-5 h-5" />
         </button>
       </div>
     </div>
@@ -179,7 +179,7 @@ onUnmounted(() => {
         @click="selectPlayer(player)"
       >
         <div class="font-medium text-sm">{{ formatNom(player.nom) }} {{ formatPrenom(player.prenom) }}</div>
-        <div class="text-xs text-header-600 dark:text-header-300 font-mono flex items-center gap-2">
+        <div class="text-sm text-header-600 dark:text-header-300 font-mono flex items-center gap-2">
           <span>{{ player.icf ? `ICF-${player.icf}` : player.matric }}</span>
           <span v-if="player.club">&mdash; {{ player.club }}</span>
           <span v-if="player.arbitre" class="px-1 rounded bg-primary-100 dark:bg-primary-950 text-primary-700 dark:text-primary-300 not-italic">{{ player.arbitre }}</span>
@@ -203,7 +203,7 @@ onUnmounted(() => {
           <UIcon name="i-heroicons-x-mark" class="w-5 h-5" />
         </button>
       </div>
-      <div class="text-xs text-header-900 dark:text-header-50 mt-1">
+      <div class="text-sm text-header-900 dark:text-header-50 mt-1">
         {{ modelValue.club }}
       </div>
     </div>

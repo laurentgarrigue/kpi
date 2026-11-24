@@ -375,7 +375,7 @@ const formatDate = (date: string | null) => {
               </th>
 
               <!-- Publication -->
-              <th class="px-4 py-3 text-center text-xs font-medium text-header-900 dark:text-header-50 uppercase tracking-wider cursor-pointer hover:bg-header-200 dark:hover:bg-header-700" @click="handleSort('Publication')">
+              <th class="px-4 py-3 text-center text-sm font-medium text-header-900 dark:text-header-50 uppercase tracking-wider cursor-pointer hover:bg-header-200 dark:hover:bg-header-700" @click="handleSort('Publication')">
                 <div class="flex items-center justify-center gap-1">
                   {{ t('events.columns.publication') }}
                   <UIcon :name="getSortIcon('Publication')" class="w-4 h-4" />
@@ -383,7 +383,7 @@ const formatDate = (date: string | null) => {
               </th>
 
               <!-- App -->
-              <th class="px-4 py-3 text-center text-xs font-medium text-header-900 dark:text-header-50 uppercase tracking-wider cursor-pointer hover:bg-header-200 dark:hover:bg-header-700" @click="handleSort('app')">
+              <th class="px-4 py-3 text-center text-sm font-medium text-header-900 dark:text-header-50 uppercase tracking-wider cursor-pointer hover:bg-header-200 dark:hover:bg-header-700" @click="handleSort('app')">
                 <div class="flex items-center justify-center gap-1">
                   {{ t('events.columns.app') }}
                   <UIcon :name="getSortIcon('app')" class="w-4 h-4" />
@@ -391,7 +391,7 @@ const formatDate = (date: string | null) => {
               </th>
 
               <!-- ID -->
-              <th class="px-4 py-3 text-left text-xs font-medium text-header-900 dark:text-header-50 uppercase tracking-wider cursor-pointer hover:bg-header-200 dark:hover:bg-header-700" @click="handleSort('Id')">
+              <th class="px-4 py-3 text-left text-sm font-medium text-header-900 dark:text-header-50 uppercase tracking-wider cursor-pointer hover:bg-header-200 dark:hover:bg-header-700" @click="handleSort('Id')">
                 <div class="flex items-center gap-1">
                   {{ t('events.columns.id') }}
                   <UIcon :name="getSortIcon('Id')" />
@@ -399,12 +399,12 @@ const formatDate = (date: string | null) => {
               </th>
 
               <!-- Edit action -->
-              <th class="px-4 py-3 text-center text-xs font-medium text-header-900 dark:text-header-50 uppercase tracking-wider w-12">
+              <th class="px-4 py-3 text-center text-sm font-medium text-header-900 dark:text-header-50 uppercase tracking-wider w-12">
                 {{ t('common.edit') }}
               </th>
 
               <!-- Libelle -->
-              <th class="px-4 py-3 text-left text-xs font-medium text-header-900 dark:text-header-50 uppercase tracking-wider cursor-pointer hover:bg-header-200 dark:hover:bg-header-700" @click="handleSort('Libelle')">
+              <th class="px-4 py-3 text-left text-sm font-medium text-header-900 dark:text-header-50 uppercase tracking-wider cursor-pointer hover:bg-header-200 dark:hover:bg-header-700" @click="handleSort('Libelle')">
                 <div class="flex items-center gap-1">
                   {{ t('events.columns.libelle') }}
                   <UIcon :name="getSortIcon('Libelle')" class="w-4 h-4" />
@@ -412,7 +412,7 @@ const formatDate = (date: string | null) => {
               </th>
 
               <!-- Lieu -->
-              <th class="px-4 py-3 text-left text-xs font-medium text-header-900 dark:text-header-50 uppercase tracking-wider cursor-pointer hover:bg-header-200 dark:hover:bg-header-700" @click="handleSort('Lieu')">
+              <th class="px-4 py-3 text-left text-sm font-medium text-header-900 dark:text-header-50 uppercase tracking-wider cursor-pointer hover:bg-header-200 dark:hover:bg-header-700" @click="handleSort('Lieu')">
                 <div class="flex items-center gap-1">
                   {{ t('events.columns.lieu') }}
                   <UIcon :name="getSortIcon('Lieu')" class="w-4 h-4" />
@@ -420,7 +420,7 @@ const formatDate = (date: string | null) => {
               </th>
 
               <!-- Date debut -->
-              <th class="px-4 py-3 text-left text-xs font-medium text-header-900 dark:text-header-50 uppercase tracking-wider cursor-pointer hover:bg-header-200 dark:hover:bg-header-700" @click="handleSort('Date_debut')">
+              <th class="px-4 py-3 text-left text-sm font-medium text-header-900 dark:text-header-50 uppercase tracking-wider cursor-pointer hover:bg-header-200 dark:hover:bg-header-700" @click="handleSort('Date_debut')">
                 <div class="flex items-center gap-1">
                   {{ t('events.columns.date_debut') }}
                   <UIcon :name="getSortIcon('Date_debut')" class="w-4 h-4" />
@@ -428,7 +428,7 @@ const formatDate = (date: string | null) => {
               </th>
 
               <!-- Date fin -->
-              <th class="px-4 py-3 text-left text-xs font-medium text-header-900 dark:text-header-50 uppercase tracking-wider cursor-pointer hover:bg-header-200 dark:hover:bg-header-700" @click="handleSort('Date_fin')">
+              <th class="px-4 py-3 text-left text-sm font-medium text-header-900 dark:text-header-50 uppercase tracking-wider cursor-pointer hover:bg-header-200 dark:hover:bg-header-700" @click="handleSort('Date_fin')">
                 <div class="flex items-center gap-1">
                   {{ t('events.columns.date_fin') }}
                   <UIcon :name="getSortIcon('Date_fin')" class="w-4 h-4" />
@@ -436,17 +436,17 @@ const formatDate = (date: string | null) => {
               </th>
 
               <!-- Associate -->
-              <th class="px-4 py-3 text-center text-xs font-medium text-header-900 dark:text-header-50 uppercase tracking-wider w-12">
+              <th class="px-4 py-3 text-center text-sm font-medium text-header-900 dark:text-header-50 uppercase tracking-wider w-12">
                 {{ t('events.columns.associate') }}
               </th>
 
               <!-- Nb gamedays -->
-              <th class="px-4 py-3 text-center text-xs font-medium text-header-900 dark:text-header-50 uppercase tracking-wider">
+              <th class="px-4 py-3 text-center text-sm font-medium text-header-900 dark:text-header-50 uppercase tracking-wider">
                 {{ t('events.columns.nb_gamedays') }}
               </th>
 
               <!-- Actions -->
-              <th class="px-4 py-3 text-right text-xs font-medium text-header-900 dark:text-header-50 uppercase tracking-wider">
+              <th class="px-4 py-3 text-right text-sm font-medium text-header-900 dark:text-header-50 uppercase tracking-wider">
                 {{ t('events.columns.actions') }}
               </th>
             </tr>
@@ -571,7 +571,7 @@ const formatDate = (date: string | null) => {
                 <div class="flex items-center justify-end gap-1">
                   <button
                     v-if="authStore.isSuperAdmin"
-                    class="p-1.5 text-danger-600 dark:text-danger-400"
+                    class="p-1.5 text-danger-600 dark:text-danger-300"
                     :title="t('common.delete')"
                     @click="openDeleteModal(event)"
                   >
@@ -718,7 +718,7 @@ const formatDate = (date: string | null) => {
           <!-- Libelle -->
           <div>
             <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">
-              {{ t('events.form.libelle') }} <span class="text-danger-500 dark:text-danger-400">*</span>
+              {{ t('events.form.libelle') }} <span class="text-danger-600 dark:text-danger-300">*</span>
             </label>
             <input
               v-model="formData.libelle"

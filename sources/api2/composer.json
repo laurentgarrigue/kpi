@@ -78,7 +78,8 @@
         "phpstan-baseline": "phpstan analyse --generate-baseline --memory-limit=512M",
         "test": "phpunit",
         "test-unit": "phpunit --testsuite unit",
-        "test-integration": "phpunit --testsuite integration"
+        "test-integration": "phpunit --testsuite integration",
+        "test-coverage": "phpunit --coverage-text --coverage-clover var/coverage/clover.xml"
     },
     "conflict": {
         "symfony/symfony": "*"
