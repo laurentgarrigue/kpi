@@ -68,8 +68,9 @@ final class ReportScopeSearch
                  LEFT JOIN kp_competition_equipe ea ON ea.Id = m.Id_equipeA
                  LEFT JOIN kp_competition_equipe eb ON eb.Id = m.Id_equipeB
                  WHERE j.Code_saison = ? AND (ea.Libelle LIKE ? OR eb.Libelle LIKE ? OR m.Numero_ordre = ?)
-                 ORDER BY m.Date_match, m.Heure_match, m.Id LIMIT ' . self::LIMIT,
-                [$season, $like, $like, $number],
+                 ORDER BY (m.Numero_ordre = ?) DESC, m.Date_match, m.Heure_match, m.Id LIMIT ' . self::LIMIT,
+                // un numéro de match exact passe avant les équipes dont le nom contient ce chiffre
+                [$season, $like, $like, $number, $number],
             ) as $row) {
                 $results[] = self::item(ReportScope::Match, $row['Id'], [
                     $row['Code_competition'],
