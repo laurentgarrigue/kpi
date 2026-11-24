@@ -85,6 +85,17 @@ final class DesignationCoverageTest extends ApiTestCase
         self::assertSame([], $this->person($later, 9811)['gamedays']);
     }
 
+    public function testSui08TheSummaryIsExportedInCsvAndExcelBySection(): void
+    {
+        $this->client->request('GET', '/admin/designations/summary?season=2998&section=people&format=csv', server: ['HTTP_AUTHORIZATION' => 'Bearer ' . $this->tokenFor('TADMIN')]);
+        self::assertStringStartsWith('text/csv', (string) $this->client->getResponse()->headers->get('Content-Type'));
+        self::assertStringContainsString('Personne;Club;"Libellé du club";', $this->client->getInternalResponse()->getContent());
+
+        $this->client->request('GET', '/admin/designations/summary?season=2998&section=clubs&format=xlsx', server: ['HTTP_AUTHORIZATION' => 'Bearer ' . $this->tokenFor('TADMIN')]);
+        self::assertSame('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', $this->client->getResponse()->headers->get('Content-Type'));
+        $this->requestAs('TADMIN', 'GET', '/admin/designations/summary?season=2998&section=bad&format=csv', expectedStatus: 400);
+    }
+
     public function testTheFollowUpIsReservedToProfilesOneAndTwo(): void
     {
         $this->requestAs('TDIV', 'GET', '/admin/designations/coverage?season=2998', expectedStatus: 403);

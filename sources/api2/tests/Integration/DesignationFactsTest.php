@@ -68,12 +68,12 @@ final class DesignationFactsTest extends ApiTestCase
         $this->connection->executeStatement(
             "INSERT INTO kp_match_detail (Id_match, Periode, Id_evt_match, Equipe_A_B) VALUES (9801, 'M1', 'J', 'A'), (9801, 'M2', 'R', 'B'), (9801, 'M2', 'J', 'B')"
         );
-        self::assertNull($this->row($this->facts(), 'C001', 'card', 'yellow')); // match non validé
+        self::assertNull($this->row($this->facts(), 'C001', 'card_yellow', '')); // match non validé
 
         $this->connection->executeStatement("UPDATE kp_match SET Validation = 'O' WHERE Id = 9801");
         $items = $this->facts();
 
-        self::assertSame([1, 1, 1], [$this->row($items, 'C001', 'card', 'yellow')['quantity'], $this->row($items, 'C002', 'card', 'yellow')['quantity'], $this->row($items, 'C002', 'card', 'red')['quantity']]);
+        self::assertSame([1, 1, 1], [$this->row($items, 'C001', 'card_yellow', '')['quantity'], $this->row($items, 'C002', 'card_yellow', '')['quantity'], $this->row($items, 'C002', 'card_red', '')['quantity']]);
     }
 
     public function testRel05TheStatementIsExportedInCsvAndExcelForProfilesOneAndTwo(): void

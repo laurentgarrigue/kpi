@@ -17,11 +17,12 @@ const { t } = useI18n()
       <button
         v-else
         type="button"
-        class="text-xs underline"
+        class="ml-auto text-danger-600 dark:text-danger-300 hover:text-danger-800 dark:hover:text-danger-200"
         :aria-label="t('designations.remove.label', { name: holderLabel(holder) })"
+        :title="t('designations.remove.confirm')"
         @click="emit('remove', holder)"
       >
-        ×
+        <UIcon name="heroicons:trash" class="w-5 h-5" />
       </button>
     </span>
     <button

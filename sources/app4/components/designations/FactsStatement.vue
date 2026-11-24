@@ -19,9 +19,12 @@ const api = useApi()
 const items = ref<FactRow[]>([])
 const loading = ref(false)
 const clubFilter = ref('')
+const kindFilter = ref('')
+/** Types de fait présents dans le relevé, pour le filtre. */
+const kinds = computed(() => [...new Set(items.value.map(row => row.fact))])
 const shown = computed(() => {
   const q = clubFilter.value.trim().toLowerCase()
-  return q ? items.value.filter(row => `${row.club ?? ''} ${row.clubLabel}`.toLowerCase().includes(q)) : items.value
+  return items.value.filter(row => (!q || `${row.club ?? ''} ${row.clubLabel}`.toLowerCase().includes(q)) && (!kindFilter.value || row.fact === kindFilter.value))
 })
 const qualifierLabel = (row: FactRow) => {
   const key = `designations.facts.qualifier.${row.qualifier}`
@@ -55,6 +58,10 @@ watch(() => props.season, load, { immediate: true })
   <div>
     <div class="flex flex-wrap items-center gap-3 mb-4">
       <input v-model="clubFilter" type="search" :placeholder="t('designations.facts.filter')" :aria-label="t('designations.facts.filter')" class="rounded border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 px-2 py-1 text-sm">
+      <select v-model="kindFilter" :aria-label="t('designations.facts.kind_filter')" class="rounded border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 px-2 py-1 text-sm">
+        <option value="">{{ t('designations.facts.all_kinds') }}</option>
+        <option v-for="kind in kinds" :key="kind" :value="kind">{{ t(`designations.facts.kind.${kind}`) }}</option>
+      </select>
       <span class="text-xs text-header-500">{{ t('designations.facts.help') }}</span>
       <div class="ml-auto flex gap-2">
         <button type="button" class="px-3 py-1.5 text-sm rounded-lg border border-header-300 dark:border-header-700" @click="download('csv')">CSV</button>

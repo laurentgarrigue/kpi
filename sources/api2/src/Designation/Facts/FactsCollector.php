@@ -22,7 +22,7 @@ final class FactsCollector
 {
     /** Officiels « fournis » par un club (annexe 8 § 1) ; l'arbitre non-joueur seulement s'il vient de l'organisateur. */
     private const PROVIDED_ROLES = ['DELEGUE_CNA', 'JUGE_ARBITRE', 'ARBITRE_NJ'];
-    private const CARDS = ['J' => 'yellow', 'R' => 'red', 'D' => 'black'];
+    private const CARDS = ['J' => Fact::CARD_YELLOW, 'R' => Fact::CARD_RED, 'D' => Fact::CARD_BLACK];
     private const ABSENT = ['absent', 'replaced'];
     private const VALIDATED = 'O';
 
@@ -167,7 +167,7 @@ final class FactsCollector
             [$gamedayIds, self::VALIDATED],
             [ArrayParameterType::INTEGER],
         ) as $row) {
-            $facts[] = new Fact($row['club'] ?: null, Fact::CARD, self::CARDS[$row['code']], (int) $row['n'], sprintf('%s · match n° %s', $row['Code_competition'], $row['Numero_ordre'] ?? $row['Id']), 'MATCH', (string) $row['Id']);
+            $facts[] = new Fact($row['club'] ?: null, self::CARDS[$row['code']], '', (int) $row['n'], sprintf('%s · match n° %s', $row['Code_competition'], $row['Numero_ordre'] ?? $row['Id']), 'MATCH', (string) $row['Id']);
         }
 
         return $facts;

@@ -14,7 +14,10 @@ final class Fact
     public const PODIUM = 'podium';
     public const RC_PROVIDED = 'rc_provided';
     public const OFFICIAL_PROVIDED = 'official_provided';
-    public const CARD = 'card';
+    /** Un type de fait par couleur : les pénalités diffèrent (annexe 8 § 2.2), le relevé se filtre par type. */
+    public const CARD_YELLOW = 'card_yellow';
+    public const CARD_RED = 'card_red';
+    public const CARD_BLACK = 'card_black';
     public const OUTFIT_WARNING = 'outfit_warning';
     public const INFRACTION = 'infraction';
 

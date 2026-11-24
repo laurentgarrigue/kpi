@@ -30,7 +30,7 @@ Périmètre technique : app4 (saisie), api2 (modèle, règles, PDF), app3 si bes
 | D2 | Source de vérité | Table `kp_designation` `(saison, rôle, type et id de périmètre, licence, club, autorité, ordre, qualité)`. Les champs texte de `kp_journee` en sont recopiés. |
 | D3 | Rôles | Le catalogue des rôles est défini à un seul endroit (api2) : périmètres autorisés et profil du mandat généré. |
 | D4 | `kp_rc` | Absorbée dans `kp_designation` (rôle `RC`, périmètre compétition ; un RC « national sans compétition », ex `- CNA -`, devient un RC sur le **niveau national**), puis remplacée par une vue SQL en lecture seule pendant la période de secours (l'ancienne table est gardée sous le nom `kp_rc_avant_designations`). |
-| D5 | Compte | Si un licencié désigné n'a pas de compte, le compte est créé automatiquement (`Code` = licence, profil de base 8), **seulement si son email est connu**. La base des licences n'ayant pas d'email, il est saisi avec la Désignation (`email`, facultatif) ; il ne sert qu'à créer le compte. Le profil de base d'un compte existant n'est jamais modifié. |
+| D5 | Compte | Si un licencié désigné n'a pas de compte, le compte est créé automatiquement (`Code` = licence, profil de base 8, **limité aux compétitions de la Désignation** et à sa saison, jamais à toutes), **seulement si son email est connu**. La base des licences n'ayant pas d'email, il est saisi avec la Désignation (`email`, facultatif) ; il ne sert qu'à créer le compte. Le profil de base ni les filtres d'un compte existant ne sont jamais modifiés ; une Désignation ultérieure ne les élargit que par le mandat généré (D6). |
 | D6 | Mandat | Un **mandat généré par saison et par rôle**, dont le périmètre est l'union des Désignations de ce rôle. Il est recalculé à chaque création ou suppression de Désignation, et supprimé quand il n'en reste plus. |
 | D7 | Personnes désignables | Toute personne de la base des joueurs, Joueurs internationaux compris. Sans email, la Désignation est enregistrée sans compte ni mandat. |
 | D8 | Profils des mandats | RC → 4 ; responsable d'équipe → 7 (avec `limitation_equipe_club` = club de l'équipe) ; délégué CNA → 5 ; R1 et juge arbitre → 6 ; arbitre non-joueur → aucun mandat ; représentant des athlètes et autres membres du jury d'appel → aucun mandat. Un profil 3–4 désigné garde ses droits et bascule par le sélecteur de mandat. |
@@ -119,7 +119,7 @@ Source : annexes 2026 au règlement sportif, annexe 8 « Rétributions, pénalit
 | RC fournis, par catégorie (championnat ; Coupe de France, U21, play-down) | Désignations `RC` + club du licencié |
 | Délégués CNA, juges arbitres, arbitres non-joueurs désignés par l'organisateur (D23) fournis, par journée | Désignations `DELEGUE_CNA`, `JUGE_ARBITRE`, `ARBITRE_NJ`, confirmées par le bilan de journée (présence effective) |
 | Joueurs ajoutés hors délai sur une feuille de présence | Journal des feuilles de présence (à vérifier) |
-| Cartons rouges et jaunes pris par des joueurs | Timeline des matchs validés |
+| Cartons jaunes, rouges et noirs pris par des joueurs, **un type de fait par couleur** (pénalités différentes) | Timeline des matchs validés |
 | Avertissements pour tenue d'arbitre non conforme, par arbitre | Bilan arbitrage (champ structuré par arbitre) |
 | Infractions par catégorie (RP KAP 59) | Bilans de journée, rapports d'incident et de jury d'appel |
 
@@ -232,6 +232,9 @@ Les tests portent le code du critère dans leur nom. « National » = compétiti
 - **MAN-01** — Étant donné un licencié sans compte, quand on le désigne sur un rôle à mandat en donnant son email,
   alors un compte `Code = licence`, profil 8, est créé et un e-mail d'activation est envoyé ; la réponse indique
   `account: created` (`existing` si le compte existait, `none` sinon).
+- **MAN-12** — Étant donné un licencié sans compte désigné avec son email sur une journée de la compétition `NDES`
+  (saison 2998), alors son compte (profil 8) a `Filtre_competition = |NDES|` et `Filtre_saison = |2998|` : il ne voit
+  pas les autres compétitions. Un périmètre sans compétition (événement sans journée) ne crée pas de compte.
 - **MAN-02** — Étant donné un licencié sans email, quand on le désigne, alors la Désignation est créée, sans compte
   ni mandat, et la réponse le signale.
 - **MAN-03** — Étant donné un compte existant de profil 7, quand on le désigne délégué CNA, alors son profil de
@@ -263,6 +266,10 @@ Les tests portent le code du critère dans leur nom. « National » = compétiti
   orange avec le motif ; idem pour une personne sans email.
 - **SUI-05** — Étant donné le filtre « seulement les manques », alors seules les lignes ayant au moins une case
   rouge sont listées.
+- **SUI-07** — Dans le récapitulatif, les phases d'une compétition de type CP de mêmes dates et lieu comptent pour
+  **une seule** journée couverte et **une seule** Désignation (9 phases désignées = 1), comme dans la matrice.
+- **SUI-08** — Chaque tableau du récapitulatif (par personne, par club) se replie et se déplie, et s'exporte en CSV et
+  en Excel (une ligne par personne ou club ; par rôle, Désignations et journées couvertes), sur la saison ou la période.
 - **SUI-06** — Le récapitulatif donne, par personne et par club, le nombre de Désignations par rôle et le nombre de
   journées couvertes, sur la saison ou une période.
 
@@ -315,6 +322,8 @@ Les tests portent le code du critère dans leur nom. « National » = compétiti
   club figé dans la Désignation.
 - **REL-04** — Étant donné un fait du relevé, alors son détail donne la source (journée, match, Désignation ou
   rapport).
+- **REL-06** — Les cartons jaunes, rouges et noirs sont trois types de fait distincts (`card_yellow`, `card_red`,
+  `card_black`) ; l'écran filtre le relevé par type de fait, en plus du club.
 - **REL-05** — Le relevé s'exporte en CSV et en Excel.
 
 **Classement national des clubs (D20, D24)**

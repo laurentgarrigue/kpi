@@ -20,8 +20,11 @@ final class MandateRepository
         return $row === false ? null : ['niveau' => (int) $row['Niveau'], 'mail' => (string) $row['Mail']];
     }
 
-    /** Compte de consultation (profil 8), sans filtre ni mot de passe utilisable : l'activation passe par le lien. */
-    public function createAccount(int $matric, string $identity, string $mail, int $profile, string $unusablePasswordHash): void
+    /**
+     * Compte de consultation (profil 8) restreint aux compétitions et à la saison de la Désignation (D5), sans mot de
+     * passe utilisable : l'activation passe par le lien.
+     */
+    public function createAccount(int $matric, string $identity, string $mail, int $profile, string $unusablePasswordHash, string $competitionFilter, string $seasonFilter): void
     {
         $this->connection->insert('kp_user', [
             'Code' => (string) $matric,
@@ -31,8 +34,9 @@ final class MandateRepository
             'Tel' => '',
             'Fonction' => '',
             'Niveau' => $profile,
-            'Filtre_competition' => '',
-            'Filtre_saison' => '',
+            'Type_filtre_competition' => 2,
+            'Filtre_competition' => $competitionFilter,
+            'Filtre_saison' => $seasonFilter,
             'Filtre_competition_sql' => '',
             'Filtre_journee' => '',
         ]);

@@ -62,7 +62,7 @@ final class DesignationService
             $created = $this->repository->find($this->repository->insert($designation, $user->getUserIdentifier()))
                 ?? throw DesignationRejected::notFound();
             $this->legacyColumns->afterDesignationChange($created);
-            $account = $this->mandates->ensureAccount($created->matric, $created->role, $email);
+            $account = $this->mandates->ensureAccount($created, $email);
             $this->mandates->refresh($created->matric, $created->season, $created->role);
 
             return new CreatedDesignation($created, $account);

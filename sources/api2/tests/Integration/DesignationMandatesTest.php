@@ -29,6 +29,16 @@ final class DesignationMandatesTest extends ApiTestCase
         self::assertSame(['libelle' => 'R1 2998', 'niveau' => 6, 'filtre_competition' => '|NDES|', 'filtre_journee' => '9801'], $this->mandate('9812', 'R1'));
     }
 
+    public function testMan12ANewAccountIsLimitedToTheCompetitionsOfItsDesignation(): void
+    {
+        $this->designate(['role' => 'R1', 'scopeType' => 'JOURNEE', 'scopeId' => '9801', 'matric' => 9812, 'email' => 'arbitre@example.test']);
+
+        self::assertSame(
+            ['Filtre_competition' => '|NDES|', 'Filtre_saison' => '|2998|'],
+            $this->connection->fetchAssociative("SELECT Filtre_competition, Filtre_saison FROM kp_user WHERE Code = '9812'"),
+        );
+    }
+
     public function testMan02WithoutEmailTheDesignationIsCreatedWithoutAccountNorMandate(): void
     {
         $created = $this->designate(['role' => 'R1', 'scopeType' => 'JOURNEE', 'scopeId' => '9801', 'matric' => 9813]);

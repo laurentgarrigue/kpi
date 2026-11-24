@@ -66,9 +66,9 @@
         </colgroup>
         <thead>
             <tr class="pdf-sheet__highlight">
-                <th colspan="6" class="pdf-sheet__team-head"><span class="pdf-sheet__badge"{% if sheet.team_a.badge %} style="{{ sheet.team_a.badge }}"{% endif %}>X</span>{{ l['scoresheet.team'] }} A: {{ sheet.team_a.name }}{% if sheet.team_a.colour %} ({{ sheet.team_a.colour }}){% endif %}</th>
+                <th colspan="6" class="pdf-sheet__team-head"><span class="pdf-sheet__badge"{% if sheet.team_a.badge %} style="{{ sheet.team_a.badge }}"{% endif %}>99</span>{{ l['scoresheet.team'] }} A: {{ sheet.team_a.name }}{% if sheet.team_a.colour %} ({{ sheet.team_a.colour }}){% endif %}</th>
                 <th class="pdf-sheet__no-highlight">{{ l['scoresheet.period'] }}</th>
-                <th colspan="6" class="pdf-sheet__team-head"><span class="pdf-sheet__badge"{% if sheet.team_b.badge %} style="{{ sheet.team_b.badge }}"{% endif %}>X</span>{{ l['scoresheet.team'] }} B: {{ sheet.team_b.name }}{% if sheet.team_b.colour %} ({{ sheet.team_b.colour }}){% endif %}</th>
+                <th colspan="6" class="pdf-sheet__team-head"><span class="pdf-sheet__badge"{% if sheet.team_b.badge %} style="{{ sheet.team_b.badge }}"{% endif %}>99</span>{{ l['scoresheet.team'] }} B: {{ sheet.team_b.name }}{% if sheet.team_b.colour %} ({{ sheet.team_b.colour }}){% endif %}</th>
             </tr>
             <tr>
                 <th class="pdf-sheet__card--green">{{ l['scoresheet.card_green'] }}</th><th class="pdf-sheet__card--yellow">{{ l['scoresheet.card_yellow'] }}</th><th class="pdf-sheet__card--red">{{ l['scoresheet.card_red'] }}</th><th class="pdf-sheet__card--definitive">{{ l['scoresheet.definitive'] }}</th>

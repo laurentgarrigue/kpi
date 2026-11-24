@@ -12,8 +12,8 @@ definePageMeta({
 })
 
 type Tab = 'matrix' | 'summary' | 'facts'
-interface SummaryPerson { matric: number, name: string, club: string | null, designations: Record<string, number>, gamedays: Record<string, number> }
-interface SummaryClub { club: string | null, people: number, designations: Record<string, number>, gamedays: Record<string, number> }
+interface SummaryPerson { matric: number, name: string, club: string | null, clubLabel: string, designations: Record<string, number>, gamedays: Record<string, number> }
+interface SummaryClub { club: string | null, clubLabel: string, people: number, designations: Record<string, number>, gamedays: Record<string, number> }
 
 const { t } = useI18n()
 const api = useApi()
@@ -38,6 +38,25 @@ const summary = ref<{ people: SummaryPerson[], clubs: SummaryClub[] } | null>(nu
 const summaryFrom = ref('')
 const summaryTo = ref('')
 const target = ref<DesignationTarget | null>(null)
+/** Tableaux du récapitulatif repliés (tous dépliés par défaut). */
+const collapsedSummary = ref<Set<string>>(new Set())
+const toggleSummary = (section: string) => {
+  const next = new Set(collapsedSummary.value)
+  if (!next.delete(section)) next.add(section)
+  collapsedSummary.value = next
+}
+const downloadSummary = async (section: 'people' | 'clubs', format: 'csv' | 'xlsx') => {
+  const params = new URLSearchParams({ season: season.value, section, format })
+  if (summaryFrom.value) params.set('from', summaryFrom.value)
+  if (summaryTo.value) params.set('to', summaryTo.value)
+  const buffer = await api.getBlob(`/admin/designations/summary?${params}`)
+  const type = format === 'csv' ? 'text/csv' : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+  const link = document.createElement('a')
+  link.href = URL.createObjectURL(new Blob([buffer], { type }))
+  link.download = `recapitulatif-${section}-${season.value}.${format}`
+  link.click()
+  URL.revokeObjectURL(link.href)
+}
 const removing = ref<CoverageHolder | null>(null)
 
 const season = computed(() => workContext.season)
@@ -207,7 +226,7 @@ onMounted(async () => {
                 </tr>
                 <template v-if="showsManager('RESP_EQUIPE')">
                   <tr v-for="team in competition.teams" :key="`team-${team.id}`">
-                    <th scope="row" class="px-2 py-1 text-left font-normal">{{ team.label }}</th>
+                    <th scope="row" class="px-2 py-1 text-left font-normal">{{ team.label }}<span v-if="team.club" class="ml-1 font-mono text-xs text-header-500 dark:text-header-300">({{ team.club }})</span></th>
                     <td class="px-2 py-1" :class="statusClasses(team.cells.RESP_EQUIPE.status)" :title="cellTitle(team.cells.RESP_EQUIPE)">
                       <DesignationsCellHolders
                         :cell="team.cells.RESP_EQUIPE"
@@ -273,8 +292,15 @@ onMounted(async () => {
       <p class="text-sm text-header-600 dark:text-header-300 mb-2">{{ t('designations.summary_help') }}</p>
 
       <template v-for="section in (['people', 'clubs'] as const)" :key="section">
-        <h2 class="font-semibold mt-6 mb-2">{{ t(`designations.summary.${section}`) }}</h2>
-        <div class="overflow-x-auto">
+        <div class="flex items-center gap-2 mt-6 mb-2 bg-header-200 dark:bg-header-700 px-4 py-2 rounded">
+          <button type="button" class="flex items-center gap-2 flex-1 text-left cursor-pointer" :aria-expanded="!collapsedSummary.has(section)" @click="toggleSummary(section)">
+            <UIcon name="heroicons:chevron-right" class="w-4 h-4 text-header-900 dark:text-header-50 transition-transform" :class="{ 'rotate-90': !collapsedSummary.has(section) }" />
+            <h2 class="text-sm font-semibold text-header-900 dark:text-header-50">{{ t(`designations.summary.${section}`) }}</h2>
+          </button>
+          <button type="button" class="px-3 py-1 text-sm rounded-lg border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50" @click="downloadSummary(section, 'csv')">CSV</button>
+          <button type="button" class="px-3 py-1 text-sm rounded-lg border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50" @click="downloadSummary(section, 'xlsx')">Excel</button>
+        </div>
+        <div v-show="!collapsedSummary.has(section)" class="overflow-x-auto">
           <table class="min-w-full text-sm border border-header-200 dark:border-header-700">
             <thead>
               <tr class="bg-header-50 dark:bg-header-800">
@@ -286,8 +312,9 @@ onMounted(async () => {
             <tbody>
               <tr v-for="row in (section === 'people' ? summary?.people : summary?.clubs) ?? []" :key="'matric' in row ? row.matric : (row.club ?? '-')">
                 <th scope="row" class="px-2 py-1 text-left font-normal">
-                  <template v-if="'matric' in row">{{ row.name }} <span class="text-header-500">({{ row.club ?? '—' }})</span></template>
-                  <template v-else>{{ row.club ?? t('designations.no_club') }}</template>
+                  <template v-if="'matric' in row">{{ row.name }} <span class="text-header-500">({{ row.club ? (row.clubLabel ? `${row.clubLabel} · ${row.club}` : row.club) : '—' }})</span></template>
+                  <template v-else-if="row.club">{{ row.clubLabel }} <span class="text-header-500">({{ row.club }})</span></template>
+                  <template v-else>{{ t('designations.no_club') }}</template>
                 </th>
                 <td v-if="'people' in row" class="px-2 py-1 text-right">{{ row.people }}</td>
                 <td v-for="role in summaryRoles" :key="role" class="px-2 py-1 text-right tabular-nums">

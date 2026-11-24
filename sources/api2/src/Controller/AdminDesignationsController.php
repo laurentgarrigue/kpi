@@ -88,26 +88,7 @@ final class AdminDesignationsController extends AbstractController
                 implode(' ; ', array_map(static fn (array $d): string => sprintf('%s (%s %s)', $d['label'], $d['sourceType'], $d['sourceId']), $row['details'])),
             ];
         }
-        $xlsx = $format === 'xlsx';
-        $response = new StreamedResponse(static function () use ($table, $xlsx): void {
-            if ($xlsx) {
-                $spreadsheet = new Spreadsheet();
-                $spreadsheet->getActiveSheet()->fromArray($table, null, 'A1', true);
-                (new Xlsx($spreadsheet))->save('php://output');
-
-                return;
-            }
-            $output = fopen('php://output', 'w');
-            fwrite($output, "\xEF\xBB\xBF"); // BOM : accents corrects dans Excel
-            foreach ($table as $line) {
-                fputcsv($output, $line, ';', '"', '');
-            }
-            fclose($output);
-        });
-        $response->headers->set('Content-Type', $xlsx ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' : 'text/csv; charset=utf-8');
-        $response->headers->set('Content-Disposition', $response->headers->makeDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT, sprintf('releve-des-faits-%s.%s', $season, $format)));
-
-        return $response;
+        return $this->download($table, $format, sprintf('releve-des-faits-%s', $season));
     }
 
     /** Suivi de couverture (SUI-01 à SUI-05), réservé à ceux qui désignent : profils 1 et 2. */
@@ -165,25 +146,88 @@ final class AdminDesignationsController extends AbstractController
         return $gameday === null ? $this->error(DesignationRejected::NOT_FOUND, Response::HTTP_NOT_FOUND) : $this->json($gameday);
     }
 
+    /**
+     * Tableau en téléchargement CSV (séparateur « ; », BOM pour Excel) ou Excel.
+     *
+     * @param list<list<scalar|null>> $table
+     */
+    private function download(array $table, string $format, string $basename): Response
+    {
+        $xlsx = $format === 'xlsx';
+        $response = new StreamedResponse(static function () use ($table, $xlsx): void {
+            if ($xlsx) {
+                $spreadsheet = new Spreadsheet();
+                $spreadsheet->getActiveSheet()->fromArray($table, null, 'A1', true);
+                (new Xlsx($spreadsheet))->save('php://output');
+
+                return;
+            }
+            $output = fopen('php://output', 'w');
+            fwrite($output, "\xEF\xBB\xBF"); // BOM : accents corrects dans Excel
+            foreach ($table as $line) {
+                fputcsv($output, $line, ';', '"', '');
+            }
+            fclose($output);
+        });
+        $response->headers->set('Content-Type', $xlsx ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' : 'text/csv; charset=utf-8');
+        $response->headers->set('Content-Disposition', $response->headers->makeDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT, sprintf('%s.%s', $basename, $format)));
+
+        return $response;
+    }
+
     /** Récapitulatif par personne et par club (SUI-06), profils 1 et 2. */
     #[Route('/summary', name: 'admin_designations_summary', methods: ['GET'])]
     #[OA\Get(path: '/admin/designations/summary', summary: 'Désignations par rôle et journées couvertes, par personne et par club (période facultative)')]
-    public function summary(Request $request): JsonResponse
+    public function summary(Request $request): Response
     {
         $season = (string) $request->query->get('season', '');
         $from = $request->query->get('from');
         $to = $request->query->get('to');
+        $format = (string) $request->query->get('format', 'json');
+        $section = (string) $request->query->get('section', 'people');
         $datePattern = '/^\d{4}-\d{2}-\d{2}$/';
         if (!preg_match(self::SEASON_PATTERN, $season)
             || ($from !== null && !preg_match($datePattern, (string) $from))
-            || ($to !== null && !preg_match($datePattern, (string) $to))) {
+            || ($to !== null && !preg_match($datePattern, (string) $to))
+            || !in_array($format, ['json', 'csv', 'xlsx'], true) || !in_array($section, ['people', 'clubs'], true)) {
             return $this->error(DesignationRejected::INVALID, Response::HTTP_BAD_REQUEST);
         }
         if (!$this->isDesignator()) {
             return $this->error(DesignationRejected::FORBIDDEN, Response::HTTP_FORBIDDEN);
         }
 
-        return $this->json($this->coverage->summary($season, $from, $to));
+        $summary = $this->coverage->summary($season, $from, $to);
+        if ($format === 'json') {
+            return $this->json($summary);
+        }
+
+        return $this->download(self::summaryTable($summary[$section], $section === 'people'), $format, sprintf('recapitulatif-%s-%s', $section, $season));
+    }
+
+    /**
+     * Une ligne par personne ou par club ; pour chaque rôle, le nombre de Désignations et de journées couvertes.
+     *
+     * @param list<array<string, mixed>> $rows
+     *
+     * @return list<list<scalar|null>>
+     */
+    private static function summaryTable(array $rows, bool $people): array
+    {
+        $roles = RoleCatalog::all();
+        $header = $people ? ['Personne', 'Club', 'Libellé du club'] : ['Club', 'Libellé du club', 'Personnes'];
+        foreach ($roles as $role) {
+            array_push($header, $role->label . ' (désignations)', $role->label . ' (journées)');
+        }
+        $table = [$header];
+        foreach ($rows as $row) {
+            $line = $people ? [$row['name'], $row['club'] ?? '', $row['clubLabel']] : [$row['club'] ?? '', $row['clubLabel'], $row['people']];
+            foreach (array_keys($roles) as $code) {
+                array_push($line, $row['designations'][$code] ?? 0, $row['gamedays'][$code] ?? 0);
+            }
+            $table[] = $line;
+        }
+
+        return $table;
     }
 
     #[Route('/roles', name: 'admin_designations_roles', methods: ['GET'])]

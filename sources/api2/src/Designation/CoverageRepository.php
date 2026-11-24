@@ -76,6 +76,24 @@ final class CoverageRepository
     }
 
     /**
+     * @param list<string> $codes
+     *
+     * @return array<string, string> code => libellé
+     */
+    public function clubLabels(array $codes): array
+    {
+        if ($codes === []) {
+            return [];
+        }
+
+        return array_column($this->connection->fetchAllAssociative(
+            'SELECT Code, Libelle FROM kp_club WHERE Code IN (?)',
+            [$codes],
+            [ArrayParameterType::STRING],
+        ), 'Libelle', 'Code');
+    }
+
+    /**
      * @param list<int> $matrics
      *
      * @return array<int, array{name: string, hasEmail: bool}>

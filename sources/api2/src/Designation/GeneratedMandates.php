@@ -8,7 +8,7 @@ use App\Service\NotificationService;
  * Comptes et mandats générés par les Désignations (FEATURE_DESIGNATIONS.md D5, D6, D8, D10, D16 ; MAN-01 à MAN-11).
  *
  * - Compte : créé à la première Désignation d'un rôle à mandat, seulement si un email est fourni ; `Code` = licence,
- *   profil de base 8 ; un lien d'activation est envoyé (mécanisme du mot de passe oublié). Un compte existant n'est
+ *   profil de base 8 limité aux compétitions de la Désignation ; un lien d'activation est envoyé (mécanisme du mot de passe oublié). Un compte existant n'est
  *   jamais modifié.
  * - Mandat : un par (compte, saison, rôle), recalculé depuis toutes les Désignations de ce rôle, supprimé quand il
  *   n'en reste plus. Les mandats saisis à la main (designation_role NULL) ne sont jamais touchés.
@@ -32,8 +32,10 @@ final class GeneratedMandates
     /**
      * Compte du licencié désigné : existant, créé avec l'email fourni, ou aucun (MAN-01, MAN-02, MAN-11).
      */
-    public function ensureAccount(int $matric, string $role, ?string $email): string
+    public function ensureAccount(Designation $designation, ?string $email): string
     {
+        $matric = $designation->matric;
+        $role = $designation->role;
         if ($this->repository->account($matric) !== null) {
             return self::ACCOUNT_EXISTING;
         }
@@ -42,8 +44,15 @@ final class GeneratedMandates
             return self::ACCOUNT_NONE;
         }
 
+        // Le compte neuf ne voit que les compétitions de cette Désignation, jamais toutes (D5)
+        $perimeter = $this->perimeter($designation->season, [$designation]);
+        if ($perimeter->isEmpty()) {
+            return self::ACCOUNT_NONE;
+        }
+        $filters = $perimeter->columns();
+
         $identity = trim(($name['nom'] ?? '') . ' ' . ($name['prenom'] ?? ''));
-        $this->repository->createAccount($matric, $identity, $email, self::NEW_ACCOUNT_PROFILE, password_hash(bin2hex(random_bytes(16)), PASSWORD_BCRYPT));
+        $this->repository->createAccount($matric, $identity, $email, self::NEW_ACCOUNT_PROFILE, password_hash(bin2hex(random_bytes(16)), PASSWORD_BCRYPT), $filters['filtre_competition'], $filters['filtre_saison']);
         $token = bin2hex(random_bytes(32));
         $this->repository->storeResetToken($matric, $token);
         $this->notifications->sendPasswordReset($email, $token, true, '', (string) $matric);

@@ -142,9 +142,20 @@ final class CoverageService
     public function summary(string $season, ?string $from, ?string $to): array
     {
         $designations = $this->designations->ofSeason($season);
-        $codes = array_column($this->coverage->competitions($season), 'code');
+        $competitions = $this->coverage->competitions($season);
+        $codes = array_column($competitions, 'code');
+        $tournaments = array_column(array_filter($competitions, static fn (array $c): bool => $c['type'] === 'CP'), 'code');
+        $allGamedays = $this->coverage->gamedays($season, $codes);
+        // Les phases d'un tournoi (CP) de mêmes dates et lieu ne font qu'une journée (SUI-07)
+        $dayKey = static fn (array $g): string => in_array($g['competition'], $tournaments, true)
+            ? "{$g['competition']}|{$g['start']}|{$g['end']}|{$g['place']}"
+            : (string) $g['id'];
+        $keyOfGameday = [];
+        foreach ($allGamedays as $g) {
+            $keyOfGameday[$g['id']] = $dayKey($g);
+        }
         $gamedays = array_filter(
-            $this->coverage->gamedays($season, $codes),
+            $allGamedays,
             static fn (array $g): bool => ($from === null || ($g['end'] ?? $g['start']) >= $from) && ($to === null || $g['start'] <= $to),
         );
 
@@ -154,18 +165,26 @@ final class CoverageService
         };
         foreach ($designations as $designation) {
             $add($designation);
-            $people[$designation->matric]['designations'][$designation->role] = ($people[$designation->matric]['designations'][$designation->role] ?? 0) + 1;
+            $unit = $designation->scopeType === ScopeType::Journee && isset($keyOfGameday[(int) $designation->scopeId])
+                ? 'day:' . $keyOfGameday[(int) $designation->scopeId]
+                : "designation:{$designation->id}";
+            $people[$designation->matric]['designationUnits'][$designation->role][$unit] = true;
         }
+        foreach ($people as &$person) {
+            $person['designations'] = array_map('count', $person['designationUnits'] ?? []);
+        }
+        unset($person);
         foreach ($gamedays as $gameday) {
             $effective = EffectiveDesignations::of(new GamedayScope($gameday['id'], $season, $gameday['competition'], $gameday['eventIds']), $designations);
             foreach (self::GAMEDAY_ROLES as $role) {
                 foreach ($effective->holders($role) as $holder) {
-                    $people[$holder->matric]['gamedays'][$role][$gameday['id']] = true;
+                    $people[$holder->matric]['gamedays'][$role][$keyOfGameday[$gameday['id']]] = true;
                 }
             }
         }
 
         $names = $this->coverage->people(array_keys($people));
+        $clubLabels = $this->coverage->clubLabels(array_values(array_unique(array_filter(array_column($people, 'club')))));
         $peopleRows = [];
         $clubs = [];
         foreach ($people as $matric => $person) {
@@ -174,11 +193,12 @@ final class CoverageService
                 'matric' => $matric,
                 'name' => $names[$matric]['name'] ?? '',
                 'club' => $person['club'],
+                'clubLabel' => $clubLabels[$person['club'] ?? ''] ?? '',
                 'designations' => $person['designations'],
                 'gamedays' => $gamedaysByRole,
             ];
             $club = $person['club'] ?? '';
-            $clubs[$club] ??= ['club' => $person['club'], 'people' => 0, 'designations' => [], 'gamedays' => []];
+            $clubs[$club] ??= ['club' => $person['club'], 'clubLabel' => $clubLabels[$club] ?? '', 'people' => 0, 'designations' => [], 'gamedays' => []];
             $clubs[$club]['people']++;
             foreach ($person['designations'] as $role => $count) {
                 $clubs[$club]['designations'][$role] = ($clubs[$club]['designations'][$role] ?? 0) + $count;

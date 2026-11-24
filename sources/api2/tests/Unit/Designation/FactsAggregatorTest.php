@@ -27,10 +27,10 @@ final class FactsAggregatorTest extends TestCase
         $rows = FactsAggregator::rows([
             new Fact('C002', Fact::GAMEDAY_PITCHES, 'NDES', 0, 'J1', 'JOURNEE', '9801'),
             new Fact(null, Fact::INFRACTION, '2', 1, 'Club X', 'REPORT', '12'),
-            new Fact('C001', Fact::CARD, 'yellow', 3, 'Match 1', 'MATCH', '9801'),
+            new Fact('C001', Fact::CARD_YELLOW, '', 3, 'Match 1', 'MATCH', '9801'),
         ], []);
 
-        self::assertSame([['C001', 'card'], [null, 'infraction']], array_map(static fn (array $r): array => [$r['club'], $r['fact']], $rows));
+        self::assertSame([['C001', 'card_yellow'], [null, 'infraction']], array_map(static fn (array $r): array => [$r['club'], $r['fact']], $rows));
         foreach ($rows as $row) {
             self::assertSame(['club', 'clubLabel', 'fact', 'qualifier', 'quantity', 'details'], array_keys($row));
         }
