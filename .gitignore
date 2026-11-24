@@ -218,3 +218,4 @@ sources/app3/public/maquettes/
 DOC/communication/**/node_modules/
 DOC/communication/**/out/
 DOC/communication/**/recordings/
+DOC/communication/**/public/demos/*.mp4
