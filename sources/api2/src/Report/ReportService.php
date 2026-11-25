@@ -17,6 +17,8 @@ use Psr\Clock\ClockInterface;
 final class ReportService
 {
     private const MANAGER_MAX_PROFILE = 2;
+    /** `saisi_par` d'un brouillon ouvert par KPI (aucun compte ne porte ce code). */
+    public const SYSTEM_AUTHOR = 'KPI';
 
     public function __construct(
         private readonly ReportRepository $reports,
@@ -60,6 +62,25 @@ final class ReportService
         $clean = $this->answers($definition, self::seeded($definition, $answers, $this->kpi->of($perimeter)), false);
 
         $id = $this->reports->insert($definition, $scope, $scopeId, $perimeter->season, $author, $user->getUserIdentifier(), $clean);
+
+        return $this->reports->find($id) ?? throw new ReportRejected(ReportRejected::NOT_FOUND, 404);
+    }
+
+    /**
+     * Brouillon ouvert par KPI lui-même, sans utilisateur (suspension « jury d'appel », FEATURE_CARD_SUSPENSIONS.md S12) :
+     * saisi par `KPI`, pré-rempli comme un rapport créé à la main ; son auteur (le président du jury) et les profils 1–2
+     * le reprennent.
+     *
+     * @param array<string, mixed> $answers
+     *
+     * @throws ReportRejected
+     */
+    public function openSystemDraft(string $type, ReportScope $scope, string $scopeId, string $season, ?int $author, array $answers): Report
+    {
+        $definition = ReportTypeCatalog::current($type);
+        $perimeter = $this->perimeter($scope, $scopeId, $season);
+        $clean = $this->answers($definition, self::seeded($definition, $answers, $this->kpi->of($perimeter)), false);
+        $id = $this->reports->insert($definition, $scope, $scopeId, $perimeter->season, $author, self::SYSTEM_AUTHOR, $clean);
 
         return $this->reports->find($id) ?? throw new ReportRejected(ReportRejected::NOT_FOUND, 404);
     }

@@ -15,8 +15,9 @@ Catalogues existants au 2026-11-22 :
 | Affichage des compétitions | `src/PublicResults/CompetitionRules.php`, `src/PublicSite/PublicSiteRules.php` | Règles d'affichage public reprises du legacy |
 | Éditorial et formulaires | `src/Cms/CmsRules.php`, `src/Forms/FormRules.php` | Règles du CMS et des formulaires d'inscription |
 | Journal | `src/Journal/JournalCategories.php` | Familles d'actions du journal d'activité |
+| Cumuls de cartons | `src/Discipline/SuspensionCatalog.php` ([FEATURE_CARD_SUSPENSIONS.md](../../../specs/FEATURE_CARD_SUSPENSIONS.md)) | Seuils de cartons et suspensions de l'art. 50, versionnés par saison (ajouté le 2026-11-25) |
 
-Il n'existe **aucun catalogue** de notifications ou de cumuls de cartons (suspension, alerte après N cartons).
+Il n'existait **aucun catalogue** de cumuls de cartons au 2026-11-22 ; il a été ajouté depuis (ligne « Cumuls de cartons »).
 
 ## Considered Options
 

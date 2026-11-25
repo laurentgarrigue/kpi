@@ -63,7 +63,7 @@ Aucune question de cadrage ouverte. Reste à faire : relecture des critères (§
 découpage en tickets.
 
 **Hors périmètre** (tickets créés le 2026-11-22) : états PDF des catalogues (`.scratch/catalogues-pdf/`), écrans de
-scoring autonomes (`.scratch/scoring-ecrans-autonomes/`), cumuls de cartons et notifications (`.scratch/cumuls-cartons/`).
+scoring autonomes (`.scratch/scoring-ecrans-autonomes/`), cumuls de cartons et notifications (`.scratch/cumuls-cartons/`, [FEATURE_CARD_SUSPENSIONS.md](FEATURE_CARD_SUSPENSIONS.md)).
 
 ## 4. Suivi des désignations (app4)
 

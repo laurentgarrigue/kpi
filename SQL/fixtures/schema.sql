@@ -620,6 +620,34 @@ CREATE TABLE `kp_report_submission` (
   CONSTRAINT `fk_submission_report` FOREIGN KEY (`report_id`) REFERENCES `kp_report` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Cumuls de cartons et suspensions (FEATURE_CARD_SUSPENSIONS.md § 4)
+DROP TABLE IF EXISTS `kp_card_suspension`;
+CREATE TABLE `kp_card_suspension` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `saison` char(4) NOT NULL,
+  `section` int(11) NOT NULL COMMENT 'kp_groupe.section de la compétition (décompte par section, S3)',
+  `matric` int(11) unsigned NOT NULL,
+  `carton_id` varchar(32) CHARACTER SET ascii COLLATE ascii_general_ci NOT NULL COMMENT 'kp_match_detail.Id du carton déclencheur',
+  `match_id` int(10) unsigned NOT NULL,
+  `journee_id` int(11) NOT NULL,
+  `code_competition` varchar(12) NOT NULL,
+  `regle` varchar(30) NOT NULL COMMENT 'Règle retenue (App\\Discipline\\SuspensionCatalog)',
+  `regles` text NOT NULL COMMENT 'Toutes les règles déclenchées par ce carton (JSON)',
+  `version_regles` smallint(6) NOT NULL,
+  `decompte` smallint(6) NOT NULL COMMENT 'Décompte de la règle retenue (4e carton de la saison…)',
+  `matchs` smallint(6) NOT NULL,
+  `jury_appel` tinyint(1) NOT NULL DEFAULT 0,
+  `actif` tinyint(1) DEFAULT 1 COMMENT '1 = en vigueur, NULL = annulée',
+  `detectee_le` datetime NOT NULL,
+  `notifiee_le` datetime DEFAULT NULL COMMENT 'Vide si enregistrée en mode --silent',
+  `annulee_le` datetime DEFAULT NULL,
+  `destinataires` text DEFAULT NULL COMMENT 'Licences notifiées (JSON)',
+  `rapport_id` int(11) DEFAULT NULL COMMENT 'Brouillon de rapport de jury d''appel (kp_report)',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uniq_card_suspension_actif` (`carton_id`, `actif`),
+  KEY `idx_card_suspension_saison` (`saison`, `matric`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Durcissement authentification (AUTH_HARDENING.md § 2.3) : journal des tentatives de login,
 -- utilisé par les tests de rate-limit, verrouillage et audit.
 DROP TABLE IF EXISTS `kp_user_login_history`;
