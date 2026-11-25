@@ -28,6 +28,7 @@ final class PdfCatalog
     public const QRCODES = 'qrcodes';
     public const QRCODE_APP = 'qrcode-app';
     public const SCHEMA = 'schema';
+    public const CLUB_RANKING = 'club-ranking';
 
     /** Minimum role of each admin document (§ 7.2 to § 7.5). */
     private const ADMIN_ROLES = [
@@ -46,6 +47,8 @@ final class PdfCatalog
         self::STATS => 'ROLE_VIEWER',
         self::CARDS => 'ROLE_ORGANIZER',
         self::SCHEMA => 'ROLE_VIEWER',
+        // National club ranking: profile 1 only (PAGE_CLASSEMENT_NATIONAL_CLUBS.md Q-1)
+        self::CLUB_RANKING => 'ROLE_SUPER_ADMIN',
     ];
 
     /** Options that add data, with their own role (§ 7.2): `option` or `option=value`. */

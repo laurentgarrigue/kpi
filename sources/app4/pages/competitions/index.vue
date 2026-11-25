@@ -25,11 +25,13 @@ const api = useApi()
 const competitionsApi = useCompetitionsApi()
 const authStore = useAuthStore()
 const workContext = useWorkContextStore()
+const route = useRoute()
 
 // State
 const loading = ref(false)
 const competitions = ref<AdminCompetition[]>([])
-const search = ref('')
+// ?search=CODE: deep link (e.g. from the club ranking alerts)
+const search = ref(typeof route.query.search === 'string' ? route.query.search : '')
 
 // Accordion state: collapsed sections (all expanded by default)
 const collapsedSections = ref<Set<number>>(new Set())

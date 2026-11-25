@@ -29,6 +29,7 @@ final class PdfCatalogTest extends TestCase
             PdfCatalog::STATS => 'ROLE_VIEWER',
             PdfCatalog::CARDS => 'ROLE_ORGANIZER',
             PdfCatalog::SCHEMA => 'ROLE_VIEWER',                         // as the Schema page
+            PdfCatalog::CLUB_RANKING => 'ROLE_SUPER_ADMIN',              // PAGE_CLASSEMENT_NATIONAL_CLUBS.md Q-1: profile 1
         ];
 
         foreach ($expected as $document => $role) {
@@ -54,5 +55,6 @@ final class PdfCatalogTest extends TestCase
         self::assertFalse(PdfCatalog::isPublicDocument(PdfCatalog::PRESENCE));
         self::assertTrue(PdfCatalog::isPublicDocument(PdfCatalog::RANKING));
         self::assertTrue(PdfCatalog::isPublicDocument(PdfCatalog::GAMES_GRID));
+        self::assertFalse(PdfCatalog::isPublicDocument(PdfCatalog::CLUB_RANKING), 'published by profile 1 as a file, no public route yet');
     }
 }
