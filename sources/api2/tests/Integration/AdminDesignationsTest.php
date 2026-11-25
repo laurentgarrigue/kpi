@@ -99,6 +99,9 @@ final class AdminDesignationsTest extends ApiTestCase
     public function testDes06ProfilesFourAndAboveCannotDesignateAndProfileThreeCan(): void
     {
         $this->create('9811', ['role' => 'R1', 'scopeType' => 'JOURNEE', 'scopeId' => '9801', 'matric' => 9812], 403);
+        // limité à SCA/SCB en 2997, TDIV ne désigne pas sur la journée 9801 de NDES (périmètre du mandat)
+        $this->create('TDIV', ['role' => 'R1', 'scopeType' => 'JOURNEE', 'scopeId' => '9801', 'matric' => 9812], 403);
+        $this->connection->executeStatement("UPDATE kp_user SET Filtre_competition = '', Filtre_saison = '' WHERE Code = 'TDIV'");
         $this->create('TDIV', ['role' => 'R1', 'scopeType' => 'JOURNEE', 'scopeId' => '9801', 'matric' => 9812], 201);
         // les responsables de compétition se consultent seulement
         $this->create('TDIV', ['role' => 'RC', 'scopeType' => 'COMPETITION', 'scopeId' => 'NDES', 'matric' => 9813], 403);

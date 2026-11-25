@@ -100,7 +100,10 @@ final class DesignationCoverageTest extends ApiTestCase
     public function testTheFollowUpIsReservedToProfilesOneToThreeAndTheSummaryToOneAndTwo(): void
     {
         $this->requestAs('9811', 'GET', '/admin/designations/coverage?season=2998', expectedStatus: 403);
-        $this->requestAs('TDIV', 'GET', '/admin/designations/coverage?season=2998'); // le profil 3 voit le suivi…
+        // un profil 3 limité à la saison 2997 ne voit pas la saison 2998
+        $this->requestAs('TDIV', 'GET', '/admin/designations/coverage?season=2998', expectedStatus: 403);
+        static::getContainer()->get(\Doctrine\DBAL\Connection::class)->executeStatement("UPDATE kp_user SET Filtre_competition = '', Filtre_saison = '' WHERE Code = 'TDIV'");
+        $this->requestAs('TDIV', 'GET', '/admin/designations/coverage?season=2998'); // le profil 3 sans limite voit le suivi…
         $this->requestAs('TDIV', 'GET', '/admin/designations/summary?season=2998', expectedStatus: 403); // …pas le récapitulatif
         $this->requestAs('9811', 'GET', '/admin/designations/summary?season=2998', expectedStatus: 403);
         $this->requestAs('TADMIN', 'GET', '/admin/designations/coverage?season=2998&level=bad', expectedStatus: 400);
