@@ -115,7 +115,77 @@ savoir quoi révoquer.
 corrections de fond** (L1, L2) dont l'incrustation a de toute façon besoin. Le coût est faible ;
 le risque est concentré sur le réseau du site et sur l'horloge des boîtiers.
 
-### 2.7 Recommandation
+### 2.7 Piste : écran sur le même réseau local que le PC de la console (2026-11-25)
+
+**Question** : si l'écran et le PC de la console partagent le même réseau local (même routeur 4G,
+même switch), la latence est-elle réglée ?
+
+**Non, pas à lui seul.** Partager le réseau ne change pas le trajet des données : la console
+écrit dans api2 et l'écran lit Mercure, donc tout passe **par le serveur KPI sur Internet**,
+deux fois par le même accès 4G. Les vrais coûts restent entiers :
+
+| Cause | Réglée par le simple réseau local ? |
+|---|---|
+| L1 — attente du drainage de l'outbox (0–1 s), **la plus grosse part** | ❌ elle est sur le serveur |
+| Aller-retour Internet console → serveur → écran | ❌ inchangé (on gagne seulement d'éviter le Wi-Fi public saturé, déjà exclu au §2.3) |
+| L2 — décalage d'horloge entre la console et l'écran | ❌ inchangé |
+| Coupure d'Internet | ❌ l'écran perd le flux comme avant |
+
+Le réseau local ne rapporte que si les données vont **directement** du PC à l'écran. Pour un
+navigateur, il n'existe que trois façons de le faire :
+
+| Chemin direct | Faisable ? | Pourquoi |
+|---|---|---|
+| **Serveur local** (WebSocket/SSE servi par le PC ou un boîtier) | ❌ sans application installée | une page HTTPS ne peut pas ouvrir `ws://192.168.x.x` (*mixed content*), Chrome restreint en plus l'accès au réseau privé, et un navigateur ne sait pas écouter un port. Il faut un certificat TLS local et un programme installé : c'est le **niveau N2** de l'étude (§6) |
+| `BroadcastChannel` | ❌ | limité aux fenêtres d'un **même** navigateur sur un **même** poste (c'est le câble vidéo actuel) |
+| **WebRTC DataChannel** pair à pair | ✅ **seule voie sans rien installer** | natif dans tous les navigateurs récents, autorisé en HTTPS, chiffré. Sur un même réseau local, la liaison s'établit directement entre les deux appareils (candidats « host ») sans passer par Internet |
+
+**WebRTC en réseau local — ce que ça donnerait**
+
+```
+ Console (PC)  ──① offre/réponse via api2 + Mercure (Internet, quelques secondes, une fois)──▶ Écran
+      │                                                                                       ▲
+      └──────────② DataChannel direct sur le réseau local : chaque action, ≈ 5–30 ms ─────────┘
+      └──③ POST api2 → outbox → Mercure (inchangé) : la référence, et le secours si ② tombe ──┘
+```
+
+- **Latence** : quelques dizaines de ms appui → écran, **sous les 200 ms** de l'E3 de l'étude ;
+  le drainage de l'outbox ne joue plus sur le chemin rapide.
+- **Horloges** : l'écran se recale sur la console par aller-retour sur le DataChannel (RTT de
+  quelques ms → précision de l'ordre de la milliseconde). Combiné à T4 (console en heure serveur),
+  les deux chemins restent cohérents.
+- **Coupure d'Internet** : une liaison **déjà établie** survit ; l'écran continue de recevoir la
+  console. En revanche, un écran qui redémarre pendant la coupure ne peut pas se réappairer
+  (l'appairage ① passe par api2).
+- **Mercure reste la vérité** : la console envoie l'action aux écrans **avant** la confirmation
+  serveur. Si le serveur la refuse (409, source non active) ou la corrige, le message Mercure
+  suivant l'emporte (`tick`). Un écran prend donc toujours le plus récent des deux chemins.
+
+**Limites**
+
+| Limite | Effet |
+|---|---|
+| **Isolation des clients Wi-Fi** (fréquente sur les Wi-Fi publics et certains routeurs 4G en mode invité) | pas de liaison directe → retour au chemin Mercure, sans gain. À vérifier sur le routeur retenu (réglage « AP isolation » désactivé) |
+| Chrome masque les IP locales derrière des noms `.local` (mDNS) | si le réseau bloque le multicast, pas de liaison directe → même repli |
+| L'écran dépend du **PC de la console allumé, onglet ouvert** | perte du chemin rapide si la console plante ou passe sur un autre terminal (reprise §6.4 de PAGE_SCORING) : repli Mercure, puis nouvel appairage |
+| L'appairage demande que l'**écran écrive** (sa réponse SDP) | entorse à « lecture seule » : une route d'écriture **limitée à la signalisation**, autorisée par le jeton d'affichage du terrain |
+| La console gère **N liaisons** (2–4 écrans par terrain) | code et tests supplémentaires dans la console, déjà dense |
+| **Afficheurs d'angle réglementaires** | la latence serait tenue, mais le blocage reste **matériel** : écran lisible au soleil à 1 500–3 000 € par angle (étude §3), Wi-Fi extérieur à 20 m dans un spectre 2,4 GHz encombré, dépendance à Internet pour l'appairage (E6). **L'étude n'est pas remise en cause.** |
+
+**Coût estimé** : **2–3 semaines** (signalisation api2 + topic privé, gestion des liaisons dans
+la console, client écran, fusion des deux chemins, tests de coupure), **après** le lot de base
+(T1–T8), dont il réutilise tout. Sans commune mesure avec le niveau N2 (3–5 mois).
+
+**Verdict**
+
+- Réseau local **seul** : ❌ ne résout ni L1 ni L2 ; seul bénéfice, un réseau dédié (déjà
+  recommandé au §2.3).
+- Réseau local **+ WebRTC** : ✅ résout la latence (≈ 5–30 ms) et la précision, tient une coupure
+  d'Internet en cours de match. C'est la bonne réponse **si** les mesures §2.8-1 montrent qu'un
+  chronomètre de tir à ~500 ms (lot de base) ne suffit pas aux écrans secondaires. À n'engager
+  qu'en second temps, une fois le chemin Mercure validé.
+
+### 2.8 Recommandation
 
 1. **Maintenant, sans code** (compatible avec le gel) : profiter de R1/R4 pour **mesurer** sur
    l'incrustation (`?debug`) la latence réelle appui → affichage et l'écart d'horloge sur un vrai
@@ -124,6 +194,8 @@ le risque est concentré sur le réseau du site et sur l'horloge des boîtiers.
    + la page `/live/display` (§3).
 3. **Afficheurs d'angle réglementaires** : inchangé, filière radio de l'étude.
 4. **Sans Internet** : pas de hub local dans ce lot ; câble vidéo, puis arbitrage N2 / lot 7.
+5. **Réseau local + WebRTC** (§2.7) : extension possible du lot de base si la latence mesurée ne
+   suffit pas ; prérequis à documenter dès maintenant : routeur dédié **sans isolation des clients**.
 
 ## 3. Périmètre fonctionnel
 
@@ -257,6 +329,7 @@ Les tests sont nommés d'après ces critères.
 ## 9. Hors périmètre / plus tard
 
 - **Hub Mercure local / fonctionnement sans Internet** — niveau N2 de l'étude, lot 7.
+- **Chemin direct WebRTC en réseau local** (§2.7) — second temps, selon les mesures.
 - **Appairage par code court** affiché sur l'écran (flux « device code ») — si le QR s'avère
   pénible en exploitation.
 - **Supervision des écrans** (liste des écrans connectés, dernière activité) — utile à partir de
@@ -270,4 +343,4 @@ Les tests sont nommés d'après ces critères.
 2. Matériel de référence : **Raspberry Pi en kiosque** (recommandé) — acceptable pour les
    organisateurs, ou faut-il viser d'abord les clés HDMI grand public ?
 3. Réseau : peut-on imposer un **routeur 4G dédié** par site comme prérequis documenté ?
-4. Les mesures §2.7-1 peuvent-elles être faites pendant le pilote R4 ?
+4. Les mesures §2.8-1 peuvent-elles être faites pendant le pilote R4 ?
