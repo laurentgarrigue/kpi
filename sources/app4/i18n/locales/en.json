@@ -3608,6 +3608,13 @@
   },
   "designations": {
     "organiser_saved": "Organising club saved.",
+    "organiser_clear_title": "Remove the organising club?",
+    "organiser_clear_message": "The organising club “{club}” will be removed from this gameday.",
+    "place_clear": "Delete the place",
+    "place_clear_title": "Delete the place?",
+    "place_clear_message": "The place “{place}” and its department will be removed from this gameday.",
+    "place_edit": "Change the place and department",
+    "place_saved": "Place and department saved.",
     "organiser_edit": "Change the organising club",
     "organiser_clear": "Remove the organising club",
     "title": "Designations",
@@ -3636,6 +3643,8 @@
       "people": "People",
       "holders": "Holders",
       "organiser": "Organising club",
+      "place": "Place",
+      "department": "Department",
       "gameday": "Gameday"
     },
     "missing": "To designate",
@@ -3696,11 +3705,13 @@
       "gamedays": "Gamedays"
     },
     "phases": "{n} phases",
+    "display": {
+      "title": "Display",
+      "filters_section": "Filters"
+    },
     "roles_picker": {
       "managers_group": "Managers",
-      "gamedays_group": "Gamedays",
-      "label": "Roles",
-      "all": "All"
+      "gamedays_group": "Gamedays"
     },
     "block": {
       "caption": "Designations: {line}",

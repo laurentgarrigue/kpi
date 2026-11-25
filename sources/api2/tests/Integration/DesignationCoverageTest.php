@@ -25,6 +25,7 @@ final class DesignationCoverageTest extends ApiTestCase
         self::assertSame('not_applicable', $this->gamedayCell($matrix, 'REGDES', 9803, 'DELEGUE_CNA')['status']);
         self::assertSame('empty', $this->gamedayCell($matrix, 'REGDES', 9803, 'R1')['status']);
         self::assertSame('red', $this->competition($matrix, 'NDES')['cells']['RC']['status']);
+        self::assertArrayHasKey('statut', $this->competition($matrix, 'NDES')); // ATT / ON / END : une compétition terminée est en lecture seule
         self::assertArrayHasKey('type', $this->competition($matrix, 'NDES')); // regroupement des phases d'un tournoi (CP) dans app4
     }
 
@@ -45,13 +46,13 @@ final class DesignationCoverageTest extends ApiTestCase
         self::assertSame(['JOURNEE', 9813], $this->holder($this->gamedayCell($matrix, 'NDES', 9802, 'DELEGUE_CNA')));
     }
 
-    public function testSui04AnOfficialOfTheClubOfAnEngagedTeamOrWithoutEmailIsOrange(): void
+    public function testSui04AnOfficialOfTheClubOfAnEngagedTeamIsGreenButWarnedAndOneWithoutEmailIsOrange(): void
     {
         $this->designate(['role' => 'JUGE_ARBITRE', 'scopeType' => 'JOURNEE', 'scopeId' => '9801', 'matric' => 9813]);
         $matrix = $this->matrix();
 
         $delegate = $this->gamedayCell($matrix, 'NDES', 9801, 'DELEGUE_CNA');
-        self::assertSame(['orange', ['same_club']], [$delegate['status'], $delegate['holders'][0]['warnings']]);
+        self::assertSame(['green', ['same_club']], [$delegate['status'], $delegate['holders'][0]['warnings']]);
         $judge = $this->gamedayCell($matrix, 'NDES', 9801, 'JUGE_ARBITRE');
         self::assertSame(['orange', ['no_email']], [$judge['status'], $judge['holders'][0]['warnings']]);
     }
@@ -96,10 +97,12 @@ final class DesignationCoverageTest extends ApiTestCase
         $this->requestAs('TADMIN', 'GET', '/admin/designations/summary?season=2998&section=bad&format=csv', expectedStatus: 400);
     }
 
-    public function testTheFollowUpIsReservedToProfilesOneAndTwo(): void
+    public function testTheFollowUpIsReservedToProfilesOneToThreeAndTheSummaryToOneAndTwo(): void
     {
-        $this->requestAs('TDIV', 'GET', '/admin/designations/coverage?season=2998', expectedStatus: 403);
-        $this->requestAs('TDIV', 'GET', '/admin/designations/summary?season=2998', expectedStatus: 403);
+        $this->requestAs('9811', 'GET', '/admin/designations/coverage?season=2998', expectedStatus: 403);
+        $this->requestAs('TDIV', 'GET', '/admin/designations/coverage?season=2998'); // le profil 3 voit le suivi…
+        $this->requestAs('TDIV', 'GET', '/admin/designations/summary?season=2998', expectedStatus: 403); // …pas le récapitulatif
+        $this->requestAs('9811', 'GET', '/admin/designations/summary?season=2998', expectedStatus: 403);
         $this->requestAs('TADMIN', 'GET', '/admin/designations/coverage?season=2998&level=bad', expectedStatus: 400);
     }
 

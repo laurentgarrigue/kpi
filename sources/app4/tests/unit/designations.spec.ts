@@ -1,10 +1,10 @@
 // Suivi des Désignations (FEATURE_DESIGNATIONS.md § 4, SUI-01 à SUI-06) : règles d'affichage pures.
 import { describe, expect, it } from 'vitest'
-import { canAddHolder, countStatuses, gamedayDates, gamedayRows, holderLabel, isInherited, rowKindOf, scopeCells, scopeOfRow, statusClasses, visibleRoles, type CoverageCell, type CoverageHolder, type CoverageMatrix, type RoleDefinition } from '../../utils/designations'
+import { canAddHolder, canEditRole, countStatuses, gamedayDates, gamedayRows, holderLabel, isCompetitionEnded, isInherited, rowKindOf, scopeCells, scopeOfRow, statusClasses, visibleRoles, type CoverageCell, type CoverageHolder, type CoverageMatrix, type RoleDefinition } from '../../utils/designations'
 
 const holder = (origin: CoverageHolder['origin'], club: string | null = 'C001'): CoverageHolder => ({ designationId: 1, matric: 1001, name: 'DUPONT Jean', club, origin, warnings: [] })
 const cell = (status: CoverageCell['status'], holders: CoverageHolder[] = []): CoverageCell => ({ requirement: 'required', status, holders })
-const role = (maxPerScope: number | null): RoleDefinition => ({ code: 'R1', label: 'R1', scopes: ['JOURNEE'], mandateProfile: 6, authorities: ['CNA'], maxPerScope })
+const role = (maxPerScope: number | null): RoleDefinition => ({ code: 'R1', label: 'R1', scopes: ['JOURNEE'], mandateProfile: 6, authorities: ['CNA'], maxPerScope, designableByMaxProfile: 3 })
 
 describe('suivi des désignations', () => {
   it('SUI-01, SUI-04 : chaque état a sa couleur', () => {
@@ -42,7 +42,7 @@ describe('suivi des désignations', () => {
       season: '2998',
       gamedayRoles: ['R1'],
       competitions: [{
-        code: 'NDES', label: 'N', type: 'CHPT', national: true, cells: { RC: cell('red') },
+        code: 'NDES', label: 'N', type: 'CHPT', statut: 'ON', national: true, cells: { RC: cell('red') },
         gamedays: [{ id: 1, label: 'J1', place: '', organiser: { code: '', label: '' }, start: null, end: null, eventIds: [], cells: { R1: cell('orange'), JURY_APPEL: cell('empty') } }],
         teams: [{ id: 2, label: 'E', club: null, cells: { RESP_EQUIPE: cell('red') } }],
       }],
@@ -58,7 +58,7 @@ describe('suivi des désignations', () => {
 })
 
 describe('phases d\'un tournoi (CP)', () => {
-  const gameday = (id: number, start: string, place: string, cells: Record<string, CoverageCell>, organiser = { code: '', label: '' }) => ({ id, label: `Phase ${id}`, place, organiser, start, end: start, eventIds: [], cells })
+  const gameday = (id: number, start: string, place: string, cells: Record<string, CoverageCell>, organiser = { code: '', label: '' }) => ({ id, label: `Phase ${id}`, place, department: '', organiser, start, end: start, eventIds: [], cells })
   const own = (designationId: number, matric: number): CoverageHolder => ({ designationId, matric, name: `P${matric}`, club: null, origin: 'JOURNEE', warnings: [] })
   const fromCompetition: CoverageHolder = { designationId: 9, matric: 7, name: 'P7', club: null, origin: 'COMPETITION', warnings: [] }
 
@@ -98,17 +98,29 @@ describe('phases d\'un tournoi (CP)', () => {
     expect(both.cells.R1.holders[0].designationIds).toEqual([11, 13])
   })
 
+  it('un rôle se modifie selon le profil, sinon il se consulte seulement', () => {
+    const rc = { ...role(null), code: 'RC', designableByMaxProfile: 2 }
+    expect(canEditRole(rc, 2)).toBe(true)
+    expect(canEditRole(rc, 3)).toBe(false)
+    expect(canEditRole(undefined, 1)).toBe(false)
+  })
+
+  it('une compétition terminée est en lecture seule', () => {
+    expect(isCompetitionEnded({ statut: 'END' })).toBe(true)
+    expect(isCompetitionEnded({ statut: 'ON' })).toBe(false)
+  })
+
   it('filtre les rôles affichés', () => {
-    expect(visibleRoles(['DELEGUE_CNA', 'R1', 'JUGE_ARBITRE'], ['R1'])).toEqual(['R1'])
+    expect(visibleRoles(['DELEGUE_CNA', 'R1', 'JUGE_ARBITRE'], ['R1'])).toEqual(['DELEGUE_CNA', 'JUGE_ARBITRE'])
     expect(visibleRoles(['DELEGUE_CNA', 'R1'], [])).toEqual(['DELEGUE_CNA', 'R1'])
   })
 })
 
 describe('bloc « Désignations » d\'un périmètre', () => {
   const roles: RoleDefinition[] = [
-    { code: 'RC', label: 'RC', scopes: ['COMPETITION', 'NIVEAU'], mandateProfile: 4, authorities: ['CNA'], maxPerScope: null },
-    { code: 'R1', label: 'R1', scopes: ['EVENEMENT', 'COMPETITION', 'JOURNEE'], mandateProfile: 6, authorities: ['CNA'], maxPerScope: 1 },
-    { code: 'RESP_EQUIPE', label: 'Resp', scopes: ['EQUIPE'], mandateProfile: 7, authorities: ['CNA'], maxPerScope: null },
+    { code: 'RC', label: 'RC', scopes: ['COMPETITION', 'NIVEAU'], mandateProfile: 4, authorities: ['CNA'], maxPerScope: null, designableByMaxProfile: 2 },
+    { code: 'R1', label: 'R1', scopes: ['EVENEMENT', 'COMPETITION', 'JOURNEE'], mandateProfile: 6, authorities: ['CNA'], maxPerScope: 1, designableByMaxProfile: 3 },
+    { code: 'RESP_EQUIPE', label: 'Resp', scopes: ['EQUIPE'], mandateProfile: 7, authorities: ['CNA'], maxPerScope: null, designableByMaxProfile: 3 },
   ]
 
   it('liste, par rôle autorisé sur le périmètre, ses Désignations propres', () => {

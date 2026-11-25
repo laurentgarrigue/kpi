@@ -17,8 +17,8 @@ final class CoverageRepository
     public function competitions(string $season): array
     {
         return array_map(
-            static fn (array $row): array => ['code' => $row['Code'], 'label' => (string) ($row['Libelle'] ?? $row['Code']), 'type' => (string) ($row['Code_typeclt'] ?? '')],
-            $this->connection->fetchAllAssociative('SELECT c.Code, c.Libelle, c.Code_typeclt FROM kp_competition c LEFT JOIN kp_groupe g ON g.Groupe = c.Code_ref
+            static fn (array $row): array => ['code' => $row['Code'], 'label' => (string) ($row['Libelle'] ?? $row['Code']), 'type' => (string) ($row['Code_typeclt'] ?? ''), 'statut' => (string) ($row['Statut'] ?? '')],
+            $this->connection->fetchAllAssociative('SELECT c.Code, c.Libelle, c.Code_typeclt, c.Statut FROM kp_competition c LEFT JOIN kp_groupe g ON g.Groupe = c.Code_ref
                  WHERE c.Code_saison = ? ORDER BY COALESCE(g.section, 999), COALESCE(g.ordre, 999), c.Code_tour, c.GroupOrder, c.Code', [$season]),
         );
     }
@@ -26,7 +26,7 @@ final class CoverageRepository
     /**
      * @param list<string> $competitions
      *
-     * @return list<array{id: int, competition: string, label: string, place: string, organiser: array{code: string, label: string}, start: string|null, end: string|null, eventIds: list<int>}>
+     * @return list<array{id: int, competition: string, label: string, place: string, department: string, organiser: array{code: string, label: string}, start: string|null, end: string|null, eventIds: list<int>}>
      */
     public function gamedays(string $season, array $competitions): array
     {
@@ -34,7 +34,7 @@ final class CoverageRepository
             return [];
         }
         $rows = $this->connection->fetchAllAssociative(
-            "SELECT j.Id, j.Code_competition, j.Phase, j.Nom, j.Lieu, j.Code_organisateur, j.Organisateur, j.Date_debut, j.Date_fin,
+            "SELECT j.Id, j.Code_competition, j.Phase, j.Nom, j.Lieu, j.Departement, j.Code_organisateur, j.Organisateur, j.Date_debut, j.Date_fin,
                     GROUP_CONCAT(ej.Id_evenement ORDER BY ej.Id_evenement) AS events
              FROM kp_journee j LEFT JOIN kp_evenement_journee ej ON ej.Id_journee = j.Id
              WHERE j.Code_saison = ? AND j.Code_competition IN (?)
@@ -51,6 +51,7 @@ final class CoverageRepository
             'competition' => $row['Code_competition'],
             'label' => (string) ($row['Phase'] ?: ($row['Nom'] ?: $row['Id'])),
             'place' => (string) ($row['Lieu'] ?? ''),
+            'department' => (string) ($row['Departement'] ?? ''),
             'organiser' => ['code' => $organisers->code($row['Code_organisateur'], $row['Organisateur']), 'label' => $organisers->label($row['Code_organisateur'], $row['Organisateur'])],
             'start' => $row['Date_debut'],
             'end' => $row['Date_fin'],

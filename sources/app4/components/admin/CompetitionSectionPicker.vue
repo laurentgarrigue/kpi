@@ -6,14 +6,22 @@ import type { ChecklistCompetition } from '~/types'
  * déroulante de compétitions à cocher (AdminCompetitionChecklist, celle du formulaire de mandat). Même source que le
  * filtre des mandats. Aucune compétition choisie = toutes (de la section choisie, s'il y en a une).
  */
-const props = defineProps<{ modelValue: string[], season: string }>()
+const props = defineProps<{ modelValue: string[], season: string, storageKey?: string }>()
 const emit = defineEmits<{ 'update:modelValue': [value: string[]] }>()
 const { t } = useI18n()
 const api = useApi()
 
 const competitions = ref<ChecklistCompetition[]>([])
 const loading = ref(false)
-const section = ref<number | ''>('')
+/** Section mémorisée dans le navigateur quand `storageKey` est fourni (les compétitions cochées le sont par la page). */
+const loadSection = (): number | '' => {
+  if (!props.storageKey) return ''
+  try {
+    const saved = JSON.parse(localStorage.getItem(props.storageKey) ?? '""')
+    return typeof saved === 'number' ? saved : ''
+  } catch { return '' }
+}
+const section = ref<number | ''>(loadSection())
 const checklist = ref<{ shown: string[] } | null>(null)
 
 const sections = computed(() => [...new Map(competitions.value.map(c => [c.section, c.sectionLabel])).entries()])
@@ -26,6 +34,7 @@ const load = async () => {
   try {
     const data = await api.get<{ groups: { section: number, sectionLabel: string, competitions: { code: string, libelle: string }[] }[] }>('/admin/filters/competitions', { seasons: props.season })
     competitions.value = (data.groups ?? []).flatMap(group => group.competitions.map(c => ({ ...c, section: group.section, sectionLabel: group.sectionLabel })))
+    if (section.value !== '' && !sections.value.some(([id]) => id === section.value)) section.value = ''
     const valid = new Set(competitions.value.map(c => c.code))
     if (props.modelValue.some(code => !valid.has(code))) {
       emit('update:modelValue', props.modelValue.filter(code => valid.has(code)))
@@ -36,7 +45,12 @@ const load = async () => {
 }
 
 /** Une section choisie sans compétition cochée restreint l'affichage à ses compétitions. */
-const onSection = () => emit('update:modelValue', section.value === '' ? [] : inSection.value.map(c => c.code))
+const onSection = () => {
+  if (props.storageKey) {
+    try { localStorage.setItem(props.storageKey, JSON.stringify(section.value)) } catch { /* ignore */ }
+  }
+  emit('update:modelValue', section.value === '' ? [] : inSection.value.map(c => c.code))
+}
 const selectShown = () => emit('update:modelValue', [...new Set([...props.modelValue, ...(checklist.value?.shown ?? [])])])
 
 watch(() => props.season, load, { immediate: true })

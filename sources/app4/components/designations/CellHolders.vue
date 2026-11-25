@@ -2,7 +2,7 @@
 import { holderLabel, isInherited, type CoverageCell, type CoverageHolder, type RowKind } from '~/utils/designations'
 
 /** Titulaires d'une case du suivi : hérités en italique (SUI-03), alertes (SUI-04), retrait des titulaires propres. */
-const props = defineProps<{ cell: CoverageCell, kind: RowKind, canAdd: boolean }>()
+const props = defineProps<{ cell: CoverageCell, kind: RowKind, canAdd: boolean, readonly?: boolean }>()
 const emit = defineEmits<{ add: [], remove: [holder: CoverageHolder] }>()
 const { t } = useI18n()
 </script>
@@ -15,7 +15,7 @@ const { t } = useI18n()
       <span>{{ holderLabel(holder) }}</span>
       <span v-if="isInherited(holder, props.kind)" class="text-xs">({{ t(`designations.origin.${holder.origin}`) }})</span>
       <button
-        v-else
+        v-else-if="!props.readonly"
         type="button"
         class="ml-auto text-danger-600 dark:text-danger-300 hover:text-danger-800 dark:hover:text-danger-200"
         :aria-label="t('designations.remove.label', { name: holderLabel(holder) })"

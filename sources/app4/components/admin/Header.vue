@@ -174,6 +174,9 @@ const adminMenuGroups = computed<MenuGroup[]>(() => {
       icon: 'heroicons:flag',
       label: t('menu.referees_pool')
     })
+  }
+  // Désignations : profils 1 à 3
+  if (profile <= 3) {
     referentials.push({
       to: '/designations',
       icon: 'heroicons:user-group',

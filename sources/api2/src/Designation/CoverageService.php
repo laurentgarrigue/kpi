@@ -17,7 +17,7 @@ final class CoverageService
     public const LEVEL_OTHER = 'other';
 
     /** Colonnes des journées, dans l'ordre d'affichage. */
-    public const GAMEDAY_ROLES = ['DELEGUE_CNA', 'R1', 'JUGE_ARBITRE', 'ARBITRE_NJ', 'REP_EQUIPES', 'JURY_APPEL'];
+    public const GAMEDAY_ROLES = ['R1', 'DELEGUE_CNA', 'JUGE_ARBITRE', 'ARBITRE_NJ', 'REP_EQUIPES', 'JURY_APPEL'];
     private const COMPETITION_ROLE = 'RC';
     private const TEAM_ROLE = 'RESP_EQUIPE';
 
@@ -28,15 +28,18 @@ final class CoverageService
     }
 
     /**
-     * @param list<string> $competitionCodes filtre facultatif
+     * @param list<string>      $competitionCodes    filtre facultatif
+     * @param list<string>|null $allowedCompetitions compétitions du mandat de l'utilisateur ; null = aucune limite
      *
      * @return array{season: string, gamedayRoles: list<string>, competitions: list<array<string, mixed>>}
      */
-    public function matrix(string $season, string $level, array $competitionCodes, bool $onlyGaps): array
+    public function matrix(string $season, string $level, array $competitionCodes, bool $onlyGaps, ?array $allowedCompetitions = null): array
     {
         $competitions = array_values(array_filter(
             $this->coverage->competitions($season),
-            static fn (array $c): bool => self::matchesLevel($c['code'], $level) && ($competitionCodes === [] || in_array($c['code'], $competitionCodes, true)),
+            static fn (array $c): bool => self::matchesLevel($c['code'], $level)
+                && ($competitionCodes === [] || in_array($c['code'], $competitionCodes, true))
+                && ($allowedCompetitions === null || in_array($c['code'], $allowedCompetitions, true)),
         ));
         $codes = array_column($competitions, 'code');
         $gamedays = $this->coverage->gamedays($season, $codes);

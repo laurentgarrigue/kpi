@@ -87,6 +87,7 @@ final class DesignationFactsTest extends ApiTestCase
         $this->client->request('GET', '/admin/designations/facts?season=2998&format=xlsx', server: ['HTTP_AUTHORIZATION' => 'Bearer ' . $this->tokenFor('TADMIN')]);
         self::assertSame('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', $this->client->getResponse()->headers->get('Content-Type'));
         $this->requestAs('TDIV', 'GET', '/admin/designations/facts?season=2998', expectedStatus: 403);
+        $this->requestAs('9811', 'GET', '/admin/designations/facts?season=2998', expectedStatus: 403);
     }
 
     /** @return list<array<string, mixed>> */

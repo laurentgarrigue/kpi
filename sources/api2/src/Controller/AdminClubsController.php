@@ -60,9 +60,12 @@ class AdminClubsController extends AbstractController
         $params = [];
 
         if (strlen($q) >= 2) {
-            $where[]  = "(c.Libelle LIKE ? OR c.Code LIKE ?)";
-            $params[] = "%$q%";
-            $params[] = "%$q%";
+            // Chaque mot doit figurer dans le libellé, tirets ignorés (« saint jean » trouve « SAINT-JEAN CK »), ou dans le code
+            foreach (preg_split('/[\s\-]+/', $q, -1, PREG_SPLIT_NO_EMPTY) as $word) {
+                $where[]  = "(REPLACE(c.Libelle, '-', ' ') LIKE ? OR c.Code LIKE ?)";
+                $params[] = "%$word%";
+                $params[] = "%$word%";
+            }
         }
 
         if ($deptCode !== '') {

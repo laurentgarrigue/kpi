@@ -107,6 +107,26 @@ final class DesignationRepository
         return (bool) $this->connection->fetchOne($sql, [$scopeId, $season]);
     }
 
+    /**
+     * Compétitions couvertes par un périmètre, pour le respect du périmètre du mandat de l'utilisateur. Le niveau
+     * national n'est rattaché à aucune compétition.
+     *
+     * @return list<string>
+     */
+    public function competitionsOf(string $season, ScopeType $scopeType, string $scopeId): array
+    {
+        return match ($scopeType) {
+            ScopeType::Niveau => [],
+            ScopeType::Competition => [$scopeId],
+            ScopeType::Equipe => $this->connection->fetchFirstColumn('SELECT Code_compet FROM kp_competition_equipe WHERE Id = ? AND Code_saison = ?', [$scopeId, $season]),
+            ScopeType::Journee => $this->connection->fetchFirstColumn('SELECT Code_competition FROM kp_journee WHERE Id = ?', [$scopeId]),
+            ScopeType::Evenement => $this->connection->fetchFirstColumn(
+                'SELECT DISTINCT j.Code_competition FROM kp_evenement_journee ej JOIN kp_journee j ON j.Id = ej.Id_journee WHERE ej.Id_evenement = ? AND j.Code_saison = ?',
+                [$scopeId, $season],
+            ),
+        };
+    }
+
     public function gameday(int $gamedayId): ?GamedayScope
     {
         $row = $this->connection->fetchAssociative('SELECT Code_competition, Code_saison FROM kp_journee WHERE Id = ?', [$gamedayId]);

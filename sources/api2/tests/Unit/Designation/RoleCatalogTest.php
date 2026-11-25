@@ -109,7 +109,7 @@ final class RoleCatalogTest extends TestCase
                 $role->designableByDelegate,
                 $role->code,
             );
-            self::assertSame(2, $role->designableByMaxProfile, $role->code);
+            self::assertSame(in_array($role->code, ['RC', 'BUREAU_CNA'], true) ? 2 : 3, $role->designableByMaxProfile, $role->code);
         }
     }
 

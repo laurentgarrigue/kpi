@@ -34,13 +34,20 @@ final class DesignationRulesTest extends TestCase
         self::assertNull(DesignationRules::validate('JURY_APPEL', ScopeType::Journee, Authority::Cna, 12));
     }
 
-    public function testDes06OnlyProfilesOneAndTwoDesignate(): void
+    public function testDes06OnlyProfilesOneToThreeDesignate(): void
     {
-        self::assertTrue(DesignationRules::canDesignate('R1', 1, false));
-        self::assertTrue(DesignationRules::canDesignate('R1', 2, false));
-        foreach (range(3, 10) as $profile) {
+        foreach ([1, 2, 3] as $profile) {
+            self::assertTrue(DesignationRules::canDesignate('R1', $profile, false), "profil $profile");
+        }
+        foreach (range(4, 10) as $profile) {
             self::assertFalse(DesignationRules::canDesignate('R1', $profile, false), "profil $profile");
         }
+    }
+
+    public function testTheCnaBureauStaysWithProfilesOneAndTwoBecauseItsMandateIsProfileTwo(): void
+    {
+        self::assertTrue(DesignationRules::canDesignate('BUREAU_CNA', 2, false));
+        self::assertFalse(DesignationRules::canDesignate('BUREAU_CNA', 3, false));
     }
 
     public function testDes07TheDelegateOfTheScopeDesignatesTheTeamsRepresentativeAndTheAppealJuryOnly(): void
