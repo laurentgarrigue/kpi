@@ -53,6 +53,12 @@ const copyDepartement = ref('')
 const copyRespInsc = ref('')
 const copyRespR1 = ref('')
 const copyOrganisateur = ref('')
+const copyCodeOrganisateur = ref('')
+// Le code du club suit le libellé : une saisie libre le vide, le choix d'un club de la liste le renseigne
+const onOrganisateurInput = (value: string) => {
+  if (value !== copyOrganisateur.value) copyCodeOrganisateur.value = ''
+  copyOrganisateur.value = value
+}
 const copyDelegue = ref('')
 const copyInitPremierTour = ref(false)
 
@@ -296,6 +302,7 @@ const openCopyModal = async (schema: SchemaSearchResult) => {
     copyRespInsc.value = p.responsableInsc || ''
     copyRespR1.value = p.responsableR1 || ''
     copyOrganisateur.value = p.organisateur || ''
+    copyCodeOrganisateur.value = p.codeOrganisateur || ''
     copyDelegue.value = p.delegue || ''
 
     // Load destination options
@@ -357,6 +364,7 @@ const doCopy = async () => {
       responsableInsc: copyRespInsc.value || null,
       responsableR1: copyRespR1.value || null,
       organisateur: copyOrganisateur.value || null,
+      codeOrganisateur: copyCodeOrganisateur.value || null,
       delegue: copyDelegue.value || null,
       initPremierTour: copyInitPremierTour.value,
       emptyMeansEmpty: isCpDestination.value,
@@ -876,7 +884,8 @@ onMounted(async () => {
                 detail-field="code"
                 :placeholder="t('competitionCopy.copy.organisateur')"
                 :maxlength="40"
-                @update:model-value="copyOrganisateur = $event"
+                @update:model-value="onOrganisateurInput"
+                @select="(club: { code: string }) => { copyCodeOrganisateur = club.code }"
               />
             </div>
             <div>

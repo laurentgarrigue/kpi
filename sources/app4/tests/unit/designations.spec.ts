@@ -43,7 +43,7 @@ describe('suivi des désignations', () => {
       gamedayRoles: ['R1'],
       competitions: [{
         code: 'NDES', label: 'N', type: 'CHPT', national: true, cells: { RC: cell('red') },
-        gamedays: [{ id: 1, label: 'J1', place: '', start: null, end: null, eventIds: [], cells: { R1: cell('orange'), JURY_APPEL: cell('empty') } }],
+        gamedays: [{ id: 1, label: 'J1', place: '', organiser: { code: '', label: '' }, start: null, end: null, eventIds: [], cells: { R1: cell('orange'), JURY_APPEL: cell('empty') } }],
         teams: [{ id: 2, label: 'E', club: null, cells: { RESP_EQUIPE: cell('red') } }],
       }],
     }
@@ -58,7 +58,7 @@ describe('suivi des désignations', () => {
 })
 
 describe('phases d\'un tournoi (CP)', () => {
-  const gameday = (id: number, start: string, place: string, cells: Record<string, CoverageCell>) => ({ id, label: `Phase ${id}`, place, start, end: start, eventIds: [], cells })
+  const gameday = (id: number, start: string, place: string, cells: Record<string, CoverageCell>, organiser = { code: '', label: '' }) => ({ id, label: `Phase ${id}`, place, organiser, start, end: start, eventIds: [], cells })
   const own = (designationId: number, matric: number): CoverageHolder => ({ designationId, matric, name: `P${matric}`, club: null, origin: 'JOURNEE', warnings: [] })
   const fromCompetition: CoverageHolder = { designationId: 9, matric: 7, name: 'P7', club: null, origin: 'COMPETITION', warnings: [] }
 
@@ -70,6 +70,12 @@ describe('phases d\'un tournoi (CP)', () => {
     ] })
     expect(rows.map(row => row.ids)).toEqual([[1, 2], [3]])
     expect(rows[0].cells.R1.holders).toEqual([{ ...fromCompetition, designationIds: [9] }])
+  })
+
+  it('garde le club organisateur du premier renseigné parmi les phases regroupées', () => {
+    const saintOmer = { code: '6220', label: 'KAYAK CLUB SAINT-OMER' }
+    const [row] = gamedayRows({ type: 'CP', gamedays: [gameday(1, '2998-06-01', 'A', {}), gameday(2, '2998-06-01', 'A', {}, saintOmer)] })
+    expect(row.organiser).toEqual(saintOmer)
   })
 
   it('ne regroupe pas les journées d\'un championnat', () => {

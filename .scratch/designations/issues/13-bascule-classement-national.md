@@ -1,7 +1,7 @@
 # Classement national des clubs : lecture des Désignations
 
 Status: ready-for-agent
-Blocked by: 06, chantier 6 (fusion de claude/classement-national-clubs)
+Blocked by: 06, chantier 6 (fusion faite, #426), 14 (reprise de la saison)
 
 Spec : [FEATURE_DESIGNATIONS.md](../../../DOC/specs/FEATURE_DESIGNATIONS.md) (D20, D24)
 

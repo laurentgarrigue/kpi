@@ -2,6 +2,7 @@
 
 namespace App\Designation;
 
+use App\ClubRanking\OrganiserClubResolver;
 use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
 
@@ -25,7 +26,7 @@ final class CoverageRepository
     /**
      * @param list<string> $competitions
      *
-     * @return list<array{id: int, competition: string, label: string, place: string, start: string|null, end: string|null, eventIds: list<int>}>
+     * @return list<array{id: int, competition: string, label: string, place: string, organiser: array{code: string, label: string}, start: string|null, end: string|null, eventIds: list<int>}>
      */
     public function gamedays(string $season, array $competitions): array
     {
@@ -33,7 +34,7 @@ final class CoverageRepository
             return [];
         }
         $rows = $this->connection->fetchAllAssociative(
-            "SELECT j.Id, j.Code_competition, j.Phase, j.Nom, j.Lieu, j.Date_debut, j.Date_fin,
+            "SELECT j.Id, j.Code_competition, j.Phase, j.Nom, j.Lieu, j.Code_organisateur, j.Organisateur, j.Date_debut, j.Date_fin,
                     GROUP_CONCAT(ej.Id_evenement ORDER BY ej.Id_evenement) AS events
              FROM kp_journee j LEFT JOIN kp_evenement_journee ej ON ej.Id_journee = j.Id
              WHERE j.Code_saison = ? AND j.Code_competition IN (?)
@@ -42,11 +43,15 @@ final class CoverageRepository
             [1 => ArrayParameterType::STRING],
         );
 
+        // même identification du club organisateur que le classement national des clubs
+        $organisers = new OrganiserClubResolver(array_column($this->connection->fetchAllAssociative('SELECT Code, Libelle FROM kp_club'), 'Libelle', 'Code'));
+
         return array_map(static fn (array $row): array => [
             'id' => (int) $row['Id'],
             'competition' => $row['Code_competition'],
             'label' => (string) ($row['Phase'] ?: ($row['Nom'] ?: $row['Id'])),
             'place' => (string) ($row['Lieu'] ?? ''),
+            'organiser' => ['code' => $organisers->code($row['Code_organisateur'], $row['Organisateur']), 'label' => $organisers->label($row['Code_organisateur'], $row['Organisateur'])],
             'start' => $row['Date_debut'],
             'end' => $row['Date_fin'],
             'eventIds' => $row['events'] === null ? [] : array_map('intval', explode(',', $row['events'])),

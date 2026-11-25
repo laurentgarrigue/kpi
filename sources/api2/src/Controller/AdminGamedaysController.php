@@ -191,6 +191,7 @@ class AdminGamedaysController extends AbstractController
                 'departement' => $row['Departement'],
                 'planEau' => $row['Plan_eau'],
                 'organisateur' => $row['Organisateur'],
+                'codeOrganisateur' => $row['Code_organisateur'],
                 'responsableInsc' => $row['Responsable_insc'],
                 'responsableR1' => $row['Responsable_R1'],
                 'delegue' => $row['Delegue'],

@@ -55,6 +55,7 @@ Périmètre technique : app4 (saisie), api2 (modèle, règles, PDF), app3 si bes
 | D27 | Jury d'appel | Composition par défaut (journées nationales) : délégué CNA (président de droit) + R1, repris de leurs Désignations, + un **représentant des équipes** (rôle `REP_EQUIPES`, alimente la colonne legacy `Rep_athletes`). En finale, des Désignations `JURY_APPEL` avec qualité (« représentant FFCK », « membre du bureau CNA »…) complètent le jury. Le rapport de jury d'appel reprend la composition et peut la **modifier pour l'affaire** (absence, récusation), dans le rapport seulement. Le délégué CNA peut créer les Désignations `REP_EQUIPES` et `JURY_APPEL` de son périmètre (sans mandat). Le **représentant des clubs** n'existe que dans le bilan de journée et ne siège pas au jury. |
 | D28 | Rédacteurs et destinataires des rapports | **Incident** : tout officiel du périmètre (ou saisi pour un arbitre, D17) → délégué CNA et juge arbitre du périmètre, RC des compétitions concernées, copie au rédacteur. **Jury d'appel** : président du jury (délégué CNA) → bureau CNA, RC concernés, membres du jury, copie au rédacteur ; notification aux responsables des équipes en cause ; date et heure d'affichage sur site. **Évaluation d'arbitrage** : saisie par l'évaluateur s'il est déjà officiel du périmètre, sinon par le bureau CNA (pas de rôle évaluateur pour l'instant) → juge arbitre du périmètre, bureau CNA, copie au rédacteur ; **pas de copie à l'arbitre évalué** ; lecture réservée à ces personnes ; note sur 50 calculée (somme des 5 blocs sur 10). |
 | D29 | PDF vierge | Première version : PDF vierge **imprimable** seulement, généré par Gotenberg depuis le catalogue (annotation possible dans un lecteur PDF). Pas de PDF à champs ni de `.docx` tant que le terrain ne le demande pas. |
+| D30 | Reprise des saisies legacy | Deux sources coexistaient pour les officiels d'une journée : le texte des colonnes legacy de `kp_journee` (saisi avant les Désignations) et `kp_designation`. Les Désignations deviennent la source ; la commande `app:designations:backfill-legacy --season=AAAA [--apply]` (simulation par défaut) reprend en Désignations ce qui est lisible (licence entre parenthèses), sans jamais toucher à un rôle déjà désigné, et liste le reste. Le RC (`Responsable_insc`) est repris sur la compétition quand toutes ses journées désignent la même licence. Le club organisateur est identifié partout comme le fait le classement national des clubs : `Code_organisateur` d'abord, sinon le libellé (`OrganiserClubResolver`) ; le formulaire de journée et la copie de compétition enregistrent désormais le code et pas seulement le libellé. **Ordre : la bascule du classement (D24 étape 3) ne se fait qu'après la reprise de la saison concernée** ; tant qu'elle n'est pas faite, le classement continue de lire les colonnes legacy, qui restent recopiées depuis les Désignations. |
 
 ## 3. Questions ouvertes
 
@@ -334,3 +335,21 @@ Les tests portent le code du critère dans leur nom. « National » = compétiti
   manuelle.
 - **CLA-02** — Étant donné une saison antérieure aux Désignations, alors le calcul existant (noms et table d'alias)
   s'applique inchangé.
+
+**Reprise des saisies legacy (D30)**
+
+- **REP-01** — Étant donné une journée dont `Delegue`, `Responsable_R1`, `ChefArbitre`, `Rep_athletes` ou `Arb_nj1…5`
+  contient « NOM Prénom (licence) » et dont le rôle n'a aucune Désignation effective, alors la reprise crée la
+  Désignation sur la journée, avec le club de la licence ; la fenêtre « Officiels » la montre.
+- **REP-02** — Étant donné un rôle déjà désigné (à tout périmètre qui couvre la journée), alors la reprise n'y touche pas.
+- **REP-03** — Étant donné un texte sans licence lisible, alors rien n'est créé pour ce rôle, la colonne legacy reste
+  telle quelle et la saisie est listée dans le rapport de la commande.
+- **REP-04** — Étant donné une compétition dont toutes les journées renseignent le même `Responsable_insc` et qui n'a
+  pas de RC, alors la reprise désigne ce RC sur la compétition ; si les journées divergent, rien n'est créé et le cas est listé.
+- **REP-05** — Sans `--apply`, la commande n'écrit rien ; avec, elle est rejouable sans doublon.
+- **ORG-01** — Étant donné une journée créée ou modifiée en choisissant un club dans la liste, alors `Code_organisateur`
+  est enregistré avec le libellé ; une saisie libre du libellé vide le code.
+- **ORG-02** — Étant donné une journée avec un code ou un libellé de club, alors le tableau des journées du suivi des
+  Désignations affiche le même club organisateur que le classement national des clubs (code d'abord, sinon libellé
+  identifiant un seul club).
+- **ORG-03** — Étant donné une copie de compétition, alors le code du club organisateur est copié avec le libellé.

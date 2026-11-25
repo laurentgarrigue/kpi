@@ -25,6 +25,8 @@ export interface CoverageGameday {
   id: number
   label: string
   place: string
+  /** Club organisateur, identifié comme dans le classement national des clubs (code saisi, sinon libellé). */
+  organiser: { code: string, label: string }
   start: string | null
   end: string | null
   eventIds: number[]
@@ -126,6 +128,7 @@ export interface GamedayRow {
   ids: number[]
   labels: string[]
   place: string
+  organiser: { code: string, label: string }
   start: string | null
   end: string | null
   cells: Record<string, CoverageCell>
@@ -165,6 +168,8 @@ export const gamedayRows = (competition: Pick<CoverageCompetition, 'type' | 'gam
       ids: gamedays.map(gameday => gameday.id),
       labels: gamedays.map(gameday => gameday.label),
       place: gamedays[0].place,
+      // les phases d'un tournoi ont le même organisateur ; on garde le premier renseigné
+      organiser: gamedays.map(gameday => gameday.organiser).find(organiser => organiser.label !== '') ?? gamedays[0].organiser,
       start: gamedays[0].start,
       end: gamedays[0].end,
       cells: Object.fromEntries(roles.map(role => [role, mergeCells(gamedays.map(gameday => gameday.cells[role]).filter(Boolean))])),

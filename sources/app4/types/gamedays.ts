@@ -16,6 +16,7 @@ export interface Gameday {
   departement: string | null
   planEau: string | null
   organisateur: string | null
+  codeOrganisateur: string | null
   responsableInsc: string | null
   responsableR1: string | null
   delegue: string | null

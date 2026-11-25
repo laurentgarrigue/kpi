@@ -249,6 +249,7 @@ onMounted(async () => {
               <thead>
                 <tr class="bg-header-50 dark:bg-header-800">
                   <th scope="col" class="px-2 py-1 text-left">{{ t('designations.column.gameday') }}</th>
+                  <th scope="col" class="px-2 py-1 text-left">{{ t('designations.column.organiser') }}</th>
                   <th v-for="role in shownGamedayRoles" :key="role" scope="col" class="px-2 py-1 text-left">{{ roleLabel(role) }}</th>
                 </tr>
               </thead>
@@ -258,6 +259,7 @@ onMounted(async () => {
                     <span class="whitespace-nowrap">{{ gamedayDates(row.start, row.end) }}</span><span v-if="row.place"> · {{ row.place }}</span>
                     <span class="block text-xs text-header-500">{{ row.labels.length > 1 ? t('designations.phases', { n: row.labels.length }) : row.labels[0] }}</span>
                   </th>
+                  <td class="px-2 py-1 align-top" :title="row.organiser.code">{{ row.organiser.label }}</td>
                   <td v-for="role in shownGamedayRoles" :key="role" class="px-2 py-1 align-top" :class="statusClasses(row.cells[role].status)" :title="cellTitle(row.cells[role])">
                     <DesignationsCellHolders
                       :cell="row.cells[role]"

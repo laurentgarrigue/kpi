@@ -67,6 +67,12 @@ const bulkCalendarData = ref<Omit<GamedayBulkCalendarData, 'ids'>>({
 const officialsGameday = ref<Gameday | null>(null)
 /** Colonnes legacy des officiels : recopiées depuis les Désignations, jamais envoyées par le formulaire (DES-11). */
 const OFFICIAL_FIELDS = ['responsableInsc', 'responsableR1', 'delegue', 'chefArbitre', 'repAthletes', 'arbNj1', 'arbNj2', 'arbNj3', 'arbNj4', 'arbNj5'] as const
+// Le code du club organisateur suit le libellé : une saisie libre le vide, le choix d'un club de la liste le renseigne
+const onOrganisateurInput = (value: string) => {
+  if (value !== formData.value.organisateur) formData.value.codeOrganisateur = ''
+  formData.value.organisateur = value
+}
+
 const withoutOfficials = <T extends Record<string, unknown>>(data: T) =>
   Object.fromEntries(Object.entries(data).filter(([key]) => !(OFFICIAL_FIELDS as readonly string[]).includes(key)))
 
@@ -412,7 +418,7 @@ const openEditModal = (gameday: Gameday) => {
     departement: gameday.departement || '',
     planEau: gameday.planEau || '',
     organisateur: gameday.organisateur || '',
-    codeOrganisateur: '',
+    codeOrganisateur: gameday.codeOrganisateur || '',
     responsableInsc: gameday.responsableInsc || '',
     responsableR1: gameday.responsableR1 || '',
     delegue: gameday.delegue || '',
@@ -1329,7 +1335,8 @@ const printJurySheet = (gameday: Gameday | null) => {
             detail-field="code"
             :placeholder="t('gamedays.field.organisateur')"
             :maxlength="40"
-            @update:model-value="formData.organisateur = $event"
+            @update:model-value="onOrganisateurInput"
+            @select="(club: { code: string }) => { formData.codeOrganisateur = club.code }"
           />
         </div>
 
