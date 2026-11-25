@@ -42,6 +42,7 @@ final class SuspensionDetectorTest extends TestCase
         ]);
         self::assertSame([], $found);
 
+        $this->sequence = 0;
         $found = $this->detect([
             $this->card(CardColor::Yellow, game: 1, day: 'd1'),
             $this->card(CardColor::Yellow, game: 1, day: 'd1'),
