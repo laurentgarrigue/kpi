@@ -16,8 +16,10 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
 
-/** Public, read-only endpoints of the match medals (FEATURE_MATCH_MEDALS.md § 6.4). No licence number. */
-#[OA\Tag(name: self::DOC_TAG)]
+/**
+ * Public, read-only endpoints of the match medals (FEATURE_MATCH_MEDALS.md § 6.4). No licence number. Each operation
+ * carries its own OpenAPI tag: a class-level tag would clash with the app2 ones (swagger-php "Multiple definitions").
+ */
 final class PublicMedalsController extends AbstractController
 {
     private const DOC_TAG = '7. Site public';

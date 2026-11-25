@@ -221,6 +221,14 @@ const adminMenuGroups = computed<MenuGroup[]>(() => {
       label: t('menu.medals')
     })
   }
+  // Classement national des clubs (PAGE_CLASSEMENT_NATIONAL_CLUBS.md Q-1): profile 1 only
+  if (profile <= 1) {
+    operations.push({
+      to: '/club-ranking',
+      icon: 'heroicons:chart-bar-square',
+      label: t('menu.club_ranking')
+    })
+  }
   if (operations.length > 0) {
     groups.push({
       key: 'operations',

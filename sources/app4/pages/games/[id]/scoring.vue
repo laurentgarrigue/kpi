@@ -6,7 +6,8 @@ import type { DisplayKind, DisplayOptions } from '~/utils/scoringDisplayOptions'
 import { closureWarnings, type ClosureWarning } from '~/utils/scoringClosure'
 import { isPenaltyExpired } from '~/utils/scoringPenalties'
 import { remainingMs, runningDriftMs } from '~/utils/overlayClock'
-import { keyboardFrameShown, keyboardKeysActive, keyboardState, type KeyboardState } from '~/utils/scoringKeyboard'
+import { isEditableTarget, keyboardFrameShown, keyboardKeysActive, keyboardState, type KeyboardState } from '~/utils/scoringKeyboard'
+import { CARD_REASONS } from '~/utils/scoringCardReasons'
 
 definePageMeta({
   layout: 'admin',
@@ -40,17 +41,6 @@ const eventCodes: { code: ScoringEventCode; labelKey: string; shortKey: string; 
   { code: 'R', labelKey: 'scoring.event.card_red', shortKey: 'scoring.event_short.card_red', color: 'error', shortcut: 'factRed' },
   { code: 'D', labelKey: 'scoring.event.card_black', shortKey: 'scoring.event_short.card_black', color: 'neutral', shortcut: 'factBlack' }
 ]
-// Card reasons (motifs) reused from FMV3 — '' = none, 'unknown' pre-selected (spec §0.9)
-const reasonCodes = ['', 'r_pad', 'r_kt', 'r_ht', 'r_p', 'r_o', 'r_un', 'r_rep', 'unknown']
-// Reka UI's <SelectItem> refuses an empty-string value (it reserves '' to mean "cleared",
-// and throws during setup — which aborted the whole page update). '' stays the stored
-// value for "no reason": the sentinel below never leaves this component.
-const NO_REASON = '__none__'
-const reasonItems = computed(() => reasonCodes.map(c => ({
-  label: c === '' ? t('scoring.reason.none') : t('scoring.reason.' + c),
-  value: c === '' ? NO_REASON : c
-})))
-
 /** Human label of a period — P{n} share one parameterized i18n key (unbounded, spec §0.6). */
 const periodLabel = (p: Period): string => {
   const n = overtimeIndex(p)
@@ -180,12 +170,6 @@ const bumpScore = async (team: TeamSide, delta: 1 | -1) => {
 const eventPeriod = ref<Period>('M1')
 const eventTime = ref('00:00')
 const eventReason = ref('')
-// Bridge the sentinel <-> '' so the select never sees an empty value while the rest of the
-// page (and the API) keeps working with '' for "no reason".
-const eventReasonSelect = computed({
-  get: () => eventReason.value === '' ? NO_REASON : eventReason.value,
-  set: (v: string) => { eventReason.value = v === NO_REASON ? '' : v }
-})
 // When set, the event buttons commit an UPDATE of this existing event instead of a new one.
 const editingUid = ref<string | null>(null)
 
@@ -610,6 +594,9 @@ const kbKeysActive = computed(() => keyboardKeysActive(kbState.value))
 const KEYBOARD_BADGE_COLOR: Record<KeyboardState, 'success' | 'neutral' | 'warning'> = {
   ready: 'success', field: 'neutral', off: 'warning', window: 'warning'
 }
+// `Échap` also answers while a field has the focus (it is how the entry is dropped from there):
+// only a lost window or an open dialog silences it.
+const escKbdClass = computed(() => kbState.value === 'window' || kbState.value === 'off' ? 'opacity-30 line-through' : 'opacity-80')
 const kbdClass = computed(() => kbKeysActive.value ? 'opacity-80' : 'opacity-30 line-through')
 
 // The fact time follows the clock until an entry starts: the moment a fact or a player is
@@ -889,15 +876,21 @@ const stageEvent = async (code: ScoringEventCode) => {
   else advanceEntry()
 }
 
-/** The reason list closed (picked, or Échap to keep the default): carry on with the entry. */
-const onReasonOpen = (open: boolean) => {
-  reasonOpen.value = open
-  // After the list has handed the focus back to its trigger.
-  if (!open && pendingCode.value) setTimeout(advanceEntry, 0)
+/** The reason modal closed (picked, or Échap to keep the current one): carry on with the entry. */
+const onReasonClose = () => {
+  reasonOpen.value = false
+  if (pendingCode.value) setTimeout(advanceEntry, 0)
+}
+
+/** Leave the editable field holding the focus (time of the fact), or the keys stay typed into it. */
+const releaseFieldFocus = () => {
+  const active = document.activeElement
+  if (active instanceof HTMLElement && isEditableTarget(active)) active.blur()
 }
 
 /** Drop the whole entry (button "Désélectionner", `Échap`): the time follows the clock again. */
 const clearEntry = () => {
+  releaseFieldFocus()
   pendingCode.value = null
   selected.value = null
   editingUid.value = null
@@ -911,6 +904,16 @@ const clearEntry = () => {
 }
 
 watch(matchOn, (on) => { if (!on) clearEntry() })
+
+// `Échap` = « Désélectionner », wherever the focus is — unless a dialog owns the key
+// (shortcutsEnabled is off then; the dialogs handle their own `Échap`).
+const onEscapeKey = (event: KeyboardEvent) => {
+  if (event.key !== 'Escape' || event.defaultPrevented || !shortcutsEnabled.value || !entryActive.value) return
+  event.preventDefault()
+  clearEntry()
+}
+onMounted(() => window.addEventListener('keydown', onEscapeKey))
+onUnmounted(() => window.removeEventListener('keydown', onEscapeKey))
 
 // Deleting a fact — from the entry panel (fact being edited) or the timeline's bin — is
 // always confirmed: a goal changes the score.
@@ -937,6 +940,7 @@ const validatePending = async () => {
     return
   }
   pendingCode.value = null
+  releaseFieldFocus()
   await commitEvent(code)
 }
 
@@ -1562,6 +1566,7 @@ const toggleLock = async () => {
               </span>
               <UButton size="xs" variant="soft" color="neutral" icon="i-heroicons-x-mark" @click="clearEntry">
                 {{ t('scoring.entry.clear') }}
+                <kbd class="rounded border border-current/40 px-1 text-xs font-mono leading-4" :class="escKbdClass">Esc</kbd>
               </UButton>
             </template>
             <template v-else-if="canScore">
@@ -1594,19 +1599,22 @@ const toggleLock = async () => {
             </UButton>
           </div>
 
-          <!-- 2. A card's reason: the list opens by itself (optional — default "Autre") -->
+          <!-- 2. A card's reason: a pictogram modal opens by itself (default "Autre") -->
           <div v-if="pendingIsCard">
             <label class="block text-center text-sm text-header-600 dark:text-header-300 mb-1">{{ t('scoring.reason.label') }}</label>
-            <USelect
-              v-model="eventReasonSelect"
-              :open="reasonOpen"
-              :items="reasonItems"
-              :disabled="!canScore"
+            <UButton
+              block
               size="sm"
-              class="w-full"
-              @update:open="onReasonOpen"
-            />
+              color="neutral"
+              variant="outline"
+              :disabled="!canScore"
+              @click="reasonOpen = true"
+            >
+              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" v-html="CARD_REASONS.find(r => r.code === eventReason)?.icon" />
+              {{ t('scoring.reason.' + (eventReason || 'unknown')) }}
+            </UButton>
           </div>
+          <ScoringCardReasonModal v-model="eventReason" :open="reasonOpen" @close="onReasonClose" />
 
           <!-- 3. The player by number (keyboard): ←/→ when both teams have it, then Entrée -->
           <div v-if="pendingCode && !selected && !editingUid" class="max-md:hidden">

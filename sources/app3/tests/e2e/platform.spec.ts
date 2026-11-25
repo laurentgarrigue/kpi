@@ -215,7 +215,7 @@ describe('platform and results pages (SITE_PLATFORM.md, phase 2 specs)', async (
   })
 
   it('CAL-07/HIS-02/TEA-02/CLB-01: the phase 3 pages are rendered by the server', async () => {
-    expect(await $fetch<string>('/calendar?month=2999-04')).toContain('Championnat Résultats')
+    expect(await $fetch<string>('/calendar?month=2999-04&view=week')).toContain('Championnat Résultats')
     expect(await $fetch<string>('/history/TSTRES')).toContain('Equipe Echo')
     expect(await $fetch<string>('/teams/101')).toContain('ALPHA Ann')
     expect(await $fetch<string>('/clubs?club=C001')).toContain('Club Alpha Lacville')

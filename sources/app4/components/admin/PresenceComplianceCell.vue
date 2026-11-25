@@ -11,6 +11,7 @@ interface Props {
   field: 'licence' | 'pagaie' | 'certif'
   season: string
   enforcement?: 'block' | 'warn' | null
+  advisoryErrors?: string[]
   minPagaie?: string | null
 }
 
@@ -25,8 +26,9 @@ const { errorLabel } = useEligibilityMessages()
 const hasError = (code: string) => !!props.player.eligibilityErrors?.includes(code)
 
 // Red when the rule blocks, amber when it only warns
+const warnClass = 'bg-amber-500 text-white dark:bg-amber-500 dark:text-header-950'
 const issueClass = computed(() => props.enforcement === 'warn'
-  ? 'bg-amber-500 text-white dark:bg-amber-500 dark:text-header-950'
+  ? warnClass
   : 'bg-danger-600 text-white dark:bg-danger-500')
 
 const licenceNumber = computed(() => props.player.icf ? `ICF-${props.player.icf}` : props.player.matric.toString())
@@ -59,7 +61,7 @@ const isOldLicence = computed(() => !!props.player.origine && !!props.season && 
       <span
         v-if="hasError('Pagaie_couleur')"
         class="issue-pill"
-        :class="issueClass"
+        :class="advisoryErrors?.includes('Pagaie_couleur') ? warnClass : issueClass"
         :title="errorLabel('Pagaie_couleur', minPagaie)"
       >{{ player.pagaieLabel || t('presence.paddle_none') }}</span>
       <span

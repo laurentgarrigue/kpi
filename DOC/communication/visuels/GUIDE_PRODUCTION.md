@@ -25,6 +25,7 @@ DOC/communication/visuels/
 ├── captures/                    captures haute définition (PNG)
 ├── gabarits/carrousel-feature.html   gabarit de carrousel 1080×1350
 ├── exports/                     zone de dépôt temporaire, ignorée par git (Playwright MCP n'écrit que dans le dépôt)
+├── kit-relais/                  kit de relais des plénières (C27) : visuels.html, TEXTES.md, scripts QR / captures / export
 └── reels/
     ├── frise-match/             Reel « Le match minute par minute » (captures animées)
     └── installation-app/        Reel d'installation (cartes d'étapes + enregistrement Playwright hors ligne)
@@ -32,6 +33,7 @@ DOC/communication/visuels/
 ~/Documents/dev/kpi_exports/     livrables, HORS du dépôt
 ├── reels/                       MP4 des Reels
 ├── carrousels/                  PNG des slides
+├── kit-relais/                  visuels, QR code et textes du kit de relais
 └── demos/installation-app/      copie des vidéos de démonstration (entrées du Reel, non versionnées)
 ```
 
@@ -160,7 +162,21 @@ Le filtre `tile=` de ffmpeg échoue dans cette version : assembler les planches-
 
 **Intégration dans Remotion** : `<OffthreadVideo src={staticFile("demos/offline.mp4")} startFrom={secondes * fps} muted />` dans une `<Sequence>`, cadré dans un cadre de téléphone (bordure bleue, coins arrondis).
 
-## 8. Check-list avant publication
+## 8. Visuels statiques exportés par script (modèle `kit-relais/`)
+
+Plus rapide et reproductible que l'export à la main du § 5 : `scripts/export.ts` (Playwright) photographie chaque
+`<section class="visuel">` à sa taille réelle. Mode d'emploi : [kit-relais/README.md](kit-relais/README.md).
+
+- **Servir la racine du dépôt**, pas `visuels/` : la page charge Raleway et Agency FB depuis `sources/kpi-layer`
+  (pas de Google Fonts, pas de copie de police).
+- **QR code de production** : `npm run qr` (bibliothèque `qrcode`). Ne pas réutiliser le QR capturé sur la préprod
+  (`qr-application-bord-de-terrain.png`), qui pointe sur la préprod.
+- **Site public** : le bandeau « Version bêta » et les boutons flottants sont masqués avant la capture ; la carte
+  des clubs ne se charge qu'après le clic sur « Afficher la carte ».
+- **Noms de joueurs** : la frise seule (graphique des périodes) n'en montre aucun ; la liste des buts en dessous,
+  si. Cadrer en conséquence quand le club n'a pas été prévenu.
+
+## 9. Check-list avant publication
 
 - [ ] Vocabulaire : ni app2/app3/app4, ni « gymnase ».
 - [ ] Aucune médaille visible (capture, vidéo, miniature) avant la révélation.

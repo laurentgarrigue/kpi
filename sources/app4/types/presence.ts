@@ -91,6 +91,8 @@ export interface CompetitionInfo {
 export interface EligibilityRules {
   level: 'national' | 'regional'
   enforcement: 'block' | 'warn'
+  /** Errors reported without blocking for the season (2027 national rule: minimum paddle colour). */
+  advisoryErrors?: string[]
   forceMaxProfile: number
   forceAddStatuses: string[]
   forceStatusChangeStatuses: string[]

@@ -67,6 +67,8 @@ Une spec par page de l'admin app4 (`PAGE_*.md`) + specs transverses :
 [PWA_AUTO_UPDATE.md](specs/PWA_AUTO_UPDATE.md), [TUTORIEL_ADMIN2.md](specs/TUTORIEL_ADMIN2.md),
 [PDF_GOTENBERG.md](specs/PDF_GOTENBERG.md) (génération PDF modernisée, api2 + Gotenberg),
 [FEATURE_DESIGNATIONS.md](specs/FEATURE_DESIGNATIONS.md) (désignations des officiels, rapports officiels dont le bilan de journée, relevé des faits).
+Calcul annuel du classement national des clubs (barème par saison, annexes art. 7) :
+[PAGE_CLASSEMENT_NATIONAL_CLUBS.md](specs/PAGE_CLASSEMENT_NATIONAL_CLUBS.md) (brouillon).
 
 Scoring live (chantier en cours, cf. [le plan](developer/in-progress/LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md)) :
 [PAGE_SCORING.md](specs/PAGE_SCORING.md) (console de saisie) et

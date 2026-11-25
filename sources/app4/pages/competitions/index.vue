@@ -28,11 +28,13 @@ const authStore = useAuthStore()
 const workContext = useWorkContextStore()
 // Désignations de la compétition : RC et officiels désignés en entier (FEATURE_DESIGNATIONS.md § 8.4, ticket 08)
 const designationsTarget = ref<ScopeModalTarget | null>(null)
+const route = useRoute()
 
 // State
 const loading = ref(false)
 const competitions = ref<AdminCompetition[]>([])
-const search = ref('')
+// ?search=CODE: deep link (e.g. from the club ranking alerts)
+const search = ref(typeof route.query.search === 'string' ? route.query.search : '')
 
 // Accordion state: collapsed sections (all expanded by default)
 const collapsedSections = ref<Set<number>>(new Set())

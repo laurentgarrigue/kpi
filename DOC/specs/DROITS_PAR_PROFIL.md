@@ -108,6 +108,7 @@
 | **TV (configuration scoreboard)** | C/M | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | **Opérations** | (saisonnières/import-export) | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | **Utilisateurs — capacité Rédacteur** | Attribuer / retirer | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| **Classement national des clubs** ([spec](PAGE_CLASSEMENT_NATIONAL_CLUBS.md)) | C/M/Calculer/Valider/Publier | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 
 ### Documents PDF ([PDF_GOTENBERG.md §7](PDF_GOTENBERG.md))
 
@@ -127,6 +128,7 @@ publiés, listes et grilles de matchs publiés, QR codes) sont accessibles sans 
 | Classements calculés (provisoires), justification de départage | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
 | Statistiques (types standard) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
 | Statistiques (types restreints), cartons cumulés | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
+| Classement national des clubs (public top N, document de travail) | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 
 ¹ équipes de ses clubs uniquement. ² toutes les équipes de ses compétitions. ³ matchs et journées publiés uniquement.
 

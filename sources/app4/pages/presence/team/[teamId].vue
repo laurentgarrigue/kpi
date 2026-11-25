@@ -33,9 +33,13 @@ const eligibility = computed(() => presenceStore.eligibility)
 const minPagaie = computed(() => eligibility.value?.minPagaieECA ?? null)
 const canOverride = computed(() => authStore.profile <= (eligibility.value?.forceMaxProfile ?? 2))
 
+// Errors that block: the advisory ones of the season (2027: paddle colour) are only reported
+const blockingErrors = (player: Player): string[] =>
+  (player.eligibilityErrors ?? []).filter(code => !(eligibility.value?.advisoryErrors ?? []).includes(code))
+
 // Blocking rules: a non-compliant player cannot take a playing status (-, C) unless forced
 const isPlayingStatusLocked = (player: Player): boolean =>
-  eligibility.value?.enforcement === 'block' && !!player.eligibilityErrors?.length && !canOverride.value
+  eligibility.value?.enforcement === 'block' && !!blockingErrors(player).length && !canOverride.value
 
 // Forced status change (profile <= forceMaxProfile) for a non-compliant player
 const forceStatusTarget = ref<{ matric: number; value: string; name: string; errors: string[] } | null>(null)
@@ -901,10 +905,10 @@ const pdfLinks = computed(() => {
               </select>
             </td>
 
-            <td class="px-3 py-1 text-sm font-medium text-header-900 dark:text-header-50">{{ formatNom(player.nom) }}<AdminEligibilityBadge :errors="player.eligibilityErrors" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" :playing="['-', 'C'].includes(player.capitaine)" /></td>
+            <td class="px-3 py-1 text-sm font-medium text-header-900 dark:text-header-50">{{ formatNom(player.nom) }}<AdminEligibilityBadge :errors="player.eligibilityErrors" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" :advisory-errors="eligibility?.advisoryErrors" :playing="['-', 'C'].includes(player.capitaine)" /></td>
             <td class="px-3 py-1 text-sm text-header-900 dark:text-header-50">{{ formatPrenom(player.prenom) }}</td>
             <td class="px-3 py-1 text-sm text-header-600 dark:text-header-300 font-mono text-center">
-              <AdminPresenceComplianceCell :player="player" :season="presenceStore.team?.codeSaison ?? ''" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" field="licence" />
+              <AdminPresenceComplianceCell :player="player" :season="presenceStore.team?.codeSaison ?? ''" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" :advisory-errors="eligibility?.advisoryErrors" field="licence" />
             </td>
             <td class="px-3 py-1 text-sm text-header-600 dark:text-header-300 text-center">
               <NuxtLink
@@ -934,10 +938,10 @@ const pdfLinks = computed(() => {
             </td>
 
             <!-- Pagaie with validation -->
-            <td class="px-3 py-1 text-sm text-center"><AdminPresenceComplianceCell :player="player" :season="presenceStore.team?.codeSaison ?? ''" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" field="pagaie" /></td>
+            <td class="px-3 py-1 text-sm text-center"><AdminPresenceComplianceCell :player="player" :season="presenceStore.team?.codeSaison ?? ''" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" :advisory-errors="eligibility?.advisoryErrors" field="pagaie" /></td>
 
             <!-- Certificate -->
-            <td class="px-3 py-1 text-sm text-center"><AdminPresenceComplianceCell :player="player" :season="presenceStore.team?.codeSaison ?? ''" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" field="certif" /></td>
+            <td class="px-3 py-1 text-sm text-center"><AdminPresenceComplianceCell :player="player" :season="presenceStore.team?.codeSaison ?? ''" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" :advisory-errors="eligibility?.advisoryErrors" field="certif" /></td>
 
             <!-- Arbitre -->
             <td class="px-3 py-1 text-sm text-header-600 dark:text-header-300 text-center font-mono">
@@ -1013,10 +1017,10 @@ const pdfLinks = computed(() => {
                   <option value="X">{{ t('presence.status_inactive') }}</option>
                 </select>
               </td>
-              <td class="px-3 py-1 text-sm font-medium text-header-900 dark:text-header-50">{{ formatNom(player.nom) }}<AdminEligibilityBadge :errors="player.eligibilityErrors" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" :playing="['-', 'C'].includes(player.capitaine)" /></td>
+              <td class="px-3 py-1 text-sm font-medium text-header-900 dark:text-header-50">{{ formatNom(player.nom) }}<AdminEligibilityBadge :errors="player.eligibilityErrors" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" :advisory-errors="eligibility?.advisoryErrors" :playing="['-', 'C'].includes(player.capitaine)" /></td>
               <td class="px-3 py-1 text-sm text-header-900 dark:text-header-50">{{ formatPrenom(player.prenom) }}</td>
               <td class="px-3 py-1 text-sm text-header-600 dark:text-header-300 font-mono text-center">
-                <AdminPresenceComplianceCell :player="player" :season="presenceStore.team?.codeSaison ?? ''" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" field="licence" />
+                <AdminPresenceComplianceCell :player="player" :season="presenceStore.team?.codeSaison ?? ''" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" :advisory-errors="eligibility?.advisoryErrors" field="licence" />
               </td>
               <td class="px-3 py-1 text-sm text-header-600 dark:text-header-300 text-center">
                 <NuxtLink
@@ -1042,8 +1046,8 @@ const pdfLinks = computed(() => {
                   :title="t('presence.surclassement_ok')"
                 />
               </td>
-              <td class="px-3 py-1 text-sm text-center"><AdminPresenceComplianceCell :player="player" :season="presenceStore.team?.codeSaison ?? ''" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" field="pagaie" /></td>
-              <td class="px-3 py-1 text-sm text-center"><AdminPresenceComplianceCell :player="player" :season="presenceStore.team?.codeSaison ?? ''" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" field="certif" /></td>
+              <td class="px-3 py-1 text-sm text-center"><AdminPresenceComplianceCell :player="player" :season="presenceStore.team?.codeSaison ?? ''" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" :advisory-errors="eligibility?.advisoryErrors" field="pagaie" /></td>
+              <td class="px-3 py-1 text-sm text-center"><AdminPresenceComplianceCell :player="player" :season="presenceStore.team?.codeSaison ?? ''" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" :advisory-errors="eligibility?.advisoryErrors" field="certif" /></td>
               <td class="px-3 py-1 text-sm text-header-600 dark:text-header-300 text-center font-mono">
                 {{ [player.arbitre, player.niveau].filter(Boolean).join('-') || '' }}
               </td>
@@ -1113,10 +1117,10 @@ const pdfLinks = computed(() => {
                   <option value="X">{{ t('presence.status_inactive') }}</option>
                 </select>
               </td>
-              <td class="px-3 py-1 text-sm font-medium text-header-900 dark:text-header-50">{{ formatNom(player.nom) }}<AdminEligibilityBadge :errors="player.eligibilityErrors" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" :playing="['-', 'C'].includes(player.capitaine)" /></td>
+              <td class="px-3 py-1 text-sm font-medium text-header-900 dark:text-header-50">{{ formatNom(player.nom) }}<AdminEligibilityBadge :errors="player.eligibilityErrors" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" :advisory-errors="eligibility?.advisoryErrors" :playing="['-', 'C'].includes(player.capitaine)" /></td>
               <td class="px-3 py-1 text-sm text-header-900 dark:text-header-50">{{ formatPrenom(player.prenom) }}</td>
               <td class="px-3 py-1 text-sm text-header-600 dark:text-header-300 font-mono text-center">
-                <AdminPresenceComplianceCell :player="player" :season="presenceStore.team?.codeSaison ?? ''" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" field="licence" />
+                <AdminPresenceComplianceCell :player="player" :season="presenceStore.team?.codeSaison ?? ''" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" :advisory-errors="eligibility?.advisoryErrors" field="licence" />
               </td>
               <td class="px-3 py-1 text-sm text-header-600 dark:text-header-300 text-center">
                 <NuxtLink
@@ -1142,8 +1146,8 @@ const pdfLinks = computed(() => {
                   :title="t('presence.surclassement_ok')"
                 />
               </td>
-              <td class="px-3 py-1 text-sm text-center"><AdminPresenceComplianceCell :player="player" :season="presenceStore.team?.codeSaison ?? ''" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" field="pagaie" /></td>
-              <td class="px-3 py-1 text-sm text-center"><AdminPresenceComplianceCell :player="player" :season="presenceStore.team?.codeSaison ?? ''" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" field="certif" /></td>
+              <td class="px-3 py-1 text-sm text-center"><AdminPresenceComplianceCell :player="player" :season="presenceStore.team?.codeSaison ?? ''" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" :advisory-errors="eligibility?.advisoryErrors" field="pagaie" /></td>
+              <td class="px-3 py-1 text-sm text-center"><AdminPresenceComplianceCell :player="player" :season="presenceStore.team?.codeSaison ?? ''" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" :advisory-errors="eligibility?.advisoryErrors" field="certif" /></td>
               <td class="px-3 py-1 text-sm text-header-600 dark:text-header-300 text-center font-mono">
                 {{ [player.arbitre, player.niveau].filter(Boolean).join('-') || '' }}
               </td>
@@ -1213,10 +1217,10 @@ const pdfLinks = computed(() => {
                   <option value="X">{{ t('presence.status_inactive') }}</option>
                 </select>
               </td>
-              <td class="px-3 py-1 text-sm font-medium text-header-900 dark:text-header-50">{{ formatNom(player.nom) }}<AdminEligibilityBadge :errors="player.eligibilityErrors" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" :playing="['-', 'C'].includes(player.capitaine)" /></td>
+              <td class="px-3 py-1 text-sm font-medium text-header-900 dark:text-header-50">{{ formatNom(player.nom) }}<AdminEligibilityBadge :errors="player.eligibilityErrors" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" :advisory-errors="eligibility?.advisoryErrors" :playing="['-', 'C'].includes(player.capitaine)" /></td>
               <td class="px-3 py-1 text-sm text-header-900 dark:text-header-50">{{ formatPrenom(player.prenom) }}</td>
               <td class="px-3 py-1 text-sm text-header-600 dark:text-header-300 font-mono text-center">
-                <AdminPresenceComplianceCell :player="player" :season="presenceStore.team?.codeSaison ?? ''" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" field="licence" />
+                <AdminPresenceComplianceCell :player="player" :season="presenceStore.team?.codeSaison ?? ''" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" :advisory-errors="eligibility?.advisoryErrors" field="licence" />
               </td>
               <td class="px-3 py-1 text-sm text-header-600 dark:text-header-300 text-center">
                 <NuxtLink
@@ -1242,8 +1246,8 @@ const pdfLinks = computed(() => {
                   :title="t('presence.surclassement_ok')"
                 />
               </td>
-              <td class="px-3 py-1 text-sm text-center"><AdminPresenceComplianceCell :player="player" :season="presenceStore.team?.codeSaison ?? ''" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" field="pagaie" /></td>
-              <td class="px-3 py-1 text-sm text-center"><AdminPresenceComplianceCell :player="player" :season="presenceStore.team?.codeSaison ?? ''" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" field="certif" /></td>
+              <td class="px-3 py-1 text-sm text-center"><AdminPresenceComplianceCell :player="player" :season="presenceStore.team?.codeSaison ?? ''" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" :advisory-errors="eligibility?.advisoryErrors" field="pagaie" /></td>
+              <td class="px-3 py-1 text-sm text-center"><AdminPresenceComplianceCell :player="player" :season="presenceStore.team?.codeSaison ?? ''" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" :advisory-errors="eligibility?.advisoryErrors" field="certif" /></td>
               <td class="px-3 py-1 text-sm text-header-600 dark:text-header-300 text-center font-mono">
                 {{ [player.arbitre, player.niveau].filter(Boolean).join('-') || '' }}
               </td>
@@ -1294,8 +1298,8 @@ const pdfLinks = computed(() => {
               class="rounded border-header-300 dark:border-header-700"
             >
             <div>
-              <div class="font-bold text-header-900 dark:text-header-50">{{ formatNom(player.nom) }} {{ formatPrenom(player.prenom) }}<AdminEligibilityBadge :errors="player.eligibilityErrors" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" :playing="['-', 'C'].includes(player.capitaine)" /></div>
-              <AdminPresenceComplianceCell :player="player" :season="presenceStore.team?.codeSaison ?? ''" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" field="licence" />
+              <div class="font-bold text-header-900 dark:text-header-50">{{ formatNom(player.nom) }} {{ formatPrenom(player.prenom) }}<AdminEligibilityBadge :errors="player.eligibilityErrors" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" :advisory-errors="eligibility?.advisoryErrors" :playing="['-', 'C'].includes(player.capitaine)" /></div>
+              <AdminPresenceComplianceCell :player="player" :season="presenceStore.team?.codeSaison ?? ''" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" :advisory-errors="eligibility?.advisoryErrors" field="licence" />
             </div>
           </div>
           <!-- Numero + Capitaine badges -->
@@ -1367,11 +1371,11 @@ const pdfLinks = computed(() => {
           </div>
           <div class="flex items-center gap-2">
             <span class="text-header-600 dark:text-header-300">{{ t('common.paddle') }}:</span>
-            <AdminPresenceComplianceCell :player="player" :season="presenceStore.team?.codeSaison ?? ''" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" field="pagaie" />
+            <AdminPresenceComplianceCell :player="player" :season="presenceStore.team?.codeSaison ?? ''" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" :advisory-errors="eligibility?.advisoryErrors" field="pagaie" />
           </div>
           <div class="flex items-center gap-2">
             <span class="text-header-600 dark:text-header-300">{{ t('common.certificate') }}:</span>
-            <AdminPresenceComplianceCell :player="player" :season="presenceStore.team?.codeSaison ?? ''" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" field="certif" />
+            <AdminPresenceComplianceCell :player="player" :season="presenceStore.team?.codeSaison ?? ''" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" :advisory-errors="eligibility?.advisoryErrors" field="certif" />
           </div>
         </div>
 

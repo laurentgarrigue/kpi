@@ -415,7 +415,7 @@ const isWinner = (game, team) => {
 const scoreClass = (game, team) => {
   return {
     'lcd text-lg px-2 py-1 border border-gray-400 rounded': true,
-    'bg-bar text-white': isWinner(game, team),
+    'bg-bar text-white dark:bg-white dark:text-black dark:border-white font-bold': isWinner(game, team),
     'bg-gray-200 text-gray-900': !isWinner(game, team),
   }
 }
