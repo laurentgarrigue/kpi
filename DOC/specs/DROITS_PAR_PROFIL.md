@@ -127,6 +127,7 @@ publiés, listes et grilles de matchs publiés, QR codes) sont accessibles sans 
 | Statistiques (types standard) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
 | Statistiques (types restreints), cartons cumulés | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
 | Classement national des clubs (public top N, document de travail) | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Règles métier (valeurs des catalogues, [FEATURE_RULES_CATALOG_PDF.md](FEATURE_RULES_CATALOG_PDF.md)) | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 
 ¹ équipes de ses clubs uniquement. ² toutes les équipes de ses compétitions. ³ matchs et journées publiés uniquement.
 

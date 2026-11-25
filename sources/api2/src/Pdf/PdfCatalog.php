@@ -29,6 +29,7 @@ final class PdfCatalog
     public const QRCODE_APP = 'qrcode-app';
     public const SCHEMA = 'schema';
     public const CLUB_RANKING = 'club-ranking';
+    public const RULES_CATALOG = 'rules-catalog';
 
     /** Minimum role of each admin document (§ 7.2 to § 7.5). */
     private const ADMIN_ROLES = [
@@ -49,6 +50,8 @@ final class PdfCatalog
         self::SCHEMA => 'ROLE_VIEWER',
         // National club ranking: profile 1 only (PAGE_CLASSEMENT_NATIONAL_CLUBS.md Q-1)
         self::CLUB_RANKING => 'ROLE_SUPER_ADMIN',
+        // Values of the business rule catalogues: profile 1 only (FEATURE_RULES_CATALOG_PDF.md § 4)
+        self::RULES_CATALOG => 'ROLE_SUPER_ADMIN',
     ];
 
     /** Options that add data, with their own role (§ 7.2): `option` or `option=value`. */
@@ -71,6 +74,18 @@ final class PdfCatalog
         self::QRCODES,
         self::QRCODE_APP,
     ];
+
+    /** @return list<string> every document of the catalogue, admin ones first */
+    public static function documents(): array
+    {
+        return array_values(array_unique([...array_keys(self::ADMIN_ROLES), ...self::PUBLIC_DOCUMENTS]));
+    }
+
+    /** @return array<string, string> role of each option adding data to a document (`option` or `option=value`) */
+    public static function optionRolesOf(string $document): array
+    {
+        return self::OPTION_ROLES[$document] ?? [];
+    }
 
     public static function isAdminDocument(string $document): bool
     {

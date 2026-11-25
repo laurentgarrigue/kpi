@@ -849,7 +849,21 @@
       "purge_button": "Purge Cache",
       "confirm_purge": "Confirm cache purge?",
       "success_purge": "Cache purged: {matchFiles} game files, {eventFiles} event files deleted",
-      "error_purge": "Error purging cache"
+      "error_purge": "Error purging cache",
+      "rules_catalog": "Business rules",
+      "rules_catalog_description": "PDF of the values of every business rule catalogue (eligible player, age categories, scoring, medals, equipment control, PDF documents), for validation by the CNA board.",
+      "rules_catalog_season": "Season",
+      "rules_catalog_catalog": "Catalogue",
+      "rules_catalog_all": "Every catalogue (with contents)",
+      "rules_catalog_button": "Print the PDF",
+      "rules_catalogs": {
+        "player-eligibility": "Eligible player",
+        "age-categories": "Age categories",
+        "scoring": "Scoring game rules",
+        "medals": "Medals and thresholds",
+        "equipment": "Equipment control",
+        "pdf-documents": "PDF documents"
+      }
     },
     "common": {
       "operation_success": "Operation successful",

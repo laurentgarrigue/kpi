@@ -9,7 +9,7 @@ import { isScrutineerProfile } from './scrutineering'
 export type AdminPdfDocument =
   | 'teams-groups' | 'presence' | 'scrutineering-control' | 'referees-pool' | 'instances'
   | 'games-list' | 'scoresheet' | 'ranking' | 'ranking-team-detail' | 'ranking-gameday-detail'
-  | 'ranking-phases' | 'ranking-tiebreak' | 'stats' | 'cards' | 'schema' | 'club-ranking'
+  | 'ranking-phases' | 'ranking-tiebreak' | 'stats' | 'cards' | 'schema' | 'club-ranking' | 'rules-catalog'
 
 export type PdfOption = 'visa' | 'birthdate' | 'u21'
 
@@ -32,7 +32,14 @@ const ADMIN_PDF_MAX_PROFILE: Record<AdminPdfDocument, number> = {
   'schema': 8,
   // National club ranking: profile 1 only (PAGE_CLASSEMENT_NATIONAL_CLUBS.md Q-1)
   'club-ranking': 1,
+  // Values of the business rule catalogues: profile 1 only (FEATURE_RULES_CATALOG_PDF.md RCAT-12)
+  'rules-catalog': 1,
 }
+
+/** Catalogues of the `rules-catalog` document, in its order. Keep in step with the describers of api2 (RuleCatalogs). */
+export const RULE_CATALOGS = ['player-eligibility', 'age-categories', 'scoring', 'medals', 'equipment', 'pdf-documents'] as const
+
+export type RuleCatalog = typeof RULE_CATALOGS[number]
 
 /** Options adding data to the presence sheet, with their own highest profile (§ 7.2, I2). */
 const OPTION_MAX_PROFILE: Record<PdfOption, number> = { visa: 6, u21: 6, birthdate: 2 }
