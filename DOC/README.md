@@ -71,7 +71,8 @@ Calcul annuel du classement national des clubs (barème par saison, annexes art.
 
 Scoring live (chantier en cours, cf. [le plan](developer/in-progress/LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md)) :
 [PAGE_SCORING.md](specs/PAGE_SCORING.md) (console de saisie) et
-[PAGE_INCRUSTATION.md](specs/PAGE_INCRUSTATION.md) (page d'incrustation unique).
+[PAGE_INCRUSTATION.md](specs/PAGE_INCRUSTATION.md) (page d'incrustation unique) et
+[PAGE_ECRANS_AUTONOMES.md](specs/PAGE_ECRANS_AUTONOMES.md) (écrans de score et de chronomètre de tir reliés par Internet, évaluation + spec).
 
 ## 🌐 [Specs du site public](specs/public/README.md)
 

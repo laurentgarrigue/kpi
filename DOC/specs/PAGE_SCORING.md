@@ -982,6 +982,10 @@ couvre ce cas : **la taille est mesurée, pas devinée**.
 principal sous le chronomètre de tir), `?shotclock=0` (masquer le chronomètre de tir du
 scoreboard).
 
+**Écrans autonomes** (sans câble vidéo, reliés par Internet) : évaluation et spec dans
+[PAGE_ECRANS_AUTONOMES.md](PAGE_ECRANS_AUTONOMES.md) — même rendu, alimenté par Mercure au lieu de
+`BroadcastChannel`.
+
 ### 6.6 i18n
 
 Namespace `scoring.*` dans `i18n/locales/fr.json` et `en.json` (périodes, statuts, codes

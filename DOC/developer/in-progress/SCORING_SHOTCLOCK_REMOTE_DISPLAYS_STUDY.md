@@ -76,7 +76,9 @@ demi-longueur + dégagements), bien plus en longueur de câble — le HDMI passi
 | **E. LoRa 868 MHz** | *Duty cycle* européen incompatible avec des trames toutes les 250–500 ms ; portée inutile | — |
 
 B reste valable **en dépannage** et pour les **écrans d'ambiance distants** (déjà dans la cible
-Mercure).
+Mercure). Évaluation et spec de ces écrans :
+[PAGE_ECRANS_AUTONOMES.md](../../specs/PAGE_ECRANS_AUTONOMES.md) (issue #425) — elle confirme que
+les afficheurs d'angle réglementaires restent hors Internet.
 
 ## 4. Solution matérielle retenue : afficheurs LED + radio ESP-NOW
 
