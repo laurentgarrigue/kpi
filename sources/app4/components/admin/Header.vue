@@ -170,14 +170,25 @@ const adminMenuGroups = computed<MenuGroup[]>(() => {
   }
   if (profile <= 2) {
     referentials.push({
-      to: '/rc',
-      icon: 'heroicons:identification',
-      label: t('menu.rc')
-    })
-    referentials.push({
       to: '/referees-pool',
       icon: 'heroicons:flag',
       label: t('menu.referees_pool')
+    })
+  }
+  // Désignations : profils 1 à 3
+  if (profile <= 3) {
+    referentials.push({
+      to: '/designations',
+      icon: 'heroicons:user-group',
+      label: t('menu.designations')
+    })
+  }
+  // Rapports officiels : chacun voit ceux qu'il peut lire (rédacteur, auteur, destinataire, profils 1–2)
+  if (profile <= 8) {
+    referentials.push({
+      to: '/reports',
+      icon: 'heroicons:document-text',
+      label: t('menu.reports')
     })
   }
   if (referentials.length > 0) {

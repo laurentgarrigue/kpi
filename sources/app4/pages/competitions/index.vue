@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { ScopeModalTarget } from '~/utils/designations'
 import type {
   AdminCompetition,
   CompetitionFormData,
@@ -25,6 +26,8 @@ const api = useApi()
 const competitionsApi = useCompetitionsApi()
 const authStore = useAuthStore()
 const workContext = useWorkContextStore()
+// Désignations de la compétition : RC et officiels désignés en entier (FEATURE_DESIGNATIONS.md § 8.4, ticket 08)
+const designationsTarget = ref<ScopeModalTarget | null>(null)
 const route = useRoute()
 
 // State
@@ -286,8 +289,7 @@ const canEdit = computed(() => authStore.profile <= 3)
 const canDelete = computed(() => authStore.profile <= 2)
 const canTogglePublish = computed(() => authStore.profile <= 4)
 const canToggleLock = computed(() => authStore.profile <= 4)
-// RC (Responsables de Compétition) management is reserved to profile <= 2, same as
-// admin/rc backend routes (AdminRcController, #[IsGranted('ROLE_ADMIN')] at class level).
+// Désignations of the competition (RC and officials) are written by profiles <= 2 (FEATURE_DESIGNATIONS.md DES-06)
 const canManageRc = computed(() => authStore.profile <= 2)
 // Whether the Actions column has anything to show at all for the current profile
 const showActionsColumn = computed(() => canManageRc.value || canDelete.value)
@@ -1020,14 +1022,16 @@ const isMultiType = computed(() => formData.value.codeTypeclt === 'MULTI')
                   <!-- Actions -->
                   <td v-if="showActionsColumn" class="px-3 py-1">
                     <div class="flex items-center justify-end gap-1">
-                      <NuxtLink
+                      <button
                         v-if="canManageRc"
-                        :to="`/rc?competition=${competition.code}`"
+                        type="button"
                         class="p-1.5 text-primary-600 dark:text-primary-300 hover:text-primary-800 dark:hover:text-primary-200"
-                        :title="t('competitions.rc')"
+                        :title="t('designations.block.button')"
+                        :aria-label="t('designations.block.title', { line: competition.code })"
+                        @click="designationsTarget = { season: workContext.season, scopeType: 'COMPETITION', scopeId: competition.code, label: `${competition.code} - ${competition.libelle}` }"
                       >
                         <UIcon name="heroicons:users-solid" class="w-6 h-6" />
-                      </NuxtLink>
+                      </button>
                       <button
                         v-if="canDelete && competition.nbEquipes === 0 && competition.nbJournees === 0 && competition.nbMatchs === 0"
                         class="p-1.5 text-danger-600 dark:text-danger-300"
@@ -1664,5 +1668,6 @@ const isMultiType = computed(() => formData.value.codeTypeclt === 'MULTI')
 
     <!-- Scroll to top button -->
     <AdminScrollToTop :title="t('common.scroll_to_top')" />
+    <DesignationsScopeModal :target="designationsTarget" @close="designationsTarget = null" @changed="loadCompetitions" />
   </div>
 </template>

@@ -40,7 +40,6 @@ const duplicateConfirmOpen = ref(false)
 const bulkDeleteConfirmOpen = ref(false)
 const bulkPublishConfirmOpen = ref(false)
 const bulkCalendarModalOpen = ref(false)
-const bulkOfficialsModalOpen = ref(false)
 const officialsModalOpen = ref(false)
 
 // Form
@@ -63,25 +62,43 @@ const bulkCalendarData = ref<Omit<GamedayBulkCalendarData, 'ids'>>({
 })
 
 // Bulk officials
-const bulkOfficialsSourceId = ref<number | null>(null)
 
-// Officials modal
+// Officials modal: Désignations de la journée (FEATURE_DESIGNATIONS.md § 8.4, ticket designations/08)
 const officialsGameday = ref<Gameday | null>(null)
-const officialsFormData = ref({
-  responsableInsc: '',
-  responsableR1: '',
-  delegue: '',
-  chefArbitre: '',
-  repAthletes: '',
-  arbNj1: '',
-  arbNj2: '',
-  arbNj3: '',
-  arbNj4: '',
-  arbNj5: '',
-})
+/** Colonnes legacy des officiels : recopiées depuis les Désignations, jamais envoyées par le formulaire (DES-11). */
+const OFFICIAL_FIELDS = ['responsableInsc', 'responsableR1', 'delegue', 'chefArbitre', 'repAthletes', 'arbNj1', 'arbNj2', 'arbNj3', 'arbNj4', 'arbNj5'] as const
+// Le code du club organisateur suit le libellé : une saisie libre le vide, le choix d'un club de la liste le renseigne
+const onOrganisateurInput = (value: string) => {
+  if (value !== formData.value.organisateur) formData.value.codeOrganisateur = ''
+  formData.value.organisateur = value
+}
+
+const withoutOfficials = <T extends Record<string, unknown>>(data: T) =>
+  Object.fromEntries(Object.entries(data).filter(([key]) => !(OFFICIAL_FIELDS as readonly string[]).includes(key)))
 
 // Bulk actions dropdown
 const bulkActionsOpen = ref(false)
+
+// Display dropdown ("Affichage"): optional columns, remembered per browser
+const DISPLAY_STORAGE_KEY = 'app4_gamedays_display'
+const loadDisplay = (): { showClub?: boolean, showOfficials?: boolean } => {
+  try { return JSON.parse(localStorage.getItem(DISPLAY_STORAGE_KEY) ?? '{}') } catch { return {} }
+}
+const savedDisplay = loadDisplay()
+const showClub = ref(savedDisplay.showClub ?? true)
+const showOfficials = ref(savedDisplay.showOfficials ?? true)
+const displayOpen = ref(false)
+const displayRef = ref<HTMLDivElement | null>(null)
+const displayColumns = [
+  { key: 'club', labelKey: 'gamedays.field.club_organisateur', model: showClub },
+  { key: 'officials', labelKey: 'gamedays.field.officiels', model: showOfficials },
+]
+const activeDisplayCount = computed(() => displayColumns.filter(c => c.model.value).length)
+watch([showClub, showOfficials], () => {
+  try { localStorage.setItem(DISPLAY_STORAGE_KEY, JSON.stringify({ showClub: showClub.value, showOfficials: showOfficials.value })) } catch { /* ignore */ }
+})
+// Base layout counts Officiels and not Club organisateur
+const tableColspan = computed(() => (canSelect.value ? 17 : 16) + (showClub.value ? 1 : 0) - (showOfficials.value ? 0 : 1))
 const bulkActionsRef = ref<HTMLDivElement | null>(null)
 
 // Inline editing
@@ -213,6 +230,9 @@ const loadGamedays = async () => {
 const onClickOutside = (e: MouseEvent) => {
   if (bulkActionsRef.value && !bulkActionsRef.value.contains(e.target as Node)) {
     bulkActionsOpen.value = false
+  }
+  if (displayRef.value && !displayRef.value.contains(e.target as Node)) {
+    displayOpen.value = false
   }
 }
 onMounted(async () => {
@@ -422,7 +442,7 @@ const openEditModal = (gameday: Gameday) => {
     departement: gameday.departement || '',
     planEau: gameday.planEau || '',
     organisateur: gameday.organisateur || '',
-    codeOrganisateur: '',
+    codeOrganisateur: gameday.codeOrganisateur || '',
     responsableInsc: gameday.responsableInsc || '',
     responsableR1: gameday.responsableR1 || '',
     delegue: gameday.delegue || '',
@@ -449,10 +469,10 @@ const submitForm = async () => {
   formSaving.value = true
   try {
     if (editingGameday.value) {
-      await api.put(`/admin/gamedays/${editingGameday.value.id}`, formData.value)
+      await api.put(`/admin/gamedays/${editingGameday.value.id}`, withoutOfficials(formData.value))
       toast.add({ title: t('common.success'), description: t('gamedays.updated'), color: 'success' })
     } else {
-      await api.post('/admin/gamedays', formData.value)
+      await api.post('/admin/gamedays', withoutOfficials(formData.value))
       toast.add({ title: t('common.success'), description: t('gamedays.added'), color: 'success' })
     }
     formModalOpen.value = false
@@ -622,87 +642,10 @@ const getOfficialsSummary = (g: Gameday): string => {
   return parts.length > 0 ? parts.join(', ') : '-'
 }
 
-// ─── Bulk Officials Copy (Feature 1) ───
-const bulkOfficialsSource = computed(() => {
-  if (!bulkOfficialsSourceId.value) return null
-  return gamedays.value.find(g => g.id === bulkOfficialsSourceId.value) ?? null
-})
-
-const openBulkOfficialsModal = () => {
-  bulkOfficialsSourceId.value = null
-  bulkOfficialsModalOpen.value = true
-}
-
-const submitBulkOfficials = async () => {
-  if (!bulkOfficialsSourceId.value) return
-  formSaving.value = true
-  try {
-    const targetIds = selectedIds.value.filter(id => id !== bulkOfficialsSourceId.value)
-    const response = await api.patch<{ updated: number }>('/admin/gamedays/bulk/officials', {
-      sourceId: bulkOfficialsSourceId.value,
-      ids: targetIds,
-    })
-    toast.add({
-      title: t('common.success'),
-      description: t('gamedays.bulk_officials_updated', { count: response.updated }),
-      color: 'success',
-    })
-    bulkOfficialsModalOpen.value = false
-    selectedIds.value = []
-    await loadGamedays()
-  } catch {
-    // Error already shown by useApi
-  } finally {
-    formSaving.value = false
-  }
-}
-
-// ─── Officials Modal (Feature 2) ───
+// ─── Officials Modal (Feature 2) : bloc Désignations de la journée ───
 const openOfficialsModal = (g: Gameday) => {
   officialsGameday.value = g
-  officialsFormData.value = {
-    responsableInsc: g.responsableInsc || '',
-    responsableR1: g.responsableR1 || '',
-    delegue: g.delegue || '',
-    chefArbitre: g.chefArbitre || '',
-    repAthletes: g.repAthletes || '',
-    arbNj1: g.arbNj1 || '',
-    arbNj2: g.arbNj2 || '',
-    arbNj3: g.arbNj3 || '',
-    arbNj4: g.arbNj4 || '',
-    arbNj5: g.arbNj5 || '',
-  }
   officialsModalOpen.value = true
-}
-
-const saveOfficials = async () => {
-  if (!officialsGameday.value) return
-  formSaving.value = true
-  try {
-    await api.put(`/admin/gamedays/${officialsGameday.value.id}`, officialsFormData.value)
-    // Update local data
-    const g = gamedays.value.find(gd => gd.id === officialsGameday.value!.id)
-    if (g) {
-      Object.assign(g, {
-        responsableInsc: officialsFormData.value.responsableInsc || null,
-        responsableR1: officialsFormData.value.responsableR1 || null,
-        delegue: officialsFormData.value.delegue || null,
-        chefArbitre: officialsFormData.value.chefArbitre || null,
-        repAthletes: officialsFormData.value.repAthletes || null,
-        arbNj1: officialsFormData.value.arbNj1 || null,
-        arbNj2: officialsFormData.value.arbNj2 || null,
-        arbNj3: officialsFormData.value.arbNj3 || null,
-        arbNj4: officialsFormData.value.arbNj4 || null,
-        arbNj5: officialsFormData.value.arbNj5 || null,
-      })
-    }
-    toast.add({ title: t('common.success'), description: t('gamedays.updated'), color: 'success' })
-    officialsModalOpen.value = false
-  } catch {
-    // Error already shown
-  } finally {
-    formSaving.value = false
-  }
 }
 
 // Officials of the gameday: api2 `instances` (PDF_GOTENBERG.md § 7.2)
@@ -751,6 +694,32 @@ const printJurySheet = (gameday: Gameday | null) => {
             <option v-for="opt in sortOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
           </select>
         </div>
+
+        <!-- Display dropdown: optional columns -->
+        <div ref="displayRef" class="relative">
+          <button
+            type="button"
+            class="flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg border"
+            :class="activeDisplayCount > 0 ? 'text-primary-700 dark:text-primary-200 border-primary-400 bg-primary-50 dark:bg-primary-950' : 'text-header-900 dark:text-header-200 bg-white dark:bg-header-900 border-header-300 dark:border-header-700 hover:bg-header-50 dark:hover:bg-header-800'"
+            @click="displayOpen = !displayOpen"
+          >
+            <UIcon name="heroicons:adjustments-horizontal" class="w-5 h-5" />
+            {{ t('gamedays.display.title') }}
+            <span v-if="activeDisplayCount > 0" class="inline-flex items-center justify-center min-w-5 h-5 px-1 text-sm font-semibold text-white bg-primary-600 rounded-full">{{ activeDisplayCount }}</span>
+            <UIcon name="heroicons:chevron-down" class="w-4 h-4 transition-transform" :class="{ 'rotate-180': displayOpen }" />
+          </button>
+          <div v-show="displayOpen" class="absolute z-20 mt-1 w-60 bg-white dark:bg-header-900 border border-header-200 dark:border-header-700 rounded-lg shadow-lg py-1 right-0">
+            <div class="px-3 py-1 text-xs font-semibold text-header-900 dark:text-header-300 uppercase tracking-wider">{{ t('gamedays.display.columns_section') }}</div>
+            <label
+              v-for="col in displayColumns"
+              :key="col.key"
+              class="flex items-center gap-2 px-4 py-2 text-sm text-header-900 dark:text-header-50 cursor-pointer hover:bg-header-50 dark:hover:bg-header-800"
+            >
+              <input v-model="col.model.value" type="checkbox" class="rounded border-header-300 dark:border-header-700 text-primary-600">
+              {{ t(col.labelKey) }}
+            </label>
+          </div>
+        </div>
       </template>
     </AdminPageHeader>
 
@@ -798,14 +767,6 @@ const printJurySheet = (gameday: Gameday | null) => {
             >
               <UIcon name="heroicons:calendar-days" class="w-5 h-5 text-primary-600 dark:text-primary-300" />
               {{ t('gamedays.calendar_public') }}
-            </button>
-            <button
-              v-if="showCPColumns"
-              class="w-full flex items-center gap-2 px-4 py-2 text-sm text-header-900 dark:text-header-50 hover:bg-header-50 dark:hover:bg-header-800"
-              @click="openBulkOfficialsModal(); bulkActionsOpen = false"
-            >
-              <UIcon name="heroicons:user-group" class="w-5 h-5 text-amber-700 dark:text-amber-300" />
-              {{ t('gamedays.bulk_officials_title') }}
             </button>
 
             <!-- ── Danger section ── -->
@@ -876,7 +837,8 @@ const printJurySheet = (gameday: Gameday | null) => {
               <!-- Matches -->
               <th class="px-2 py-3 text-center text-sm font-medium text-header-900 dark:text-header-50 uppercase">{{ t('gamedays.field.matches') }}</th>
               <!-- Officials -->
-              <th class="px-2 py-3 text-left text-sm font-medium text-header-900 dark:text-header-50 uppercase">{{ t('gamedays.field.officiels') }}</th>
+              <th v-if="showClub" class="px-2 py-3 text-left text-sm font-medium text-header-900 dark:text-header-50 uppercase">{{ t('gamedays.field.club_organisateur') }}</th>
+              <th v-if="showOfficials" class="px-2 py-3 text-left text-sm font-medium text-header-900 dark:text-header-50 uppercase">{{ t('gamedays.field.officiels') }}</th>
               <!-- Delete -->
               <th v-if="canEdit" class="w-10 px-2 py-3" />
             </tr>
@@ -884,21 +846,21 @@ const printJurySheet = (gameday: Gameday | null) => {
           <tbody class="bg-white dark:bg-header-900 divide-y divide-header-200 dark:divide-header-700">
             <!-- Loading -->
             <tr v-if="loading && gamedays.length === 0">
-              <td :colspan="canSelect ? 17 : 16" class="px-4 py-8 text-center text-header-900 dark:text-header-50">
+              <td :colspan="tableColspan" class="px-4 py-8 text-center text-header-900 dark:text-header-50">
                 <UIcon name="heroicons:arrow-path" class="w-6 h-6 animate-spin mx-auto mb-2" />
                 {{ t('common.loading') }}
               </td>
             </tr>
             <!-- Empty: no context selected -->
             <tr v-else-if="!hasContextFilter">
-              <td :colspan="canSelect ? 17 : 16" class="px-4 py-12 text-center text-header-600 dark:text-header-300">
+              <td :colspan="tableColspan" class="px-4 py-12 text-center text-header-600 dark:text-header-300">
                 <UIcon name="heroicons:funnel" class="w-8 h-8 mx-auto mb-2 opacity-40" />
                 <div class="text-sm">{{ t('gamedays.select_context') }}</div>
               </td>
             </tr>
             <!-- Empty: no results -->
             <tr v-else-if="gamedays.length === 0">
-              <td :colspan="canSelect ? 17 : 16" class="px-4 py-8 text-center text-header-900 dark:text-header-50">
+              <td :colspan="tableColspan" class="px-4 py-8 text-center text-header-900 dark:text-header-50">
                 {{ t('gamedays.no_results') }}
               </td>
             </tr>
@@ -1156,8 +1118,10 @@ const printJurySheet = (gameday: Gameday | null) => {
                 </NuxtLink>
                 <span v-else class="text-header-600 dark:text-header-300">0</span>
               </td>
+              <!-- Organising club -->
+              <td v-if="showClub" class="px-2 py-2 text-sm text-header-900 dark:text-header-50 max-w-48 truncate" :title="g.clubOrganisateur?.code">{{ g.clubOrganisateur?.label || '-' }}</td>
               <!-- Officials -->
-              <td class="px-2 py-2 text-sm text-header-900 dark:text-header-50 max-w-48" @click.stop>
+              <td v-if="showOfficials" class="px-2 py-2 text-sm text-header-900 dark:text-header-50 max-w-48" @click.stop>
                 <button
                   class="text-left hover:text-primary-600 dark:hover:text-primary-300 truncate max-w-full"
                   :title="getOfficialsSummary(g)"
@@ -1424,90 +1388,15 @@ const printJurySheet = (gameday: Gameday | null) => {
             detail-field="code"
             :placeholder="t('gamedays.field.organisateur')"
             :maxlength="40"
-            @update:model-value="formData.organisateur = $event"
+            @update:model-value="onOrganisateurInput"
+            @select="(club: { code: string }) => { formData.codeOrganisateur = club.code }"
           />
         </div>
 
-        <!-- Officials (always visible) -->
-        <div class="border border-header-200 dark:border-header-700 rounded-lg">
-          <div class="px-4 py-3 text-sm font-medium text-header-900 dark:text-header-50 bg-header-50 dark:bg-header-900 rounded-t-lg">
-            {{ t('gamedays.field.officiels') }}
-          </div>
-          <div class="p-4 border-t border-header-200 dark:border-header-700 space-y-3">
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">{{ t('gamedays.field.responsable_insc') }}</label>
-                <AdminAthleteAutocomplete
-                  :model-value="formData.responsableInsc"
-                  :placeholder="t('gamedays.field.responsable_insc')"
-                  @update:model-value="formData.responsableInsc = $event"
-                />
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">{{ t('gamedays.field.responsable_r1') }}</label>
-                <AdminAthleteAutocomplete
-                  :model-value="formData.responsableR1"
-                  :placeholder="t('gamedays.field.responsable_r1')"
-                  @update:model-value="formData.responsableR1 = $event"
-                />
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">{{ t('gamedays.field.delegue') }}</label>
-                <AdminAthleteAutocomplete
-                  :model-value="formData.delegue"
-                  :placeholder="t('gamedays.field.delegue')"
-                  @update:model-value="formData.delegue = $event"
-                />
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">{{ t('gamedays.field.chef_arbitre') }}</label>
-                <AdminAthleteAutocomplete
-                  :model-value="formData.chefArbitre"
-                  :placeholder="t('gamedays.field.chef_arbitre')"
-                  @update:model-value="formData.chefArbitre = $event"
-                />
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">{{ t('gamedays.field.rep_athletes') }}</label>
-                <AdminAthleteAutocomplete
-                  :model-value="formData.repAthletes"
-                  :placeholder="t('gamedays.field.rep_athletes')"
-                  @update:model-value="formData.repAthletes = $event"
-                />
-              </div>
-            </div>
-            <div class="border-t border-header-100 dark:border-header-800 pt-3">
-              <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-2">{{ t('gamedays.field.arb_nj') }}</label>
-              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                <AdminAthleteAutocomplete
-                  :model-value="formData.arbNj1"
-                  placeholder="1"
-                  @update:model-value="formData.arbNj1 = $event"
-                />
-                <AdminAthleteAutocomplete
-                  :model-value="formData.arbNj2"
-                  placeholder="2"
-                  @update:model-value="formData.arbNj2 = $event"
-                />
-                <AdminAthleteAutocomplete
-                  :model-value="formData.arbNj3"
-                  placeholder="3"
-                  @update:model-value="formData.arbNj3 = $event"
-                />
-                <AdminAthleteAutocomplete
-                  :model-value="formData.arbNj4"
-                  placeholder="4"
-                  @update:model-value="formData.arbNj4 = $event"
-                />
-                <AdminAthleteAutocomplete
-                  :model-value="formData.arbNj5"
-                  placeholder="5"
-                  @update:model-value="formData.arbNj5 = $event"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
+        <!-- Officials: désignés dans le bloc Désignations (bouton Officiels de la ligne), plus saisis ici -->
+        <p class="text-sm text-header-700 dark:text-header-200 border border-header-200 dark:border-header-700 rounded-lg px-4 py-3">
+          {{ t('gamedays.officials_by_designations') }}
+        </p>
 
         <!-- Actions -->
         <div class="flex justify-end gap-2 pt-4 border-t">
@@ -1645,73 +1534,6 @@ const printJurySheet = (gameday: Gameday | null) => {
       </form>
     </AdminModal>
 
-    <!-- ═══════ BULK OFFICIALS COPY MODAL (Feature 1) ═══════ -->
-    <AdminModal
-      :open="bulkOfficialsModalOpen"
-      :title="t('gamedays.bulk_officials_title')"
-      max-width="lg"
-      @close="bulkOfficialsModalOpen = false"
-    >
-      <div class="space-y-4">
-        <p class="text-sm text-header-900 dark:text-header-50">
-          {{ t('gamedays.bulk_officials_hint', { count: selectedIds.length }) }}
-        </p>
-
-        <!-- Source phase selector -->
-        <div>
-          <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">{{ t('gamedays.bulk_officials_source') }}</label>
-          <select
-            v-model.number="bulkOfficialsSourceId"
-            class="w-full px-3 py-2 text-sm border border-header-300 dark:border-header-700 rounded-lg bg-white dark:bg-header-900 text-header-900 dark:text-header-50 focus:ring-2 focus:ring-primary-500"
-          >
-            <option :value="null">{{ t('gamedays.bulk_officials_select_source') }}</option>
-            <option v-for="g in gamedays" :key="g.id" :value="g.id">
-              #{{ g.id }} - {{ g.phase || '?' }} ({{ g.nom || '-' }})
-            </option>
-          </select>
-        </div>
-
-        <!-- Preview of source data -->
-        <div v-if="bulkOfficialsSource" class="p-3 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-lg text-sm space-y-1">
-          <p class="font-medium text-amber-800 dark:text-amber-200 mb-2">{{ t('gamedays.bulk_officials_preview') }}</p>
-          <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-header-900 dark:text-header-50">
-            <div class="text-success-700 dark:text-success-300 font-medium col-span-2 mt-1">{{ t('gamedays.calendar_public') }}</div>
-            <div>{{ t('gamedays.field.nom') }}: <span class="font-medium">{{ bulkOfficialsSource.nom || '-' }}</span></div>
-            <div>{{ t('gamedays.field.lieu') }}: <span class="font-medium">{{ bulkOfficialsSource.lieu || '-' }} {{ bulkOfficialsSource.departement ? `(${bulkOfficialsSource.departement})` : '' }}</span></div>
-            <div>{{ t('gamedays.field.date_debut') }}: <span class="font-medium">{{ formatDate(bulkOfficialsSource.dateDebut) }}</span></div>
-            <div>{{ t('gamedays.field.date_fin') }}: <span class="font-medium">{{ formatDate(bulkOfficialsSource.dateFin) }}</span></div>
-            <div class="text-amber-800 dark:text-amber-200 font-medium col-span-2 mt-1">{{ t('gamedays.field.officiels') }}</div>
-            <div v-if="bulkOfficialsSource.responsableInsc">{{ t('gamedays.field.responsable_insc') }}: {{ bulkOfficialsSource.responsableInsc }}</div>
-            <div v-if="bulkOfficialsSource.responsableR1">{{ t('gamedays.field.responsable_r1') }}: {{ bulkOfficialsSource.responsableR1 }}</div>
-            <div v-if="bulkOfficialsSource.delegue">{{ t('gamedays.field.delegue') }}: {{ bulkOfficialsSource.delegue }}</div>
-            <div v-if="bulkOfficialsSource.chefArbitre">{{ t('gamedays.field.chef_arbitre') }}: {{ bulkOfficialsSource.chefArbitre }}</div>
-            <div v-if="bulkOfficialsSource.repAthletes">{{ t('gamedays.field.rep_athletes') }}: {{ bulkOfficialsSource.repAthletes }}</div>
-            <div v-if="bulkOfficialsSource.arbNj1">{{ t('gamedays.field.arb_nj') }} 1: {{ bulkOfficialsSource.arbNj1 }}</div>
-            <div v-if="bulkOfficialsSource.arbNj2">{{ t('gamedays.field.arb_nj') }} 2: {{ bulkOfficialsSource.arbNj2 }}</div>
-            <div v-if="bulkOfficialsSource.arbNj3">{{ t('gamedays.field.arb_nj') }} 3: {{ bulkOfficialsSource.arbNj3 }}</div>
-            <div v-if="bulkOfficialsSource.arbNj4">{{ t('gamedays.field.arb_nj') }} 4: {{ bulkOfficialsSource.arbNj4 }}</div>
-            <div v-if="bulkOfficialsSource.arbNj5">{{ t('gamedays.field.arb_nj') }} 5: {{ bulkOfficialsSource.arbNj5 }}</div>
-          </div>
-        </div>
-
-        <div class="flex justify-end gap-2 pt-4 border-t">
-          <button
-            type="button"
-            class="px-4 py-2 text-sm font-medium text-header-900 dark:text-header-50 bg-white dark:bg-header-900 border border-header-300 dark:border-header-700 rounded-lg hover:bg-header-50 dark:hover:bg-header-800"
-            @click="bulkOfficialsModalOpen = false"
-          >
-            {{ t('common.cancel') }}
-          </button>
-          <button
-            class="px-4 py-2 text-sm font-medium text-white bg-amber-600 rounded-lg hover:bg-amber-700 disabled:opacity-50"
-            :disabled="formSaving || !bulkOfficialsSourceId"
-            @click="submitBulkOfficials"
-          >
-            {{ formSaving ? t('common.loading') : t('common.confirm') }}
-          </button>
-        </div>
-      </div>
-    </AdminModal>
 
     <!-- ═══════ OFFICIALS MODAL (Feature 2) ═══════ -->
     <AdminModal
@@ -1728,115 +1550,15 @@ const printJurySheet = (gameday: Gameday | null) => {
           <span v-if="officialsGameday.lieu" class="ml-2">| {{ officialsGameday.lieu }}</span>
         </div>
 
-        <!-- Competition Committee -->
-        <div class="border border-header-200 dark:border-header-700 rounded-lg">
-          <div class="px-4 py-2 text-sm font-medium text-header-900 dark:text-header-50 bg-header-50 dark:bg-header-900 rounded-t-lg">
-            {{ t('gamedays.officials_comite') }}
-          </div>
-          <div class="p-4 border-t border-header-200 dark:border-header-700 space-y-3">
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">{{ t('gamedays.field.responsable_insc') }}</label>
-                <AdminAthleteAutocomplete
-                  :model-value="officialsFormData.responsableInsc"
-                  :placeholder="t('gamedays.field.responsable_insc')"
-                  @update:model-value="officialsFormData.responsableInsc = $event"
-                />
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">{{ t('gamedays.field.responsable_r1') }}</label>
-                <AdminAthleteAutocomplete
-                  :model-value="officialsFormData.responsableR1"
-                  :placeholder="t('gamedays.field.responsable_r1')"
-                  @update:model-value="officialsFormData.responsableR1 = $event"
-                />
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">{{ t('gamedays.field.delegue') }}</label>
-                <AdminAthleteAutocomplete
-                  :model-value="officialsFormData.delegue"
-                  :placeholder="t('gamedays.field.delegue')"
-                  @update:model-value="officialsFormData.delegue = $event"
-                />
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">{{ t('gamedays.field.chef_arbitre') }}</label>
-                <AdminAthleteAutocomplete
-                  :model-value="officialsFormData.chefArbitre"
-                  :placeholder="t('gamedays.field.chef_arbitre')"
-                  @update:model-value="officialsFormData.chefArbitre = $event"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Appeal Jury -->
-        <div class="border border-header-200 dark:border-header-700 rounded-lg">
-          <div class="px-4 py-2 text-sm font-medium text-header-900 dark:text-header-50 bg-header-50 dark:bg-header-900 rounded-t-lg">
-            {{ t('gamedays.officials_jury') }}
-          </div>
-          <div class="p-4 border-t border-header-200 dark:border-header-700 space-y-3">
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div>
-                <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">{{ t('gamedays.field.delegue') }} ({{ t('gamedays.field.delegue') }})</label>
-                <div class="px-3 py-2 text-sm bg-header-50 dark:bg-header-900 border border-header-200 dark:border-header-700 rounded-lg text-header-900 dark:text-header-50">
-                  {{ officialsFormData.delegue || '-' }}
-                </div>
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">{{ t('gamedays.field.responsable_r1') }}</label>
-                <div class="px-3 py-2 text-sm bg-header-50 dark:bg-header-900 border border-header-200 dark:border-header-700 rounded-lg text-header-900 dark:text-header-50">
-                  {{ officialsFormData.responsableR1 || '-' }}
-                </div>
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-header-900 dark:text-header-50 mb-1">{{ t('gamedays.field.rep_athletes') }}</label>
-                <AdminAthleteAutocomplete
-                  :model-value="officialsFormData.repAthletes"
-                  :placeholder="t('gamedays.field.rep_athletes')"
-                  @update:model-value="officialsFormData.repAthletes = $event"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Non-player referees -->
-        <div class="border border-header-200 dark:border-header-700 rounded-lg">
-          <div class="px-4 py-2 text-sm font-medium text-header-900 dark:text-header-50 bg-header-50 dark:bg-header-900 rounded-t-lg">
-            {{ t('gamedays.field.arb_nj') }}
-          </div>
-          <div class="p-4 border-t border-header-200 dark:border-header-700">
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-              <AdminAthleteAutocomplete
-                :model-value="officialsFormData.arbNj1"
-                placeholder="1"
-                @update:model-value="officialsFormData.arbNj1 = $event"
-              />
-              <AdminAthleteAutocomplete
-                :model-value="officialsFormData.arbNj2"
-                placeholder="2"
-                @update:model-value="officialsFormData.arbNj2 = $event"
-              />
-              <AdminAthleteAutocomplete
-                :model-value="officialsFormData.arbNj3"
-                placeholder="3"
-                @update:model-value="officialsFormData.arbNj3 = $event"
-              />
-              <AdminAthleteAutocomplete
-                :model-value="officialsFormData.arbNj4"
-                placeholder="4"
-                @update:model-value="officialsFormData.arbNj4 = $event"
-              />
-              <AdminAthleteAutocomplete
-                :model-value="officialsFormData.arbNj5"
-                placeholder="5"
-                @update:model-value="officialsFormData.arbNj5 = $event"
-              />
-            </div>
-          </div>
-        </div>
+        <DesignationsScopePanel
+          v-if="authStore.profile <= 5"
+          :season="officialsGameday.codeSaison"
+          scope-type="JOURNEE"
+          :scope-id="officialsGameday.id"
+          :label="`${officialsGameday.codeCompetition} - ${officialsGameday.phase}`"
+          @changed="loadGamedays"
+        />
+        <p v-else class="text-sm">{{ getOfficialsSummary(officialsGameday) || '—' }}</p>
 
         <!-- Actions -->
         <div class="flex justify-between pt-4 border-t">
@@ -1854,15 +1576,7 @@ const printJurySheet = (gameday: Gameday | null) => {
               class="px-4 py-2 text-sm font-medium text-header-900 dark:text-header-50 bg-white dark:bg-header-900 border border-header-300 dark:border-header-700 rounded-lg hover:bg-header-50 dark:hover:bg-header-800"
               @click="officialsModalOpen = false"
             >
-              {{ t('common.cancel') }}
-            </button>
-            <button
-              v-if="canEdit && (!officialsGameday || canEditGameday(officialsGameday))"
-              class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 disabled:opacity-50"
-              :disabled="formSaving"
-              @click="saveOfficials"
-            >
-              {{ formSaving ? t('common.loading') : t('common.save') }}
+              {{ t('common.close') }}
             </button>
           </div>
         </div>

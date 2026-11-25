@@ -175,7 +175,7 @@ class AdminCompetitionCopyController extends AbstractController
         // Get journees
         $journeeSql = "SELECT Id, Phase, Niveau, Date_debut, Date_fin, Nom, Libelle, Lieu,
                                Plan_eau, Departement, Responsable_insc, Responsable_R1,
-                               Organisateur, Delegue
+                               Organisateur, Code_organisateur, Delegue
                         FROM kp_journee
                         WHERE Code_competition = ? AND Code_saison = ?
                         ORDER BY Id";
@@ -205,6 +205,7 @@ class AdminCompetitionCopyController extends AbstractController
             'responsableInsc' => null,
             'responsableR1' => null,
             'organisateur' => null,
+            'codeOrganisateur' => null,
             'delegue' => null,
         ];
 
@@ -221,6 +222,7 @@ class AdminCompetitionCopyController extends AbstractController
                 'responsableInsc' => $first['Responsable_insc'] ?: null,
                 'responsableR1' => $first['Responsable_R1'] ?: null,
                 'organisateur' => $first['Organisateur'] ?: null,
+                'codeOrganisateur' => $first['Code_organisateur'] ?: null,
                 'delegue' => $first['Delegue'] ?: null,
             ];
         }
@@ -364,6 +366,7 @@ class AdminCompetitionCopyController extends AbstractController
         $responsableInsc = $data['responsableInsc'] ?? null;
         $responsableR1 = $data['responsableR1'] ?? null;
         $organisateur = $data['organisateur'] ?? null;
+        $codeOrganisateur = $data['codeOrganisateur'] ?? null;
         $delegue = $data['delegue'] ?? null;
         $initPremierTour = (bool) ($data['initPremierTour'] ?? false);
         // When true (CP / tournament competitions), an empty form field stays empty
@@ -373,7 +376,7 @@ class AdminCompetitionCopyController extends AbstractController
         // Get origin journees ordered by Id
         $journeeSql = "SELECT Id, Phase, Niveau, Etape, Nbequipes, `Type`,
                                Date_debut, Date_fin, Nom, Libelle, Lieu, Plan_eau, Departement,
-                               Responsable_insc, Responsable_R1, Organisateur, Delegue
+                               Responsable_insc, Responsable_R1, Organisateur, Code_organisateur, Delegue
                         FROM kp_journee
                         WHERE Code_competition = ? AND Code_saison = ?
                         ORDER BY Id";
@@ -445,20 +448,24 @@ class AdminCompetitionCopyController extends AbstractController
                 $jRespInsc = $resolve($responsableInsc, $j['Responsable_insc']);
                 $jRespR1 = $resolve($responsableR1, $j['Responsable_R1']);
                 $jOrganisateur = $resolve($organisateur, $j['Organisateur']);
+                // le code suit le libellé : un libellé saisi sans code ne garde pas le code de la journée d'origine
+                $jCodeOrganisateur = $organisateur !== null && $organisateur !== ''
+                    ? ($codeOrganisateur !== '' ? $codeOrganisateur : null)
+                    : ($emptyMeansEmpty ? null : ($j['Code_organisateur'] ?: null));
                 $jDelegue = $resolve($delegue, $j['Delegue']);
 
                 // Insert new journee
                 $insertSql = "INSERT INTO kp_journee
                     (Id, Code_competition, Code_saison, Phase, Niveau, Etape, Nbequipes, `Type`,
                      Date_debut, Date_fin, Nom, Libelle, Lieu, Plan_eau, Departement,
-                     Responsable_insc, Responsable_R1, Organisateur, Delegue)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                     Responsable_insc, Responsable_R1, Organisateur, Code_organisateur, Delegue)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
                 $this->connection->prepare($insertSql)->executeStatement([
                     $nextJourneeId, $destCompetition, $destSeason,
                     $j['Phase'], $j['Niveau'], $j['Etape'], $j['Nbequipes'], $j['Type'],
                     $jDateDebut, $jDateFin, $jNom, $jLibelle, $jLieu, $jPlanEau, $jDepartement,
-                    $jRespInsc, $jRespR1, $jOrganisateur, $jDelegue,
+                    $jRespInsc, $jRespR1, $jOrganisateur, $jCodeOrganisateur, $jDelegue,
                 ]);
                 $journeesCreated++;
 

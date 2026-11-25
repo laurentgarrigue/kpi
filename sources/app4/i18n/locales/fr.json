@@ -67,6 +67,8 @@
     "public_site_beta": "Nouveau site public (bêta)",
     "scrutineering": "Scrutineering",
     "medals": "Médailles",
+    "designations": "Désignations",
+    "reports": "Rapports",
     "club_ranking": "Classement des clubs"
   },
   "profile": "Profil",
@@ -358,7 +360,8 @@
     "all": "Tous",
     "select": "Sélectionner",
     "copy": "Copier",
-    "validate": "Valider"
+    "validate": "Valider",
+    "clear": "Effacer"
   },
   "legacy_redirect": {
     "message": "Redirection vers l'interface classique en cours...",
@@ -1463,6 +1466,10 @@
     "paddle_none": "aucune"
   },
   "gamedays": {
+    "display": {
+      "title": "Affichage",
+      "columns_section": "Colonnes"
+    },
     "view_list": "Liste des phases",
     "view_schema": "Schéma",
     "view_schema_title": "Afficher le schéma de la compétition sélectionnée",
@@ -1515,6 +1522,7 @@
       "chef_arbitre": "Chef arbitres",
       "rep_athletes": "Représentant athlètes",
       "arb_nj": "Arbitre Non Joueur",
+      "club_organisateur": "Club organisateur",
       "officiels": "Officiels",
       "publication": "Pub.",
       "matches": "Matchs"
@@ -1565,7 +1573,8 @@
       "10": "Octobre",
       "11": "Novembre",
       "12": "Décembre"
-    }
+    },
+    "officials_by_designations": "Les officiels (RC, R1, délégué, juge arbitre, représentant des équipes, arbitres non-joueurs) se désignent avec le bouton « Officiels » de la journée ou dans Référentiels › Désignations."
   },
   "games": {
     "title": "Gestion des Matchs",
@@ -3608,6 +3617,292 @@
     "compute_running": "Calcul de la saison {season} en cours. Vous pouvez quitter cette page : il continue et sera signalé ici.",
     "compute_failed": "Le calcul de la saison {season} a échoué : {message}",
     "compute_already": "Un calcul est déjà en cours : attendez qu’il se termine."
+  },
+  "designations": {
+    "organiser_saved": "Club organisateur enregistré.",
+    "organiser_clear_title": "Retirer le club organisateur ?",
+    "organiser_clear_message": "Le club organisateur « {club} » sera retiré de cette journée.",
+    "place_clear": "Supprimer le lieu",
+    "place_clear_title": "Supprimer le lieu ?",
+    "place_clear_message": "Le lieu « {place} » et son département seront supprimés de cette journée.",
+    "place_edit": "Modifier le lieu et le département",
+    "place_saved": "Lieu et département enregistrés.",
+    "organiser_edit": "Modifier le club organisateur",
+    "organiser_clear": "Retirer le club organisateur",
+    "title": "Désignations",
+    "season": "Saison {season}",
+    "tab": {
+      "matrix": "Couverture",
+      "summary": "Récapitulatif",
+      "facts": "Relevé des faits"
+    },
+    "level": {
+      "label": "Compétitions",
+      "national": "Nationales",
+      "other": "Régionales et autres",
+      "all": "Toutes"
+    },
+    "only_gaps": "Seulement les manques",
+    "count": {
+      "red": "{n} rôle(s) requis non pourvu(s)",
+      "orange": "{n} à vérifier"
+    },
+    "nothing": "Aucune compétition à afficher.",
+    "column": {
+      "line": "Ligne",
+      "person": "Personne",
+      "club": "Club",
+      "people": "Personnes",
+      "holders": "Titulaires",
+      "organiser": "Club organisateur",
+      "place": "Lieu",
+      "department": "Département",
+      "gameday": "Journée"
+    },
+    "missing": "À désigner",
+    "not_applicable": "Sans objet",
+    "origin": {
+      "NIVEAU": "niveau national",
+      "COMPETITION": "compétition",
+      "EQUIPE": "équipe",
+      "EVENEMENT": "événement",
+      "JOURNEE": "journée"
+    },
+    "warning": {
+      "no_email": "sans email : ni compte ni mandat",
+      "same_club": "même club qu'une équipe engagée"
+    },
+    "authority": {
+      "CNA": "CNA (pool arbitres)",
+      "ORGANISATEUR": "Club organisateur"
+    },
+    "account": {
+      "created": "Désignation enregistrée, compte créé et lien d'activation envoyé",
+      "existing": "Désignation enregistrée",
+      "none": "Désignation enregistrée, sans compte ni mandat (email inconnu)"
+    },
+    "add": {
+      "button": "Désigner",
+      "title": "Désigner : {role} — {line}",
+      "person": "Licencié",
+      "person_placeholder": "Nom, prénom ou licence",
+      "email": "Email (s'il n'a pas encore de compte KPI)",
+      "email_help": "Sert seulement à créer son compte et à lui envoyer le lien d'activation.",
+      "authority": "Désigné par",
+      "order": "Ordre",
+      "quality": "Qualité (facultatif)",
+      "submit": "Désigner"
+    },
+    "remove": {
+      "label": "Retirer {name}",
+      "title": "Retirer la désignation",
+      "message": "Retirer la désignation de {name} ? Son mandat sera recalculé.",
+      "confirm": "Retirer"
+    },
+    "removed": "Désignation retirée",
+    "period": {
+      "from": "Du",
+      "to": "Au",
+      "apply": "Appliquer"
+    },
+    "summary_help": "Nombre de désignations par rôle ; « j. » = journées couvertes sur la période (héritage compris).",
+    "summary": {
+      "people": "Par personne",
+      "clubs": "Par club"
+    },
+    "gamedays_short": "{n} j.",
+    "no_club": "Sans club",
+    "table": {
+      "managers": "Responsables",
+      "gamedays": "Journées"
+    },
+    "phases": "{n} phases",
+    "display": {
+      "title": "Affichage",
+      "filters_section": "Filtres"
+    },
+    "roles_picker": {
+      "managers_group": "Responsables",
+      "gamedays_group": "Journées"
+    },
+    "block": {
+      "caption": "Désignations : {line}",
+      "help": "En italique : désigné sur la compétition ou l'événement (hérité). Les champs officiels de la journée (feuilles, PDF, pages legacy) sont recopiés automatiquement.",
+      "title": "Désignations — {line}",
+      "button": "Désignations"
+    },
+    "copy_rc": {
+      "label": "Saison source",
+      "button": "Copier les RC",
+      "done": "{copied} RC copiés ({skipped} déjà présents)",
+      "title": "Copier les RC vers la saison {season}",
+      "help": "Les RC de la saison source sont désignés pour la saison {season}, sur les mêmes compétitions ; ceux déjà présents sont ignorés.",
+      "submit": "Copier"
+    },
+    "missing_add": "Désigner (rôle requis, non pourvu)",
+    "facts": {
+      "filter": "Filtrer par club",
+      "help": "Quantités par club pour la saison, compétitions nationales ; la CNA applique le barème de l'annexe 8.",
+      "empty": "Aucun fait relevé.",
+      "fact": "Fait",
+      "kind_filter": "Type de fait",
+      "all_kinds": "Tous les types",
+      "qualifier_label": "Précision",
+      "quantity": "Quantité",
+      "sources": "Sources",
+      "sources_count": "{n} source(s)",
+      "no_club": "Club à attribuer",
+      "kind": {
+        "gameday_hosted": "Journée nationale accueillie",
+        "gameday_pitches": "Terrains × journées",
+        "final_hosted": "Finale accueillie",
+        "podium": "Podium organisé",
+        "rc_provided": "RC fourni",
+        "official_provided": "Officiel fourni",
+        "card_yellow": "Carton jaune de joueur",
+        "card_red": "Carton rouge de joueur",
+        "card_black": "Carton noir de joueur",
+        "outfit_warning": "Avertissement de tenue d'arbitre",
+        "infraction": "Infraction"
+      },
+      "qualifier": {
+        "DELEGUE_CNA": "Délégué CNA",
+        "JUGE_ARBITRE": "Juge arbitre",
+        "ARBITRE_NJ": "Arbitre non-joueur (désigné par l'organisateur)",
+        "yellow": "Jaune",
+        "red": "Rouge",
+        "black": "Noir",
+        "1": "Catégorie 1",
+        "2": "Catégorie 2",
+        "3": "Catégorie 3",
+        "4": "Catégorie 4",
+        "5": "Catégorie 5",
+        "6": "Catégorie 6"
+      }
+    }
+  },
+  "competition_picker": {
+    "label": "Compétitions",
+    "all": "toutes",
+    "count": "{n} choisie(s)",
+    "section": "Section",
+    "all_sections": "Toutes les sections",
+    "search": "Rechercher une compétition",
+    "select_shown": "Cocher les compétitions affichées",
+    "clear": "Tout décocher",
+    "none": "Aucune compétition"
+  },
+  "reports": {
+    "title": "Rapports officiels",
+    "empty": "Aucun rapport.",
+    "late": "hors délai",
+    "version": "modèle v{version}",
+    "entered_by": "saisi par {code}",
+    "for_author": "pour la licence {matric}",
+    "new": {
+      "title": "Nouveau rapport : {line}",
+      "type": "Type",
+      "author": "Auteur (si vous saisissez pour un arbitre)",
+      "author_placeholder": "Licence de l'arbitre",
+      "submit": "Créer le brouillon",
+      "help": "Un rapport est rédigé par un officiel du périmètre ; il peut saisir celui d'un arbitre désigné, rempli sur le PDF vierge.",
+      "button": "Nouveau rapport",
+      "choose_title": "Nouveau rapport officiel : périmètre",
+      "scope": "Rattaché à",
+      "selected": "Rattaché à : {label}",
+      "search_label": "Rechercher l'élément lié",
+      "search_placeholder": "Événement, compétition, journée, lieu, équipe (2 caractères au moins) ou n° de match",
+      "no_result": "Aucun résultat dans la saison."
+    },
+    "blank": "PDF vierge : {type}",
+    "filter": {
+      "type": "Type",
+      "state": "État",
+      "all": "Tous"
+    },
+    "state": {
+      "BROUILLON": "Brouillon",
+      "SOUMIS": "Soumis"
+    },
+    "scope": {
+      "COMPETITION": "Compétition",
+      "EVENEMENT": "Événement",
+      "JOURNEE": "Journée",
+      "MATCH": "Match"
+    },
+    "column": {
+      "type": "Rapport",
+      "scope": "Périmètre",
+      "state": "État",
+      "entered_by": "Saisi par"
+    },
+    "kpi": "Données KPI",
+    "kpi_label": "Périmètre",
+    "kpi_competitions": "Compétitions",
+    "kpi_dates": "Dates",
+    "kpi_place": "Lieu",
+    "kpi_match": "Match",
+    "kpi_referees": "Arbitres",
+    "save": "Enregistrer le brouillon",
+    "submit": "Soumettre",
+    "saved": "Brouillon enregistré",
+    "submitted": "Rapport soumis et envoyé aux destinataires",
+    "missing": "{n} champ(s) obligatoire(s) à remplir",
+    "pdf": "PDF",
+    "reopen": {
+      "button": "Rouvrir",
+      "title": "Rouvrir le rapport",
+      "reason": "Motif (gardé au journal)"
+    },
+    "submissions": "Soumissions",
+    "submission": "Soumission {number} du {date} par {by}",
+    "error": {
+      "required": "Obligatoire",
+      "invalid": "Valeur invalide",
+      "unknown": "Champ inconnu"
+    },
+    "kpi_matches": "Matchs",
+    "kpi_matches_value": "{planned} prévus, {played} joués",
+    "kpi_cards": "Cartons {competition}",
+    "kpi_cards_value": "{green} verts, {yellow} jaunes, {red} rouges, {black} noirs",
+    "kpi_linked": "Pièces liées",
+    "table": {
+      "add": "Ajouter une ligne",
+      "remove": "Retirer",
+      "empty": "Aucune ligne",
+      "actions": "Actions"
+    },
+    "option": {
+      "presence": {
+        "present": "Présent",
+        "absent": "Absent",
+        "replaced": "Remplacé",
+        "recused": "Récusé"
+      },
+      "schedule_kept": {
+        "yes": "Oui",
+        "partly": "En partie",
+        "no": "Non"
+      },
+      "difficulty": {
+        "easy": "Facile",
+        "normal": "Normal",
+        "difficult": "Difficile",
+        "very_difficult": "Très difficile"
+      },
+      "second_presence": {
+        "absent": "Effacé, absent",
+        "errors": "Induit des erreurs, placements",
+        "relevant": "Pertinent et à bon escient",
+        "overbearing": "Trop présent ou omniprésent"
+      },
+      "recommended_level": {
+        "national_a": "National A",
+        "national_b": "National B",
+        "national_c": "National C",
+        "regional": "Régional"
+      }
+    }
   },
   "club_ranking": {
     "title": "Classement national des clubs",

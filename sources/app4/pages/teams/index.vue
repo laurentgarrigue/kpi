@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { ScopeModalTarget } from '~/utils/designations'
 import type {
   CompetitionTeam,
   CompetitionTeamInfo,
@@ -28,6 +29,11 @@ const pdf = usePdf()
 const api = useApi()
 const authStore = useAuthStore()
 const workContext = useWorkContextStore()
+// Responsable de l'équipe (FEATURE_DESIGNATIONS.md D8, ticket 08) : profils 1 et 2
+const designationsTarget = ref<ScopeModalTarget | null>(null)
+const openDesignations = (team: { id: number, libelle: string }) => {
+  designationsTarget.value = { season: workContext.season, scopeType: 'EQUIPE', scopeId: team.id, label: team.libelle }
+}
 const config = useRuntimeConfig()
 const toast = useToast()
 const { notifyIneligible } = useEligibilityMessages()
@@ -1355,6 +1361,16 @@ const getLogoUrl = (team: CompetitionTeam) => {
                       >
                         <UIcon name="heroicons:clipboard-document-check" class="w-6 h-6" />
                       </NuxtLink>
+                      <button
+                        v-if="authStore.profile <= 2"
+                        type="button"
+                        class="p-1 text-primary-600 dark:text-primary-300 hover:bg-primary-50 dark:hover:bg-primary-950 rounded"
+                        :title="t('designations.block.button')"
+                        :aria-label="t('designations.block.title', { line: team.libelle })"
+                        @click="openDesignations(team)"
+                      >
+                        <UIcon name="heroicons:users-solid" class="w-6 h-6" />
+                      </button>
                     </div>
                   </td>
 
@@ -1505,6 +1521,15 @@ const getLogoUrl = (team: CompetitionTeam) => {
                   >
                     <UIcon name="heroicons:clipboard-document-check" class="w-6 h-6" />
                   </NuxtLink>
+                  <button
+                    v-if="authStore.profile <= 2"
+                    type="button"
+                    class="p-1 text-primary-600 dark:text-primary-300"
+                    :aria-label="t('designations.block.title', { line: team.libelle })"
+                    @click="openDesignations(team)"
+                  >
+                    <UIcon name="heroicons:users-solid" class="w-6 h-6" />
+                  </button>
                   <button
                     class="presence-dropdown-trigger p-1 text-header-900 dark:text-header-50"
                     :title="t('teams_page.presence_sheet')"
@@ -2307,5 +2332,6 @@ const getLogoUrl = (team: CompetitionTeam) => {
 
     <!-- Scroll to top -->
     <AdminScrollToTop :title="t('common.scroll_to_top')" />
+    <DesignationsScopeModal :target="designationsTarget" @close="designationsTarget = null" />
   </div>
 </template>

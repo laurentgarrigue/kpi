@@ -381,6 +381,14 @@ Legacy utilise `UpdateCellJQ.php` avec une table whitelist. En API2, créer un e
 
 ### 7.3 Section Officiels (intégration GestionInstances)
 
+> **Depuis le 2026-11-23** ([FEATURE_DESIGNATIONS.md](FEATURE_DESIGNATIONS.md), ticket designations/08) : les officiels
+> ne se saisissent plus dans le formulaire de la journée. Le bouton « Officiels » de la ligne ouvre le bloc
+> **Désignations** de la journée (titulaires propres et hérités de la compétition ou de l'événement, désigner,
+> retirer ; profils 1–2, délégué CNA pour le jury). Les colonnes `Responsable_insc`, `Responsable_R1`, `Delegue`,
+> `ChefArbitre`, `Rep_athletes`, `Arb_nj1…5` sont recopiées depuis les Désignations et ne sont plus envoyées par le
+> formulaire. La description ci-dessous est l'ancienne saisie, conservée pour l'historique ; l'action en masse
+> « Officiels » (copie des officiels et du calendrier d'une journée à d'autres) a été retirée.
+
 La gestion des officiels, précédemment dans une page séparée (GestionInstances.php), est **intégrée dans le formulaire modal** sous forme d'une section collapsible.
 
 #### Structure de la section
