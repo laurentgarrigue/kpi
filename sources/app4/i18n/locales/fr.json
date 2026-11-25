@@ -1466,6 +1466,10 @@
     "paddle_none": "aucune"
   },
   "gamedays": {
+    "display": {
+      "title": "Affichage",
+      "columns_section": "Colonnes"
+    },
     "view_list": "Liste des phases",
     "view_schema": "Schéma",
     "view_schema_title": "Afficher le schéma de la compétition sélectionnée",
@@ -1518,6 +1522,7 @@
       "chef_arbitre": "Chef arbitres",
       "rep_athletes": "Représentant athlètes",
       "arb_nj": "Arbitre Non Joueur",
+      "club_organisateur": "Club organisateur",
       "officiels": "Officiels",
       "publication": "Pub.",
       "matches": "Matchs"

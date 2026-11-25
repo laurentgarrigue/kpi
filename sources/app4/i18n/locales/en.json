@@ -1454,6 +1454,10 @@
     "paddle_none": "none"
   },
   "gamedays": {
+    "display": {
+      "title": "Display",
+      "columns_section": "Columns"
+    },
     "view_list": "Phase list",
     "view_schema": "Draw",
     "view_schema_title": "Show the draw progression of the selected competition",
@@ -1506,6 +1510,7 @@
       "chef_arbitre": "Chief referee",
       "rep_athletes": "Athletes representative",
       "arb_nj": "Non player ref.",
+      "club_organisateur": "Organising club",
       "officiels": "Officials",
       "publication": "Pub.",
       "matches": "Games"

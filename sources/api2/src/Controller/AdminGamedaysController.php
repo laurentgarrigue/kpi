@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\ClubRanking\OrganiserClubResolver;
 use App\Designation\GamedayDesignations;
 
 use App\Entity\User;
@@ -171,7 +172,8 @@ class AdminGamedaysController extends AbstractController
         // Check user authorization per gameday
         $allowedJournees = $user?->getAllowedJournees();
 
-        $items = array_map(function ($row) use ($allowedJournees) {
+        $organisers = new OrganiserClubResolver(array_column($this->connection->fetchAllAssociative('SELECT Code, Libelle FROM kp_club'), 'Libelle', 'Code'));
+        $items = array_map(function ($row) use ($allowedJournees, $organisers) {
             $authorized = $allowedJournees === null || in_array((int) $row['Id'], $allowedJournees);
 
             return [
@@ -192,6 +194,8 @@ class AdminGamedaysController extends AbstractController
                 'planEau' => $row['Plan_eau'],
                 'organisateur' => $row['Organisateur'],
                 'codeOrganisateur' => $row['Code_organisateur'],
+                // même identification du club que le classement national des clubs (code, sinon libellé)
+                'clubOrganisateur' => ['code' => $organisers->code($row['Code_organisateur'], $row['Organisateur']), 'label' => $organisers->label($row['Code_organisateur'], $row['Organisateur'])],
                 'responsableInsc' => $row['Responsable_insc'],
                 'responsableR1' => $row['Responsable_R1'],
                 'delegue' => $row['Delegue'],

@@ -78,6 +78,27 @@ const withoutOfficials = <T extends Record<string, unknown>>(data: T) =>
 
 // Bulk actions dropdown
 const bulkActionsOpen = ref(false)
+
+// Display dropdown ("Affichage"): optional columns, remembered per browser
+const DISPLAY_STORAGE_KEY = 'app4_gamedays_display'
+const loadDisplay = (): { showClub?: boolean, showOfficials?: boolean } => {
+  try { return JSON.parse(localStorage.getItem(DISPLAY_STORAGE_KEY) ?? '{}') } catch { return {} }
+}
+const savedDisplay = loadDisplay()
+const showClub = ref(savedDisplay.showClub ?? true)
+const showOfficials = ref(savedDisplay.showOfficials ?? true)
+const displayOpen = ref(false)
+const displayRef = ref<HTMLDivElement | null>(null)
+const displayColumns = [
+  { key: 'club', labelKey: 'gamedays.field.club_organisateur', model: showClub },
+  { key: 'officials', labelKey: 'gamedays.field.officiels', model: showOfficials },
+]
+const activeDisplayCount = computed(() => displayColumns.filter(c => c.model.value).length)
+watch([showClub, showOfficials], () => {
+  try { localStorage.setItem(DISPLAY_STORAGE_KEY, JSON.stringify({ showClub: showClub.value, showOfficials: showOfficials.value })) } catch { /* ignore */ }
+})
+// Base layout counts Officiels and not Club organisateur
+const tableColspan = computed(() => (canSelect.value ? 17 : 16) + (showClub.value ? 1 : 0) - (showOfficials.value ? 0 : 1))
 const bulkActionsRef = ref<HTMLDivElement | null>(null)
 
 // Inline editing
@@ -209,6 +230,9 @@ const loadGamedays = async () => {
 const onClickOutside = (e: MouseEvent) => {
   if (bulkActionsRef.value && !bulkActionsRef.value.contains(e.target as Node)) {
     bulkActionsOpen.value = false
+  }
+  if (displayRef.value && !displayRef.value.contains(e.target as Node)) {
+    displayOpen.value = false
   }
 }
 onMounted(async () => {
@@ -670,6 +694,32 @@ const printJurySheet = (gameday: Gameday | null) => {
             <option v-for="opt in sortOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
           </select>
         </div>
+
+        <!-- Display dropdown: optional columns -->
+        <div ref="displayRef" class="relative">
+          <button
+            type="button"
+            class="flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg border"
+            :class="activeDisplayCount > 0 ? 'text-primary-700 dark:text-primary-200 border-primary-400 bg-primary-50 dark:bg-primary-950' : 'text-header-900 dark:text-header-200 bg-white dark:bg-header-900 border-header-300 dark:border-header-700 hover:bg-header-50 dark:hover:bg-header-800'"
+            @click="displayOpen = !displayOpen"
+          >
+            <UIcon name="heroicons:adjustments-horizontal" class="w-5 h-5" />
+            {{ t('gamedays.display.title') }}
+            <span v-if="activeDisplayCount > 0" class="inline-flex items-center justify-center min-w-5 h-5 px-1 text-sm font-semibold text-white bg-primary-600 rounded-full">{{ activeDisplayCount }}</span>
+            <UIcon name="heroicons:chevron-down" class="w-4 h-4 transition-transform" :class="{ 'rotate-180': displayOpen }" />
+          </button>
+          <div v-show="displayOpen" class="absolute z-20 mt-1 w-60 bg-white dark:bg-header-900 border border-header-200 dark:border-header-700 rounded-lg shadow-lg py-1 right-0">
+            <div class="px-3 py-1 text-xs font-semibold text-header-900 dark:text-header-300 uppercase tracking-wider">{{ t('gamedays.display.columns_section') }}</div>
+            <label
+              v-for="col in displayColumns"
+              :key="col.key"
+              class="flex items-center gap-2 px-4 py-2 text-sm text-header-900 dark:text-header-50 cursor-pointer hover:bg-header-50 dark:hover:bg-header-800"
+            >
+              <input v-model="col.model.value" type="checkbox" class="rounded border-header-300 dark:border-header-700 text-primary-600">
+              {{ t(col.labelKey) }}
+            </label>
+          </div>
+        </div>
       </template>
     </AdminPageHeader>
 
@@ -787,7 +837,8 @@ const printJurySheet = (gameday: Gameday | null) => {
               <!-- Matches -->
               <th class="px-2 py-3 text-center text-sm font-medium text-header-900 dark:text-header-50 uppercase">{{ t('gamedays.field.matches') }}</th>
               <!-- Officials -->
-              <th class="px-2 py-3 text-left text-sm font-medium text-header-900 dark:text-header-50 uppercase">{{ t('gamedays.field.officiels') }}</th>
+              <th v-if="showClub" class="px-2 py-3 text-left text-sm font-medium text-header-900 dark:text-header-50 uppercase">{{ t('gamedays.field.club_organisateur') }}</th>
+              <th v-if="showOfficials" class="px-2 py-3 text-left text-sm font-medium text-header-900 dark:text-header-50 uppercase">{{ t('gamedays.field.officiels') }}</th>
               <!-- Delete -->
               <th v-if="canEdit" class="w-10 px-2 py-3" />
             </tr>
@@ -795,21 +846,21 @@ const printJurySheet = (gameday: Gameday | null) => {
           <tbody class="bg-white dark:bg-header-900 divide-y divide-header-200 dark:divide-header-700">
             <!-- Loading -->
             <tr v-if="loading && gamedays.length === 0">
-              <td :colspan="canSelect ? 17 : 16" class="px-4 py-8 text-center text-header-900 dark:text-header-50">
+              <td :colspan="tableColspan" class="px-4 py-8 text-center text-header-900 dark:text-header-50">
                 <UIcon name="heroicons:arrow-path" class="w-6 h-6 animate-spin mx-auto mb-2" />
                 {{ t('common.loading') }}
               </td>
             </tr>
             <!-- Empty: no context selected -->
             <tr v-else-if="!hasContextFilter">
-              <td :colspan="canSelect ? 17 : 16" class="px-4 py-12 text-center text-header-600 dark:text-header-300">
+              <td :colspan="tableColspan" class="px-4 py-12 text-center text-header-600 dark:text-header-300">
                 <UIcon name="heroicons:funnel" class="w-8 h-8 mx-auto mb-2 opacity-40" />
                 <div class="text-sm">{{ t('gamedays.select_context') }}</div>
               </td>
             </tr>
             <!-- Empty: no results -->
             <tr v-else-if="gamedays.length === 0">
-              <td :colspan="canSelect ? 17 : 16" class="px-4 py-8 text-center text-header-900 dark:text-header-50">
+              <td :colspan="tableColspan" class="px-4 py-8 text-center text-header-900 dark:text-header-50">
                 {{ t('gamedays.no_results') }}
               </td>
             </tr>
@@ -1067,8 +1118,10 @@ const printJurySheet = (gameday: Gameday | null) => {
                 </NuxtLink>
                 <span v-else class="text-header-600 dark:text-header-300">0</span>
               </td>
+              <!-- Organising club -->
+              <td v-if="showClub" class="px-2 py-2 text-sm text-header-900 dark:text-header-50 max-w-48 truncate" :title="g.clubOrganisateur?.code">{{ g.clubOrganisateur?.label || '-' }}</td>
               <!-- Officials -->
-              <td class="px-2 py-2 text-sm text-header-900 dark:text-header-50 max-w-48" @click.stop>
+              <td v-if="showOfficials" class="px-2 py-2 text-sm text-header-900 dark:text-header-50 max-w-48" @click.stop>
                 <button
                   class="text-left hover:text-primary-600 dark:hover:text-primary-300 truncate max-w-full"
                   :title="getOfficialsSummary(g)"
