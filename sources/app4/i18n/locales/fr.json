@@ -3709,6 +3709,8 @@
     },
     "phases": "{n} phases",
     "roles_picker": {
+      "managers_group": "Responsables",
+      "gamedays_group": "Journées",
       "label": "Rôles",
       "all": "Tous"
     },

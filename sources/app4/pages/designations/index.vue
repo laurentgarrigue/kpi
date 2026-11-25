@@ -63,10 +63,19 @@ const season = computed(() => workContext.season)
 const counts = computed(() => (matrix.value ? countStatuses(matrix.value) : { red: 0, orange: 0 }))
 const roleLabel = (code: string) => roles.value[code]?.label ?? code
 const summaryRoles = computed(() => Object.keys(roles.value))
-const pickableRoles = computed(() => [...MANAGER_ROLES, ...(matrix.value?.gamedayRoles ?? [])].map(code => ({ code, label: roleLabel(code) })))
+/** Colonne « Club organisateur » du tableau des journées, choisie dans le menu Rôles comme un rôle. */
+const ORGANISER_COLUMN = 'ORGANISER'
+const pickableGroups = computed(() => [
+  { key: 'managers', label: t('designations.roles_picker.managers_group'), roles: MANAGER_ROLES.map(code => ({ code, label: roleLabel(code) })) },
+  {
+    key: 'gamedays',
+    label: t('designations.roles_picker.gamedays_group'),
+    roles: [ORGANISER_COLUMN, ...(matrix.value?.gamedayRoles ?? [])].map(code => ({ code, label: code === ORGANISER_COLUMN ? t('designations.column.organiser') : roleLabel(code) })),
+  },
+])
+const showsOrganiser = computed(() => chosenRoles.value.length === 0 || chosenRoles.value.includes(ORGANISER_COLUMN))
 const shownGamedayRoles = computed(() => visibleRoles(matrix.value?.gamedayRoles ?? [], chosenRoles.value))
 const showsManager = (role: string) => chosenRoles.value.length === 0 || chosenRoles.value.includes(role)
-/** Le tableau des responsables n'occupe une colonne que s'il est affiché ; sinon les journées prennent toute la largeur. */
 const showsManagerTable = computed(() => showsManager('RC') || showsManager('RESP_EQUIPE'))
 
 const loadRoles = async () => {
@@ -204,7 +213,7 @@ onMounted(async () => {
     <template v-if="tab === 'matrix'">
       <div class="flex flex-wrap items-center gap-4 mb-4">
         <AdminCompetitionSectionPicker v-model="competitionCodes" :season="season" />
-        <DesignationsRolePicker v-model="chosenRoles" :roles="pickableRoles" />
+        <DesignationsRolePicker v-model="chosenRoles" :groups="pickableGroups" />
         <label class="text-sm inline-flex items-center gap-2">
           <input v-model="onlyGaps" type="checkbox" class="rounded">
           {{ t('designations.only_gaps') }}
@@ -218,7 +227,7 @@ onMounted(async () => {
 
       <section v-for="competition in matrix?.competitions ?? []" :key="competition.code" class="mb-8">
         <h2 class="font-semibold mb-2">{{ competition.code }} — {{ competition.label }}</h2>
-        <div class="grid gap-4" :class="{ 'xl:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]': showsManagerTable && shownGamedayRoles.length && competition.gamedays.length }">
+        <div class="space-y-4">
           <!-- Responsables : RC et responsables d'équipe (SUI-02) -->
           <div v-if="showsManagerTable" class="overflow-x-auto">
             <table class="min-w-full text-sm border border-header-200 dark:border-header-700">
@@ -261,13 +270,13 @@ onMounted(async () => {
           </div>
 
           <!-- Journées × rôles ; phases d'un tournoi regroupées par dates et lieu (SUI-03 : héritage visible) -->
-          <div v-if="shownGamedayRoles.length && competition.gamedays.length" class="overflow-x-auto">
+          <div v-if="(shownGamedayRoles.length || showsOrganiser) && competition.gamedays.length" class="overflow-x-auto">
             <table class="min-w-full text-sm border border-header-200 dark:border-header-700">
               <caption class="text-left text-xs uppercase tracking-wide text-header-500 py-1">{{ t('designations.table.gamedays') }}</caption>
               <thead>
                 <tr class="bg-header-50 dark:bg-header-800">
                   <th scope="col" class="px-2 py-1 text-left">{{ t('designations.column.gameday') }}</th>
-                  <th scope="col" class="px-2 py-1 text-left">{{ t('designations.column.organiser') }}</th>
+                  <th v-if="showsOrganiser" scope="col" class="px-2 py-1 text-left">{{ t('designations.column.organiser') }}</th>
                   <th v-for="role in shownGamedayRoles" :key="role" scope="col" class="px-2 py-1 text-left">{{ roleLabel(role) }}</th>
                 </tr>
               </thead>
@@ -277,7 +286,7 @@ onMounted(async () => {
                     <span class="whitespace-nowrap">{{ gamedayDates(row.start, row.end) }}</span><span v-if="row.place"> · {{ row.place }}</span>
                     <span class="block text-xs text-header-500">{{ row.labels.length > 1 ? t('designations.phases', { n: row.labels.length }) : row.labels[0] }}</span>
                   </th>
-                  <td class="px-2 py-1 align-top min-w-40" :title="row.organiser.code">
+                  <td v-if="showsOrganiser" class="px-2 py-1 align-top min-w-40" :title="row.organiser.code">
                     <div v-if="editingOrganiser === row.key" class="flex items-center gap-1">
                       <AdminTextAutocomplete
                         model-value=""
@@ -295,7 +304,7 @@ onMounted(async () => {
                         <UIcon name="heroicons:pencil-square" class="w-4 h-4" />
                       </button>
                       <button v-if="row.organiser.label" type="button" class="text-header-500 hover:text-error-600" :title="t('designations.organiser_clear')" @click="saveOrganiser(row.ids, null)">
-                        <UIcon name="heroicons:x-mark" class="w-4 h-4" />
+                        <UIcon name="heroicons:trash" class="w-4 h-4" />
                       </button>
                     </div>
                   </td>

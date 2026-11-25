@@ -3697,6 +3697,8 @@
     },
     "phases": "{n} phases",
     "roles_picker": {
+      "managers_group": "Managers",
+      "gamedays_group": "Gamedays",
       "label": "Roles",
       "all": "All"
     },
