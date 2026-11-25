@@ -63,7 +63,7 @@ app4_npm_install app4_npm_ls app4_npm_clean app4_npm_update app4_npm_add app4_np
 app_wsm_generate_dev app_wsm_generate_preprod app_wsm_generate_prod \
 app_live_generate_dev app_live_generate_preprod app_live_generate_prod \
 backend_npm_install backend_npm_add backend_npm_update backend_npm_ls backend_npm_clean backend_npm_init \
-backend_composer_install backend_composer_update backend_composer_require backend_composer_require_dev backend_composer_dump backend_bash \
+backend_composer_install backend_composer_update backend_composer_require backend_composer_require_dev backend_composer_dump backend_bash api2_bash \
 api2_composer_install api2_composer_update api2_composer_require api2_cache_clear api2_cache_warmup api2_migrations_diff api2_migrations_migrate \
 api2_restart api2_logs api2_logs_errors mercure_generate_secret pdf_tokens_sync gotenberg_logs \
 api2_test api2_test_unit api2_test_integration api2_test_fixtures api2_coverage app2_test app2_coverage app3_coverage app4_coverage ci_scripts_test test db_migrate \
@@ -916,6 +916,9 @@ api2_logs_errors: ## Filtre uniquement les erreurs dans les logs d'API2
 		| grep -iE 'error|fatal|exception|warning|deprecat' \
 		| tail -50 \
 		|| echo "Aucune erreur dans les 2000 dernières lignes"
+
+api2_bash: ## Ouvre un shell bash dans le container API2 (FrankenPHP)
+	$(DOCKER_EXEC_API2) bash
 
 TRAEFIK_CERTS_PATH ?= /home/laurent/Documents/dev/traefik/certs
 

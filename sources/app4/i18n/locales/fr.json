@@ -3620,6 +3620,13 @@
   },
   "designations": {
     "organiser_saved": "Club organisateur enregistré.",
+    "organiser_clear_title": "Retirer le club organisateur ?",
+    "organiser_clear_message": "Le club organisateur « {club} » sera retiré de cette journée.",
+    "place_clear": "Supprimer le lieu",
+    "place_clear_title": "Supprimer le lieu ?",
+    "place_clear_message": "Le lieu « {place} » et son département seront supprimés de cette journée.",
+    "place_edit": "Modifier le lieu et le département",
+    "place_saved": "Lieu et département enregistrés.",
     "organiser_edit": "Modifier le club organisateur",
     "organiser_clear": "Retirer le club organisateur",
     "title": "Désignations",
@@ -3648,6 +3655,8 @@
       "people": "Personnes",
       "holders": "Titulaires",
       "organiser": "Club organisateur",
+      "place": "Lieu",
+      "department": "Département",
       "gameday": "Journée"
     },
     "missing": "À désigner",
@@ -3708,11 +3717,13 @@
       "gamedays": "Journées"
     },
     "phases": "{n} phases",
+    "display": {
+      "title": "Affichage",
+      "filters_section": "Filtres"
+    },
     "roles_picker": {
       "managers_group": "Responsables",
-      "gamedays_group": "Journées",
-      "label": "Rôles",
-      "all": "Tous"
+      "gamedays_group": "Journées"
     },
     "block": {
       "caption": "Désignations : {line}",

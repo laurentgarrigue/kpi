@@ -4,7 +4,8 @@ namespace App\Designation;
 
 /**
  * État d'une case du suivi de couverture (FEATURE_DESIGNATIONS.md D26) : rouge = rôle requis non pourvu ; orange =
- * pourvu par une personne sans email ou du club d'une équipe engagée ; vert = pourvu ; vide = facultatif non pourvu.
+ * pourvu par une personne sans email ; vert = pourvu (y compris par une personne du club d'une équipe engagée, que
+ * l'alerte signale sans changer la couleur) ; vide = facultatif non pourvu.
  */
 enum CoverageStatus: string
 {
@@ -24,7 +25,7 @@ enum CoverageStatus: string
             return $requirement === Requirement::Required ? self::Red : self::Empty;
         }
         foreach ($holders as $holder) {
-            if ($holder->warnings() !== []) {
+            if (!$holder->hasEmail) {
                 return self::Orange;
             }
         }

@@ -43,6 +43,7 @@ final class DesignationService
         if (!DesignationRules::canDesignate($role, $user->getEffectiveNiveau(), $this->isScopeDelegate($user, $season, $scopeType, $scopeId))) {
             throw DesignationRejected::forbidden();
         }
+        $this->assertInPerimeter($user, $season, $scopeType, $scopeId);
         $licence = $this->repository->licence($matric);
         if ($licence === null) {
             throw DesignationRejected::unprocessable(DesignationRejected::LICENCE_UNKNOWN);
@@ -165,6 +166,23 @@ final class DesignationService
     {
         $isDelegate = $this->isScopeDelegate($user, $designation->season, $designation->scopeType, $designation->scopeId);
         if (!DesignationRules::canDesignate($designation->role, $user->getEffectiveNiveau(), $isDelegate)) {
+            throw DesignationRejected::forbidden();
+        }
+        $this->assertInPerimeter($user, $designation->season, $designation->scopeType, $designation->scopeId);
+    }
+
+    /**
+     * Un profil dont le mandat est limité à des compétitions ne désigne que sur celles-ci (les profils 1 et 2 ne sont
+     * jamais limités). Un périmètre rattaché à d'autres compétitions, ou national, lui est interdit.
+     */
+    private function assertInPerimeter(User $user, string $season, ScopeType $scopeType, string $scopeId): void
+    {
+        $allowed = $user->getAllowedCompetitions();
+        if ($allowed === null) {
+            return;
+        }
+        $competitions = $this->repository->competitionsOf($season, $scopeType, $scopeId);
+        if ($competitions === [] || array_diff($competitions, $allowed) !== []) {
             throw DesignationRejected::forbidden();
         }
     }

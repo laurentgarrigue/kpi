@@ -42,6 +42,7 @@ final class AdminDesignationsController extends AbstractController
     private const SCOPE_ID_PATTERN = '/^[A-Za-z0-9_-]{1,20}$/';
     private const MAX_ORDER = 99;
     private const READER_MAX_PROFILE = 5;
+    private const STATEMENT_MAX_PROFILE = 2;
     private const MAX_QUALITY_LENGTH = 100;
     /** Taille de kp_user.Mail. */
     private const MAX_EMAIL_LENGTH = 100;
@@ -68,7 +69,7 @@ final class AdminDesignationsController extends AbstractController
         if (!preg_match(self::SEASON_PATTERN, $season) || !in_array($format, ['json', 'csv', 'xlsx'], true)) {
             return $this->error(DesignationRejected::INVALID, Response::HTTP_BAD_REQUEST);
         }
-        if (!$this->isDesignator()) {
+        if (!$this->isStatementReader()) {
             return $this->error(DesignationRejected::FORBIDDEN, Response::HTTP_FORBIDDEN);
         }
         $collected = $this->facts->collect($season);
@@ -107,7 +108,14 @@ final class AdminDesignationsController extends AbstractController
         }
         $competitions = array_values(array_filter(array_map('trim', explode(',', (string) $request->query->get('competitions', '')))));
 
-        return $this->json($this->coverage->matrix($season, $level, $competitions, $request->query->getBoolean('onlyGaps')));
+        $user = $this->currentUser();
+        // le mandat limité à des saisons ou à des compétitions borne ce que le suivi montre
+        $allowedSeasons = $user->getAllowedSeasons();
+        if ($allowedSeasons !== null && !in_array($season, $allowedSeasons, true)) {
+            return $this->error(DesignationRejected::FORBIDDEN, Response::HTTP_FORBIDDEN);
+        }
+
+        return $this->json($this->coverage->matrix($season, $level, $competitions, $request->query->getBoolean('onlyGaps'), $user->getAllowedCompetitions()));
     }
 
     /**
@@ -192,7 +200,7 @@ final class AdminDesignationsController extends AbstractController
             || !in_array($format, ['json', 'csv', 'xlsx'], true) || !in_array($section, ['people', 'clubs'], true)) {
             return $this->error(DesignationRejected::INVALID, Response::HTTP_BAD_REQUEST);
         }
-        if (!$this->isDesignator()) {
+        if (!$this->isStatementReader()) {
             return $this->error(DesignationRejected::FORBIDDEN, Response::HTTP_FORBIDDEN);
         }
 
@@ -422,6 +430,7 @@ final class AdminDesignationsController extends AbstractController
             'authorities' => array_map(static fn (Authority $authority): string => $authority->value, $role->authorities),
             'maxPerScope' => $role->maxPerScope,
             'designableByDelegate' => $role->designableByDelegate,
+            'designableByMaxProfile' => $role->designableByMaxProfile,
         ];
     }
 
@@ -472,6 +481,12 @@ final class AdminDesignationsController extends AbstractController
     private function canRead(): bool
     {
         return $this->currentUser()->getEffectiveNiveau() <= self::READER_MAX_PROFILE;
+    }
+
+    /** Récapitulatif et relevé des faits (rétributions) : profils 1 et 2 seulement, le profil 3 ne voit que le suivi. */
+    private function isStatementReader(): bool
+    {
+        return $this->currentUser()->getEffectiveNiveau() <= self::STATEMENT_MAX_PROFILE;
     }
 
     private function isDesignator(): bool

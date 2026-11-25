@@ -16,8 +16,14 @@ namespace App\Designation;
  */
 final class RoleCatalog
 {
-    /** Seuls les profils 1 et 2 désignent, hors exception du délégué CNA (D27, DES-06, DES-07). */
-    public const DESIGNATOR_MAX_PROFILE = 2;
+    /** Seuls les profils 1 à 3 désignent, hors exception du délégué CNA (D27, DES-06, DES-07). */
+    public const DESIGNATOR_MAX_PROFILE = 3;
+
+    /** Le bureau de la CNA donne un mandat de profil 2 : seul un profil 1 ou 2 peut le désigner (pas d'élévation de droits). */
+    public const BUREAU_DESIGNATOR_MAX_PROFILE = 2;
+
+    /** Les responsables de compétition se désignent par les profils 1 et 2 ; le profil 3 les consulte seulement. */
+    public const RC_DESIGNATOR_MAX_PROFILE = 2;
 
     private const GAMEDAY_SCOPES = [ScopeType::Evenement, ScopeType::Competition, ScopeType::Journee];
 
@@ -56,7 +62,7 @@ final class RoleCatalog
         $roles = [
             // Niveau : RC « national sans compétition » repris de kp_rc (ex '- CNA -', ticket designations/05)
             new RoleDefinition('RC', 'Responsable de compétition', [ScopeType::Competition, ScopeType::Niveau], 4, $required, $required,
-                legacyColumns: ['Responsable_insc']),
+                legacyColumns: ['Responsable_insc'], designableByMaxProfile: self::RC_DESIGNATOR_MAX_PROFILE),
             new RoleDefinition('RESP_EQUIPE', "Responsable d'équipe", [ScopeType::Equipe], 7, $required, $optional,
                 mandateLimitedToTeamClub: true),
             new RoleDefinition('DELEGUE_CNA', 'Délégué CNA', self::GAMEDAY_SCOPES, 5, $required, $none,
@@ -73,7 +79,7 @@ final class RoleCatalog
             new RoleDefinition('JURY_APPEL', "Membre du jury d'appel", self::GAMEDAY_SCOPES, null, $optional, $none,
                 designableByDelegate: true),
             new RoleDefinition('BUREAU_CNA', 'Membre du bureau CNA', [ScopeType::Niveau], 2, $none, $none,
-                noMandateUpToBaseProfile: 2),
+                noMandateUpToBaseProfile: 2, designableByMaxProfile: self::BUREAU_DESIGNATOR_MAX_PROFILE),
             new RoleDefinition('MEMBRE_CNA', 'Membre de la CNA', [ScopeType::Niveau], null, $none, $none),
         ];
 

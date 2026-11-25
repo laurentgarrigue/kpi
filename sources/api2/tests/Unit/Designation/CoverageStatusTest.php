@@ -31,11 +31,16 @@ final class CoverageStatusTest extends TestCase
         self::assertSame(CoverageStatus::Green, CoverageStatus::of(Requirement::Optional, [new CoverageHolder(true, false)]));
     }
 
-    public function testSui04AHolderWithoutEmailOrFromTheClubOfAnEngagedTeamIsOrange(): void
+    public function testSui04AHolderWithoutEmailIsOrange(): void
     {
         self::assertSame(CoverageStatus::Orange, CoverageStatus::of(Requirement::Required, [new CoverageHolder(false, false)]));
-        self::assertSame(CoverageStatus::Orange, CoverageStatus::of(Requirement::Required, [new CoverageHolder(true, true)]));
         self::assertSame(CoverageStatus::Orange, CoverageStatus::of(Requirement::Optional, [new CoverageHolder(true, false), new CoverageHolder(false, false)]));
+    }
+
+    public function testSui04AHolderFromTheClubOfAnEngagedTeamStaysGreenButIsWarned(): void
+    {
+        self::assertSame(CoverageStatus::Green, CoverageStatus::of(Requirement::Required, [new CoverageHolder(true, true)]));
+        self::assertSame(['same_club'], (new CoverageHolder(true, true))->warnings());
     }
 
     public function testTheReasonsOfAnOrangeHolderAreNamed(): void

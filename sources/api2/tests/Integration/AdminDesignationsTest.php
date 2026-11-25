@@ -96,9 +96,14 @@ final class AdminDesignationsTest extends ApiTestCase
         self::assertSame('scope_full', $error['error']);
     }
 
-    public function testDes06ProfilesThreeAndAboveCannotDesignate(): void
+    public function testDes06ProfilesFourAndAboveCannotDesignateAndProfileThreeCan(): void
     {
-        $this->create('TDIV', ['role' => 'R1', 'scopeType' => 'JOURNEE', 'scopeId' => '9801', 'matric' => 9812], 403);
+        $this->create('9811', ['role' => 'R1', 'scopeType' => 'JOURNEE', 'scopeId' => '9801', 'matric' => 9812], 403);
+        $this->create('TDIV', ['role' => 'R1', 'scopeType' => 'JOURNEE', 'scopeId' => '9801', 'matric' => 9812], 201);
+        // les responsables de compétition se consultent seulement
+        $this->create('TDIV', ['role' => 'RC', 'scopeType' => 'COMPETITION', 'scopeId' => 'NDES', 'matric' => 9813], 403);
+        // le bureau de la CNA donne un mandat de profil 2 : un profil 3 ne peut pas le désigner
+        $this->create('TDIV', ['role' => 'BUREAU_CNA', 'scopeType' => 'NIVEAU', 'scopeId' => 'N', 'matric' => 9813], 403);
         $this->create('9811', ['role' => 'R1', 'scopeType' => 'JOURNEE', 'scopeId' => '9801', 'matric' => 9812], 403);
         $this->create('TSUPER', ['role' => 'R1', 'scopeType' => 'JOURNEE', 'scopeId' => '9801', 'matric' => 9812], 201);
     }

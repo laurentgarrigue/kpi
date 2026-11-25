@@ -382,6 +382,12 @@ class AdminGamedaysController extends AbstractController
             return $this->json(['message' => 'Gameday not found'], Response::HTTP_NOT_FOUND);
         }
 
+        // un mandat limité à des compétitions ne modifie que les journées de celles-ci
+        $allowedCompetitions = $user?->getAllowedCompetitions();
+        if ($allowedCompetitions !== null && !in_array($existing['Code_competition'], $allowedCompetitions, true)) {
+            return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
+        }
+
         if ($this->isCompetitionReadOnly($existing['Code_competition'], $existing['Code_saison'])) {
             return $this->json(['message' => 'Competition is locked'], Response::HTTP_FORBIDDEN);
         }
@@ -450,11 +456,37 @@ class AdminGamedaysController extends AbstractController
 
         $updateData['Code_uti'] = $user?->getUserIdentifier();
 
+        $changes = $this->describeChanges($id, $updateData);
         $this->connection->update('kp_journee', $updateData, ['Id' => $id]);
 
-        $this->logActionForGameday('Modification journee', $existing['Code_saison'], $existing['Code_competition'], $id);
+        $this->logActionForGameday('Modification journee', $existing['Code_saison'], $existing['Code_competition'], $id, $changes);
 
         return $this->json(['message' => 'Gameday updated']);
+    }
+
+    /**
+     * Journal d'une modification : chaque colonne changée, avec son ancienne et sa nouvelle valeur (lieu, département,
+     * club organisateur…), pour savoir qui a changé quoi.
+     *
+     * @param array<string, mixed> $updateData colonnes écrites, indexées par leur nom
+     */
+    private function describeChanges(int $id, array $updateData): ?string
+    {
+        $columns = array_values(array_filter(array_keys($updateData), static fn (string $column): bool => preg_match('/^[A-Za-z_]+$/', $column) === 1 && $column !== 'Code_uti'));
+        if ($columns === []) {
+            return null;
+        }
+        $before = $this->connection->fetchAssociative(sprintf('SELECT %s FROM kp_journee WHERE Id = ?', implode(', ', $columns)), [$id]) ?: [];
+        $changes = [];
+        foreach ($columns as $column) {
+            $old = (string) ($before[$column] ?? '');
+            $new = (string) ($updateData[$column] ?? '');
+            if ($old !== $new) {
+                $changes[] = sprintf('%s : « %s » → « %s »', $column, $old, $new);
+            }
+        }
+
+        return $changes === [] ? null : implode(' ; ', $changes);
     }
 
     /**

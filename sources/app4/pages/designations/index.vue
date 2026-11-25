@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { canAddHolder, countStatuses, designationIdsOf, gamedayDates, gamedayRows, holderLabel, statusClasses, visibleRoles, type CoverageCell, type CoverageHolder, type CoverageMatrix, type DesignationTarget, type RoleDefinition, type RowKind } from '~/utils/designations'
+import { COMPETITION_STATUS_CLASSES, canAddHolder, canEditRole, isCompetitionEnded, countStatuses, designationIdsOf, gamedayDates, gamedayRows, holderLabel, statusClasses, visibleRoles, type CoverageCell, type CoverageHolder, type CoverageMatrix, type DesignationTarget, type RoleDefinition, type RowKind } from '~/utils/designations'
 
 /**
  * Suivi des Désignations, profils 1 et 2 (DOC/specs/FEATURE_DESIGNATIONS.md § 4, ticket designations/07) : matrice de
@@ -21,14 +21,36 @@ const toast = useToast()
 const authStore = useAuthStore()
 const workContext = useWorkContextStore()
 
-if (authStore.profile > 2) {
+if (authStore.profile > 3) {
   navigateTo('/')
 }
 
+/** Récapitulatif, relevé des faits et copie des RC : profils 1 et 2 seulement (le profil 3 a le suivi). */
+const canSeeStatements = computed(() => authStore.profile <= 2)
+const tabs = computed<Tab[]>(() => (canSeeStatements.value ? ['matrix', 'summary', 'facts'] : ['matrix']))
 const tab = ref<Tab>('matrix')
-const onlyGaps = ref(false)
-const competitionCodes = ref<string[]>([])
-const chosenRoles = ref<string[]>([])
+/** Colonnes et tableaux masqués par le menu Affichage (rien de masqué par défaut). */
+const DISPLAY_STORAGE_KEY = 'app4_designations_display'
+const loadDisplay = (): { hiddenRoles?: string[], onlyGaps?: boolean, competitionCodes?: string[] } => {
+  try { return JSON.parse(localStorage.getItem(DISPLAY_STORAGE_KEY) ?? '{}') } catch { return {} }
+}
+const savedDisplay = loadDisplay()
+const hiddenRoles = ref<string[]>(Array.isArray(savedDisplay.hiddenRoles) ? savedDisplay.hiddenRoles : [])
+const onlyGaps = ref(savedDisplay.onlyGaps === true)
+const competitionCodes = ref<string[]>(Array.isArray(savedDisplay.competitionCodes) ? savedDisplay.competitionCodes : [])
+const SECTION_STORAGE_KEY = 'app4_designations_section'
+watch([hiddenRoles, onlyGaps, competitionCodes], () => {
+  try { localStorage.setItem(DISPLAY_STORAGE_KEY, JSON.stringify({ hiddenRoles: hiddenRoles.value, onlyGaps: onlyGaps.value, competitionCodes: competitionCodes.value })) } catch { /* ignore */ }
+})
+const displayOpen = ref(false)
+const displayRef = ref<HTMLDivElement | null>(null)
+const isShown = (code: string) => !hiddenRoles.value.includes(code)
+const toggleRole = (code: string) => {
+  hiddenRoles.value = isShown(code) ? [...hiddenRoles.value, code] : hiddenRoles.value.filter(c => c !== code)
+}
+const onClickOutside = (e: MouseEvent) => {
+  if (displayRef.value && !displayRef.value.contains(e.target as Node)) displayOpen.value = false
+}
 /** Rôles des responsables (premier tableau de chaque compétition) ; les autres sont des colonnes de journée. */
 const MANAGER_ROLES = ['RC', 'RESP_EQUIPE']
 const loading = ref(false)
@@ -61,6 +83,8 @@ const removing = ref<CoverageHolder | null>(null)
 
 const season = computed(() => workContext.season)
 const counts = computed(() => (matrix.value ? countStatuses(matrix.value) : { red: 0, orange: 0 }))
+/** Verrou d'une ligne : compétition terminée, ou rôle que le profil connecté ne peut pas désigner (consultation seule). */
+const isReadonly = (competition: { statut: string }, role: string) => isCompetitionEnded(competition) || !canEditRole(roles.value[role], authStore.profile)
 const roleLabel = (code: string) => roles.value[code]?.label ?? code
 const summaryRoles = computed(() => Object.keys(roles.value))
 /** Colonne « Club organisateur » du tableau des journées, choisie dans le menu Rôles comme un rôle. */
@@ -73,9 +97,10 @@ const pickableGroups = computed(() => [
     roles: [ORGANISER_COLUMN, ...(matrix.value?.gamedayRoles ?? [])].map(code => ({ code, label: code === ORGANISER_COLUMN ? t('designations.column.organiser') : roleLabel(code) })),
   },
 ])
-const showsOrganiser = computed(() => chosenRoles.value.length === 0 || chosenRoles.value.includes(ORGANISER_COLUMN))
-const shownGamedayRoles = computed(() => visibleRoles(matrix.value?.gamedayRoles ?? [], chosenRoles.value))
-const showsManager = (role: string) => chosenRoles.value.length === 0 || chosenRoles.value.includes(role)
+const showsOrganiser = computed(() => isShown(ORGANISER_COLUMN))
+const activeDisplayCount = computed(() => (onlyGaps.value ? 1 : 0) + pickableGroups.value.reduce((sum, group) => sum + group.roles.filter(role => isShown(role.code)).length, 0))
+const shownGamedayRoles = computed(() => visibleRoles(matrix.value?.gamedayRoles ?? [], hiddenRoles.value))
+const showsManager = (role: string) => isShown(role)
 const showsManagerTable = computed(() => showsManager('RC') || showsManager('RESP_EQUIPE'))
 
 const loadRoles = async () => {
@@ -149,8 +174,15 @@ const confirmRemove = async () => {
 }
 
 /** Club organisateur d'une ligne de journées (une journée, ou les phases d'un tournoi) en cours de modification. */
-const editingOrganiser = ref<string | null>(null)
+const editingOrganiser = ref<{ ids: number[], label: string } | null>(null)
+const organiserModalTitle = computed(() => editingOrganiser.value?.label ?? '')
 const ORGANISER_LABEL_MAX = 40
+const clearingOrganiser = ref<{ ids: number[], label: string } | null>(null)
+const confirmClearOrganiser = async () => {
+  const target = clearingOrganiser.value
+  clearingOrganiser.value = null
+  if (target) await saveOrganiser(target.ids, null)
+}
 const saveOrganiser = async (ids: number[], club: { code: string, libelle: string } | null) => {
   try {
     for (const id of ids) {
@@ -166,13 +198,47 @@ const saveOrganiser = async (ids: number[], club: { code: string, libelle: strin
   }
 }
 
+/** Lieu et département d'une ligne de journées (une journée, ou les phases d'un tournoi) en cours de modification. */
+const editingPlace = ref<{ ids: number[], label: string, place: string, department: string } | null>(null)
+const PLACE_MAX = 40
+const DEPARTMENT_MAX = 3
+const openPlaceEdit = (row: { ids: number[], place: string, department: string, start: string | null, end: string | null }) => {
+  editingPlace.value = { ids: row.ids, label: gamedayDates(row.start, row.end), place: row.place, department: row.department }
+}
+/** Sans lieu, pas de département : un lieu supprimé ou vidé emporte son département. */
+const savePlaceOf = async (ids: number[], place: string, department: string) => {
+  const cleanPlace = place.trim().slice(0, PLACE_MAX)
+  const cleanDepartment = cleanPlace === '' ? '' : department.trim().toUpperCase().slice(0, DEPARTMENT_MAX)
+  try {
+    for (const id of ids) {
+      await api.put(`/admin/gamedays/${id}`, { lieu: cleanPlace, departement: cleanDepartment })
+    }
+    toast.add({ title: t('designations.place_saved'), color: 'success' })
+    await loadMatrix()
+  } finally {
+    editingPlace.value = null
+  }
+}
+const savePlace = () => (editingPlace.value ? savePlaceOf(editingPlace.value.ids, editingPlace.value.place, editingPlace.value.department) : undefined)
+const clearingPlace = ref<{ ids: number[], label: string } | null>(null)
+const confirmClearPlace = async () => {
+  const target = clearingPlace.value
+  clearingPlace.value = null
+  if (target) await savePlaceOf(target.ids, '', '')
+}
+watch(() => editingPlace.value?.place, (place) => {
+  if (editingPlace.value && (place ?? '').trim() === '') editingPlace.value.department = ''
+})
+
 const cellTitle = (cell: CoverageCell) => cell.holders
   .map(holder => `${holderLabel(holder)} — ${t(`designations.origin.${holder.origin}`)}${holder.warnings.map(w => ` · ${t(`designations.warning.${w}`)}`).join('')}`)
   .join('\n')
 
 watch([season, onlyGaps, competitionCodes], () => loadMatrix())
 watch(tab, () => reload())
+onUnmounted(() => document.removeEventListener('click', onClickOutside))
 onMounted(async () => {
+  document.addEventListener('click', onClickOutside)
   await workContext.initContext?.()
   await loadRoles()
   await loadMatrix()
@@ -186,7 +252,7 @@ onMounted(async () => {
     <div class="flex flex-wrap items-center gap-3 mb-4">
       <div class="inline-flex rounded-md shadow-sm" role="tablist">
         <button
-          v-for="name in (['matrix', 'summary', 'facts'] as Tab[])"
+          v-for="name in tabs"
           :key="name"
           type="button"
           role="tab"
@@ -200,6 +266,7 @@ onMounted(async () => {
       </div>
       <span class="text-sm text-header-600 dark:text-header-300">{{ t('designations.season', { season }) }}</span>
       <button
+        v-if="canSeeStatements"
         type="button"
         class="ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 hover:bg-header-50 dark:hover:bg-header-800"
         @click="copyOpen = true"
@@ -212,12 +279,39 @@ onMounted(async () => {
     <!-- Matrice de couverture (SUI-01 à SUI-05) -->
     <template v-if="tab === 'matrix'">
       <div class="flex flex-wrap items-center gap-4 mb-4">
-        <AdminCompetitionSectionPicker v-model="competitionCodes" :season="season" />
-        <DesignationsRolePicker v-model="chosenRoles" :groups="pickableGroups" />
-        <label class="text-sm inline-flex items-center gap-2">
-          <input v-model="onlyGaps" type="checkbox" class="rounded">
-          {{ t('designations.only_gaps') }}
-        </label>
+        <AdminCompetitionSectionPicker v-model="competitionCodes" :season="season" :storage-key="SECTION_STORAGE_KEY" />
+        <!-- Affichage : filtre des lignes + tableaux et colonnes affichés -->
+        <div ref="displayRef" class="relative">
+          <button
+            type="button"
+            class="flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg border"
+            :class="activeDisplayCount > 0 ? 'text-primary-700 dark:text-primary-200 border-primary-400 bg-primary-50 dark:bg-primary-950' : 'text-header-900 dark:text-header-200 bg-white dark:bg-header-900 border-header-300 dark:border-header-700 hover:bg-header-50 dark:hover:bg-header-800'"
+            @click="displayOpen = !displayOpen"
+          >
+            <UIcon name="heroicons:adjustments-horizontal" class="w-5 h-5" />
+            {{ t('designations.display.title') }}
+            <span v-if="activeDisplayCount > 0" class="inline-flex items-center justify-center min-w-5 h-5 px-1 text-sm font-semibold text-white bg-primary-600 rounded-full">{{ activeDisplayCount }}</span>
+            <UIcon name="heroicons:chevron-down" class="w-4 h-4 transition-transform" :class="{ 'rotate-180': displayOpen }" />
+          </button>
+          <div v-show="displayOpen" class="absolute z-20 mt-1 w-64 bg-white dark:bg-header-900 border border-header-200 dark:border-header-700 rounded-lg shadow-lg py-1 left-0">
+            <div class="px-3 py-1 text-xs font-semibold text-header-900 dark:text-header-300 uppercase tracking-wider">{{ t('designations.display.filters_section') }}</div>
+            <label class="flex items-center gap-2 px-4 py-2 text-sm text-header-900 dark:text-header-50 cursor-pointer hover:bg-header-50 dark:hover:bg-header-800">
+              <input v-model="onlyGaps" type="checkbox" class="rounded border-header-300 dark:border-header-700 text-primary-600">
+              {{ t('designations.only_gaps') }}
+            </label>
+            <template v-for="group in pickableGroups" :key="group.key">
+              <div class="mt-1 px-3 py-1 text-xs font-semibold text-header-900 dark:text-header-300 uppercase tracking-wider border-t border-header-100 dark:border-header-800">{{ group.label }}</div>
+              <label
+                v-for="role in group.roles"
+                :key="role.code"
+                class="flex items-center gap-2 px-4 py-2 text-sm text-header-900 dark:text-header-50 cursor-pointer hover:bg-header-50 dark:hover:bg-header-800"
+              >
+                <input type="checkbox" :checked="isShown(role.code)" class="rounded border-header-300 dark:border-header-700 text-primary-600" @change="toggleRole(role.code)">
+                {{ role.label }}
+              </label>
+            </template>
+          </div>
+        </div>
         <span class="text-sm"><span class="px-2 py-0.5 rounded bg-red-100 text-red-900 dark:bg-red-900/40 dark:text-red-100">{{ t('designations.count.red', { n: counts.red }) }}</span></span>
         <span class="text-sm"><span class="px-2 py-0.5 rounded bg-orange-100 text-orange-900 dark:bg-orange-900/40 dark:text-orange-100">{{ t('designations.count.orange', { n: counts.orange }) }}</span></span>
       </div>
@@ -226,10 +320,15 @@ onMounted(async () => {
       <p v-else-if="matrix && matrix.competitions.length === 0" class="text-sm text-header-500">{{ t('designations.nothing') }}</p>
 
       <section v-for="competition in matrix?.competitions ?? []" :key="competition.code" class="mb-8">
-        <h2 class="font-semibold mb-2">{{ competition.code }} — {{ competition.label }}</h2>
+        <h2 class="font-semibold mb-2 flex flex-wrap items-center gap-2">
+          {{ competition.code }} — {{ competition.label }}
+          <span v-if="competition.statut" class="px-2 py-0.5 text-xs font-medium rounded uppercase" :class="COMPETITION_STATUS_CLASSES[competition.statut]" :title="isCompetitionEnded(competition) ? t('competition.ended_description') : ''">
+            {{ t(`competitions.status.${competition.statut}`) }}
+          </span>
+        </h2>
         <div class="space-y-4">
           <!-- Responsables : RC et responsables d'équipe (SUI-02) -->
-          <div v-if="showsManagerTable" class="overflow-x-auto">
+          <div v-if="showsManagerTable" class="overflow-x-auto lg:w-1/2">
             <table class="min-w-full text-sm border border-header-200 dark:border-header-700">
               <caption class="text-left text-xs uppercase tracking-wide text-header-500 py-1">{{ t('designations.table.managers') }}</caption>
               <thead>
@@ -245,7 +344,8 @@ onMounted(async () => {
                     <DesignationsCellHolders
                       :cell="competition.cells.RC"
                       kind="competition"
-                      :can-add="canAddHolder(competition.cells.RC, 'competition', roles.RC)"
+                      :can-add="!isReadonly(competition, 'RC') && canAddHolder(competition.cells.RC, 'competition', roles.RC)"
+                      :readonly="isReadonly(competition, 'RC')"
                       @add="openAdd('competition', [competition.code], 'RC', competition.label)"
                       @remove="removing = $event"
                     />
@@ -258,7 +358,8 @@ onMounted(async () => {
                       <DesignationsCellHolders
                         :cell="team.cells.RESP_EQUIPE"
                         kind="team"
-                        :can-add="canAddHolder(team.cells.RESP_EQUIPE, 'team', roles.RESP_EQUIPE)"
+                        :can-add="!isReadonly(competition, 'RESP_EQUIPE') && canAddHolder(team.cells.RESP_EQUIPE, 'team', roles.RESP_EQUIPE)"
+                        :readonly="isReadonly(competition, 'RESP_EQUIPE')"
                         @add="openAdd('team', [team.id], 'RESP_EQUIPE', team.label)"
                         @remove="removing = $event"
                       />
@@ -283,28 +384,23 @@ onMounted(async () => {
               <tbody>
                 <tr v-for="row in gamedayRows(competition)" :key="row.key">
                   <th scope="row" class="px-2 py-1 text-left font-normal">
-                    <span class="whitespace-nowrap">{{ gamedayDates(row.start, row.end) }}</span><span v-if="row.place"> · {{ row.place }}</span>
+                    <span class="whitespace-nowrap">{{ gamedayDates(row.start, row.end) }}</span><span v-if="row.place"> · {{ row.place }}</span><span v-if="row.department" class="text-header-500"> ({{ row.department }})</span>
+                    <button v-if="!isCompetitionEnded(competition)" type="button" class="ml-1 align-middle text-primary-600 dark:text-primary-300 hover:text-primary-800 dark:hover:text-primary-200" :title="t('designations.place_edit')" @click="openPlaceEdit(row)">
+                      <UIcon name="heroicons:pencil-square" class="w-5 h-5" />
+                    </button>
+                    <button v-if="row.place && !isCompetitionEnded(competition)" type="button" class="ml-1 align-middle text-danger-600 dark:text-danger-300 hover:text-danger-800 dark:hover:text-danger-200" :title="t('designations.place_clear')" @click="clearingPlace = { ids: row.ids, label: row.place }">
+                      <UIcon name="heroicons:trash" class="w-5 h-5" />
+                    </button>
                     <span class="block text-xs text-header-500">{{ row.labels.length > 1 ? t('designations.phases', { n: row.labels.length }) : row.labels[0] }}</span>
                   </th>
-                  <td v-if="showsOrganiser" class="px-2 py-1 align-top min-w-40" :title="row.organiser.code">
-                    <div v-if="editingOrganiser === row.key" class="flex items-center gap-1">
-                      <AdminTextAutocomplete
-                        model-value=""
-                        api-url="/admin/clubs/search-all"
-                        label-field="libelle"
-                        detail-field="code"
-                        :placeholder="t('designations.column.organiser')"
-                        @select="(club: { code: string, libelle: string }) => saveOrganiser(row.ids, club)"
-                      />
-                      <button type="button" class="text-xs text-header-600 dark:text-header-300 hover:underline" @click="editingOrganiser = null">{{ t('common.cancel') }}</button>
-                    </div>
-                    <div v-else class="flex items-center gap-1">
+                  <td v-if="showsOrganiser" class="px-2 py-1 align-top min-w-40" :class="row.organiser.code ? statusClasses('green') : ''" :title="row.organiser.code">
+                    <div class="flex items-center gap-1">
                       <span>{{ row.organiser.label || '-' }}</span>
-                      <button type="button" class="text-header-500 hover:text-primary-600" :title="t('designations.organiser_edit')" @click="editingOrganiser = row.key">
-                        <UIcon name="heroicons:pencil-square" class="w-4 h-4" />
+                      <button v-if="!isCompetitionEnded(competition)" type="button" class="text-primary-600 dark:text-primary-300 hover:text-primary-800 dark:hover:text-primary-200" :title="t('designations.organiser_edit')" @click="editingOrganiser = { ids: row.ids, label: `${gamedayDates(row.start, row.end)}${row.place ? ' · ' + row.place : ''}` }">
+                        <UIcon name="heroicons:pencil-square" class="w-5 h-5" />
                       </button>
-                      <button v-if="row.organiser.label" type="button" class="text-header-500 hover:text-error-600" :title="t('designations.organiser_clear')" @click="saveOrganiser(row.ids, null)">
-                        <UIcon name="heroicons:trash" class="w-4 h-4" />
+                      <button v-if="row.organiser.label && !isCompetitionEnded(competition)" type="button" class="text-danger-600 dark:text-danger-300 hover:text-danger-800 dark:hover:text-danger-200" :title="t('designations.organiser_clear')" @click="clearingOrganiser = { ids: row.ids, label: row.organiser.label }">
+                        <UIcon name="heroicons:trash" class="w-5 h-5" />
                       </button>
                     </div>
                   </td>
@@ -312,7 +408,8 @@ onMounted(async () => {
                     <DesignationsCellHolders
                       :cell="row.cells[role]"
                       kind="gameday"
-                      :can-add="canAddHolder(row.cells[role], 'gameday', roles[role])"
+                      :can-add="!isReadonly(competition, role) && canAddHolder(row.cells[role], 'gameday', roles[role])"
+                      :readonly="isReadonly(competition, role)"
                       @add="openAdd('gameday', row.ids, role, `${competition.code} · ${row.labels.length > 1 ? t('designations.phases', { n: row.labels.length }) : row.labels[0]}`)"
                       @remove="removing = $event"
                     />
@@ -397,9 +494,69 @@ onMounted(async () => {
       </form>
     </AdminModal>
 
+    <!-- Club organisateur : recherche dans une fenêtre, le tableau ne doit pas rogner la liste de résultats -->
+    <AdminModal :open="editingOrganiser !== null" :title="t('designations.organiser_edit')" @close="editingOrganiser = null">
+      <div v-if="editingOrganiser" class="space-y-3 min-h-72">
+        <p class="text-sm text-header-600 dark:text-header-300">{{ organiserModalTitle }}</p>
+        <AdminTextAutocomplete
+          model-value=""
+          api-url="/admin/clubs/search-all"
+          label-field="libelle"
+          detail-field="code"
+          :placeholder="t('designations.column.organiser')"
+          @select="(club: { code: string, libelle: string }) => saveOrganiser(editingOrganiser!.ids, club)"
+        />
+      </div>
+    </AdminModal>
+
+    <!-- Lieu et département : commune en autocomplete (elle renseigne le département), modifiables à la main -->
+    <AdminModal :open="editingPlace !== null" :title="t('designations.place_edit')" @close="editingPlace = null">
+      <form v-if="editingPlace" class="space-y-3 min-h-72" @submit.prevent="savePlace">
+        <p class="text-sm text-header-600 dark:text-header-300">{{ editingPlace.label }}</p>
+        <div>
+          <label class="block text-sm font-medium mb-1">{{ t('designations.column.place') }}</label>
+          <AdminTextAutocomplete
+            v-model="editingPlace.place"
+            api-url="/admin/gamedays/autocomplete/communes"
+            label-field="label"
+            detail-field="detail"
+            :placeholder="t('designations.column.place')"
+            :maxlength="PLACE_MAX"
+            @select="(item: { departement?: string }) => { if (item.departement && editingPlace) editingPlace.department = item.departement }"
+          />
+        </div>
+        <div>
+          <label for="place-department" class="block text-sm font-medium mb-1">{{ t('designations.column.department') }}</label>
+          <input id="place-department" v-model="editingPlace.department" type="text" :maxlength="DEPARTMENT_MAX" class="w-24 px-3 py-2 text-sm border border-header-300 dark:border-header-700 rounded-lg bg-white dark:bg-header-900 text-header-900 dark:text-header-50 uppercase">
+        </div>
+        <div class="flex justify-end gap-2">
+          <button type="button" class="px-3 py-1.5 rounded border border-header-300 dark:border-header-700 text-sm" @click="editingPlace = null">{{ t('common.cancel') }}</button>
+          <button type="submit" class="px-3 py-1.5 rounded bg-primary-600 text-white text-sm">{{ t('common.save') }}</button>
+        </div>
+      </form>
+    </AdminModal>
+
     <!-- Désigner depuis une case -->
     <DesignationsAddModal :target="target" :season="season" :roles="roles" @close="target = null" @saved="saved" />
 
+    <AdminConfirmModal
+      :open="clearingOrganiser !== null"
+      :title="t('designations.organiser_clear_title')"
+      :message="t('designations.organiser_clear_message', { club: clearingOrganiser?.label ?? '' })"
+      :confirm-text="t('designations.remove.confirm')"
+      :cancel-text="t('common.cancel')"
+      @confirm="confirmClearOrganiser"
+      @close="clearingOrganiser = null"
+    />
+    <AdminConfirmModal
+      :open="clearingPlace !== null"
+      :title="t('designations.place_clear_title')"
+      :message="t('designations.place_clear_message', { place: clearingPlace?.label ?? '' })"
+      :confirm-text="t('designations.remove.confirm')"
+      :cancel-text="t('common.cancel')"
+      @confirm="confirmClearPlace"
+      @close="clearingPlace = null"
+    />
     <AdminConfirmModal
       :open="removing !== null"
       :title="t('designations.remove.title')"

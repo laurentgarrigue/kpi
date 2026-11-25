@@ -47,11 +47,11 @@ Périmètre technique : app4 (saisie), api2 (modèle, règles, PDF), app3 si bes
 | D19 | Rétributions et pénalités | L'outillage **prépare** le calcul (annexe 8 du règlement sportif) sans le faire : un **relevé des faits par club et par saison** (quantités, jamais de montants), exportable, avec le détail de chaque fait et sa source (§ 6). |
 | D20 | Classement national des clubs | Les Désignations alimentent le classement national des clubs (branche `claude/classement-national-clubs`, [PAGE_CLASSEMENT_NATIONAL_CLUBS.md](PAGE_CLASSEMENT_NATIONAL_CLUBS.md) une fois fusionnée) : 7.3.1 (délégué CNA, juge arbitre), 7.3.2 (RC) et 7.3.4 (autre membre de la CNA) sont lus dans `kp_designation` au lieu des noms en texte libre, de `kp_rc` et des listes saisies à la main. |
 | D21 | Rôles ajoutés | `MEMBRE_CNA` (périmètre niveau national, pour 7.3.4 ; le bureau CNA en est un sous-ensemble) et `ARBITRE_NJ` (arbitre non-joueur, sur une journée ou un événement, pour la prime de l'annexe 8 § 1). Le rôle s'appelle `JUGE_ARBITRE` (« chef des arbitres » est l'ancienne appellation, colonne legacy `kp_journee.ChefArbitre`). |
-| D22 | Club fournisseur | Le **club** de l'officiel est **figé dans la Désignation** à sa création (pré-rempli depuis le PCE, modifiable par les profils 1–2). Le relevé des faits et le classement national des clubs l'utilisent tous les deux. Les deux se calculent **pendant la saison**, pas la saison suivante. |
+| D22 | Club fournisseur | Le **club** de l'officiel est **figé dans la Désignation** à sa création (pré-rempli depuis le PCE, modifiable par les profils 1 à 3). Le relevé des faits et le classement national des clubs l'utilisent tous les deux. Les deux se calculent **pendant la saison**, pas la saison suivante. |
 | D23 | Autorité de désignation | Chaque Désignation porte qui l'a décidée : `CNA` (par défaut) ou `ORGANISATEUR`. Pour `ARBITRE_NJ` : désigné par le club organisateur → rétribution au club fournisseur ; désigné par la CNA (pool arbitres) → budget CNA, pas de rétribution au club. |
 | D24 | Ordre de livraison | 1. Fusion du classement national des clubs tel quel. 2. Désignations. 3. Bascule des calculateurs 7.3.1, 7.3.2, 7.3.4 sur `kp_designation`, la table d'alias restant pour les saisons antérieures. |
 | D25 | Contenu du bilan de journée | Structure validée le 2026-11-22, § 7. |
-| D26 | Rôles requis et états du suivi | Exigences par niveau dans le catalogue des rôles (nationales = codes `N…`, `CF…`) : RC requis partout ; responsable d'équipe, délégué CNA, R1 et juge arbitre requis en nationale (par équipe ou par journée, héritage compris) ; le reste facultatif. États : **rouge** = rôle requis non pourvu ; **orange** = pourvu par une personne sans email ou du même club qu'une équipe engagée ; **vert** = pourvu. Détail § 4. |
+| D26 | Rôles requis et états du suivi | Exigences par niveau dans le catalogue des rôles (nationales = codes `N…`, `CF…`) : RC requis partout ; responsable d'équipe, délégué CNA, R1 et juge arbitre requis en nationale (par équipe ou par journée, héritage compris) ; le reste facultatif. États : **rouge** = rôle requis non pourvu ; **orange** = pourvu par une personne sans email ; **vert** = pourvu (y compris par une personne du même club qu'une équipe engagée, signalée par le triangle d'alerte sans changer la couleur). Détail § 4. |
 | D27 | Jury d'appel | Composition par défaut (journées nationales) : délégué CNA (président de droit) + R1, repris de leurs Désignations, + un **représentant des équipes** (rôle `REP_EQUIPES`, alimente la colonne legacy `Rep_athletes`). En finale, des Désignations `JURY_APPEL` avec qualité (« représentant FFCK », « membre du bureau CNA »…) complètent le jury. Le rapport de jury d'appel reprend la composition et peut la **modifier pour l'affaire** (absence, récusation), dans le rapport seulement. Le délégué CNA peut créer les Désignations `REP_EQUIPES` et `JURY_APPEL` de son périmètre (sans mandat). Le **représentant des clubs** n'existe que dans le bilan de journée et ne siège pas au jury. |
 | D28 | Rédacteurs et destinataires des rapports | **Incident** : tout officiel du périmètre (ou saisi pour un arbitre, D17) → délégué CNA et juge arbitre du périmètre, RC des compétitions concernées, copie au rédacteur. **Jury d'appel** : président du jury (délégué CNA) → bureau CNA, RC concernés, membres du jury, copie au rédacteur ; notification aux responsables des équipes en cause ; date et heure d'affichage sur site. **Évaluation d'arbitrage** : saisie par l'évaluateur s'il est déjà officiel du périmètre, sinon par le bureau CNA (pas de rôle évaluateur pour l'instant) → juge arbitre du périmètre, bureau CNA, copie au rédacteur ; **pas de copie à l'arbitre évalué** ; lecture réservée à ces personnes ; note sur 50 calculée (somme des 5 blocs sur 10). |
 | D29 | PDF vierge | Première version : PDF vierge **imprimable** seulement, généré par Gotenberg depuis le catalogue (annotation possible dans un lecteur PDF). Pas de PDF à champs ni de `.docx` tant que le terrain ne le demande pas. |
@@ -89,8 +89,8 @@ scoring autonomes (`.scratch/scoring-ecrans-autonomes/`), cumuls de cartons et n
   | Représentant des équipes | Facultatif (souvent désigné sur place) | Facultatif |
   | Autres membres du jury d'appel | Facultatif, sauf finales | Sans objet |
 
-- **États** : rouge (requis non pourvu), orange (pourvu sans email, ou officiel du même club qu'une équipe engagée),
-  vert (pourvu).
+- **États** : rouge (requis non pourvu), orange (pourvu sans email),
+  vert (pourvu ; l'officiel du même club qu'une équipe engagée reste vert, avec le triangle et le message d'alerte).
 - **Récapitulatif par personne et par club** : nombre de désignations et de journées couvertes, en cours de saison et
   en fin de saison ; il alimente le calcul des rétributions.
 
@@ -160,7 +160,7 @@ Pour le camping, on note sa **disponibilité** (oui / non) en plus de la note de
 ### 8.2 Catalogues (api2, ADR-0004)
 
 - `App\Designation\RoleCatalog` : pour chaque rôle, périmètres autorisés, profil du mandat (ou aucun), exigence par
-  niveau (D26), qui peut le désigner (profils 1–2 ; délégué CNA pour `REP_EQUIPES` et `JURY_APPEL`, D27), colonne
+  niveau (D26), qui peut le désigner (profils 1 à 3, le bureau CNA restant aux profils 1–2 car son mandat est de profil 2 ; délégué CNA pour `REP_EQUIPES` et `JURY_APPEL`, D27), colonne
   legacy recopiée (`Delegue`, `Responsable_R1`, `ChefArbitre`, `Rep_athletes`, `Arb_nj1…5`).
 - `App\Report\ReportTypeCatalog` : par type et par version, sections, champs, champs calculés et pré-remplis,
   rattachements, rédacteurs, destinataires, lecteurs, délai.

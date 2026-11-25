@@ -25,6 +25,7 @@ export interface CoverageGameday {
   id: number
   label: string
   place: string
+  department: string
   /** Club organisateur, identifié comme dans le classement national des clubs (code saisi, sinon libellé). */
   organiser: { code: string, label: string }
   start: string | null
@@ -45,6 +46,8 @@ export interface CoverageCompetition {
   label: string
   /** Code_typeclt : CP = tournoi, dont les phases de mêmes dates et lieu sont regroupées. */
   type: string
+  /** ATT / ON / END : une compétition terminée (END) est en lecture seule. */
+  statut: string
   national: boolean
   cells: Record<string, CoverageCell>
   gamedays: CoverageGameday[]
@@ -64,6 +67,8 @@ export interface RoleDefinition {
   mandateProfile: number | null
   authorities: string[]
   maxPerScope: number | null
+  /** Profil le moins élevé (numéro le plus grand) qui peut désigner ce rôle. */
+  designableByMaxProfile: number
 }
 
 export type RowKind = 'competition' | 'gameday' | 'team' | 'event'
@@ -74,6 +79,16 @@ const STATUS_CLASSES: Record<CoverageStatus, string> = {
   green: 'bg-green-100 text-green-900 dark:bg-green-900/40 dark:text-green-100',
   empty: 'bg-white text-header-700 dark:bg-header-900 dark:text-header-200',
   not_applicable: 'bg-header-100 text-header-400 dark:bg-header-800 dark:text-header-500',
+}
+
+/** Compétition terminée : ses désignations et ses clubs organisateurs ne se modifient plus (verrou de l'api2). */
+export const isCompetitionEnded = (competition: Pick<CoverageCompetition, 'statut'>): boolean => competition.statut === 'END'
+
+/** Couleurs du statut d'une compétition, celles de la page Compétitions. */
+export const COMPETITION_STATUS_CLASSES: Record<string, string> = {
+  ATT: 'bg-header-600 text-header-50 italic',
+  ON: 'bg-success-500 text-success-50 italic',
+  END: 'bg-primary-900 text-primary-50 italic',
 }
 
 export const statusClasses = (status: CoverageStatus): string => STATUS_CLASSES[status]
@@ -95,6 +110,9 @@ export const canAddHolder = (cell: CoverageCell, kind: RowKind, role: RoleDefini
   const own = cell.holders.filter(holder => !isInherited(holder, kind)).length
   return role.maxPerScope === null || own < role.maxPerScope
 }
+
+/** Un rôle se modifie (ajout, retrait) si le profil de l'utilisateur le permet ; sinon il se consulte seulement. */
+export const canEditRole = (role: RoleDefinition | undefined, profile: number): boolean => !!role && profile <= role.designableByMaxProfile
 
 export const holderLabel = (holder: CoverageHolder): string => (holder.club ? `${holder.name} (${holder.club})` : holder.name)
 
@@ -128,6 +146,7 @@ export interface GamedayRow {
   ids: number[]
   labels: string[]
   place: string
+  department: string
   organiser: { code: string, label: string }
   start: string | null
   end: string | null
@@ -168,6 +187,7 @@ export const gamedayRows = (competition: Pick<CoverageCompetition, 'type' | 'gam
       ids: gamedays.map(gameday => gameday.id),
       labels: gamedays.map(gameday => gameday.label),
       place: gamedays[0].place,
+      department: gamedays[0].department,
       // les phases d'un tournoi ont le même organisateur ; on garde le premier renseigné
       organiser: gamedays.map(gameday => gameday.organiser).find(organiser => organiser.label !== '') ?? gamedays[0].organiser,
       start: gamedays[0].start,
@@ -177,8 +197,8 @@ export const gamedayRows = (competition: Pick<CoverageCompetition, 'type' | 'gam
   })
 }
 
-/** Rôles affichés : ceux choisis, dans l'ordre de l'API ; aucun choix = tous. */
-export const visibleRoles = (roles: string[], chosen: string[]): string[] => (chosen.length === 0 ? roles : roles.filter(role => chosen.includes(role)))
+/** Rôles affichés : tous sauf ceux masqués par le menu Affichage, dans l'ordre de l'API. */
+export const visibleRoles = (roles: string[], hidden: string[]): string[] => roles.filter(role => !hidden.includes(role))
 
 /** Identifiants à supprimer pour retirer un titulaire (toutes ses Désignations regroupées). */
 export const designationIdsOf = (holder: CoverageHolder): number[] => holder.designationIds ?? [holder.designationId]

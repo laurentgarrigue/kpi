@@ -197,7 +197,8 @@ export const useApi = () => {
         if (errorType === ErrorType.HTTP_403) {
           let body: { message?: string } = {}
           try { body = await response.clone().json() } catch { /* ignore */ }
-          if (body.message === 'Competition is ended') {
+          // api2 répond « locked » (la plupart des contrôleurs) ou « ended » : même cause, compétition clôturée
+          if (body.message === 'Competition is ended' || body.message === 'Competition is locked') {
             toast.add({
               title: t('competition.ended_title'),
               description: t('competition.ended_description'),
