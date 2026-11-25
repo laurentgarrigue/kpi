@@ -3607,6 +3607,9 @@
     "compute_already": "A computation is already running: wait for it to end."
   },
   "designations": {
+    "organiser_saved": "Organising club saved.",
+    "organiser_edit": "Change the organising club",
+    "organiser_clear": "Remove the organising club",
     "title": "Designations",
     "season": "Season {season}",
     "tab": {

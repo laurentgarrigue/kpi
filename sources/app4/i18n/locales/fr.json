@@ -3619,6 +3619,9 @@
     "compute_already": "Un calcul est déjà en cours : attendez qu’il se termine."
   },
   "designations": {
+    "organiser_saved": "Club organisateur enregistré.",
+    "organiser_edit": "Modifier le club organisateur",
+    "organiser_clear": "Retirer le club organisateur",
     "title": "Désignations",
     "season": "Saison {season}",
     "tab": {

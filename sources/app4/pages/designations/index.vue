@@ -139,6 +139,24 @@ const confirmRemove = async () => {
   }
 }
 
+/** Club organisateur d'une ligne de journées (une journée, ou les phases d'un tournoi) en cours de modification. */
+const editingOrganiser = ref<string | null>(null)
+const ORGANISER_LABEL_MAX = 40
+const saveOrganiser = async (ids: number[], club: { code: string, libelle: string } | null) => {
+  try {
+    for (const id of ids) {
+      await api.put(`/admin/gamedays/${id}`, club
+        ? { organisateur: club.libelle.slice(0, ORGANISER_LABEL_MAX), codeOrganisateur: club.code }
+        : { organisateur: '', codeOrganisateur: '' })
+    }
+    toast.add({ title: t('designations.organiser_saved'), color: 'success' })
+    editingOrganiser.value = null
+    await loadMatrix()
+  } catch {
+    editingOrganiser.value = null
+  }
+}
+
 const cellTitle = (cell: CoverageCell) => cell.holders
   .map(holder => `${holderLabel(holder)} — ${t(`designations.origin.${holder.origin}`)}${holder.warnings.map(w => ` · ${t(`designations.warning.${w}`)}`).join('')}`)
   .join('\n')
@@ -259,7 +277,28 @@ onMounted(async () => {
                     <span class="whitespace-nowrap">{{ gamedayDates(row.start, row.end) }}</span><span v-if="row.place"> · {{ row.place }}</span>
                     <span class="block text-xs text-header-500">{{ row.labels.length > 1 ? t('designations.phases', { n: row.labels.length }) : row.labels[0] }}</span>
                   </th>
-                  <td class="px-2 py-1 align-top" :title="row.organiser.code">{{ row.organiser.label }}</td>
+                  <td class="px-2 py-1 align-top min-w-40" :title="row.organiser.code">
+                    <div v-if="editingOrganiser === row.key" class="flex items-center gap-1">
+                      <AdminTextAutocomplete
+                        model-value=""
+                        api-url="/admin/clubs/search-all"
+                        label-field="libelle"
+                        detail-field="code"
+                        :placeholder="t('designations.column.organiser')"
+                        @select="(club: { code: string, libelle: string }) => saveOrganiser(row.ids, club)"
+                      />
+                      <button type="button" class="text-xs text-header-600 dark:text-header-300 hover:underline" @click="editingOrganiser = null">{{ t('common.cancel') }}</button>
+                    </div>
+                    <div v-else class="flex items-center gap-1">
+                      <span>{{ row.organiser.label || '-' }}</span>
+                      <button type="button" class="text-header-500 hover:text-primary-600" :title="t('designations.organiser_edit')" @click="editingOrganiser = row.key">
+                        <UIcon name="heroicons:pencil-square" class="w-4 h-4" />
+                      </button>
+                      <button v-if="row.organiser.label" type="button" class="text-header-500 hover:text-error-600" :title="t('designations.organiser_clear')" @click="saveOrganiser(row.ids, null)">
+                        <UIcon name="heroicons:x-mark" class="w-4 h-4" />
+                      </button>
+                    </div>
+                  </td>
                   <td v-for="role in shownGamedayRoles" :key="role" class="px-2 py-1 align-top" :class="statusClasses(row.cells[role].status)" :title="cellTitle(row.cells[role])">
                     <DesignationsCellHolders
                       :cell="row.cells[role]"
