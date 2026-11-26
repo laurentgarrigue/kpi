@@ -37,7 +37,7 @@ const ADMIN_PDF_MAX_PROFILE: Record<AdminPdfDocument, number> = {
 }
 
 /** Catalogues of the `rules-catalog` document, in its order. Keep in step with the describers of api2 (RuleCatalogs). */
-export const RULE_CATALOGS = ['player-eligibility', 'age-categories', 'scoring', 'medals', 'equipment', 'pdf-documents'] as const
+export const RULE_CATALOGS = ['player-eligibility', 'age-categories', 'scoring', 'card-suspensions', 'medals', 'equipment', 'pdf-documents'] as const
 
 export type RuleCatalog = typeof RULE_CATALOGS[number]
 

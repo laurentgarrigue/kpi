@@ -24,7 +24,7 @@ final class RulesCatalogPdfTest extends ApiTestCase
     public function testRcat01EveryCatalogueOfTheSpecIsRegisteredInItsOrder(): void
     {
         self::assertSame(
-            ['player-eligibility', 'age-categories', 'scoring', 'medals', 'equipment', 'pdf-documents'],
+            ['player-eligibility', 'age-categories', 'scoring', 'card-suspensions', 'medals', 'equipment', 'pdf-documents'],
             array_keys(static::getContainer()->get(RuleCatalogs::class)->all()),
         );
     }
@@ -56,7 +56,7 @@ final class RulesCatalogPdfTest extends ApiTestCase
 
         self::assertStringContainsString('Règles métier', $html);
         self::assertStringContainsString('Sommaire', $html);
-        foreach (['Joueur en règle', 'Catégories d&#039;âge', 'Règles de jeu du scoring', 'Médailles et seuils', 'Contrôle équipement', 'Documents PDF'] as $title) {
+        foreach (['Joueur en règle', 'Catégories d&#039;âge', 'Règles de jeu du scoring', 'Cumuls de cartons et suspensions', 'Médailles et seuils', 'Contrôle équipement', 'Documents PDF'] as $title) {
             self::assertStringContainsString($title, $html);
         }
         self::assertStringContainsString('Fichiers source', $html);

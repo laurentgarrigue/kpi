@@ -25,11 +25,12 @@ ce que KPI contrôle réellement.
 | `player-eligibility` | Joueur en règle | `src/Eligibility/PlayerEligibilityRules.php` | oui (pagaie nationale signalée sans bloquer dès 2027) |
 | `age-categories` | Catégories d'âge | `src/AgeCategory/AgeCategoryRule.php`, table `kp_categorie` | oui (années de naissance) |
 | `scoring` | Règles de jeu du scoring | `src/Scoring/ScoringRules.php` | non |
+| `card-suspensions` | Cumuls de cartons et suspensions | `src/Discipline/SuspensionCatalog.php` ([FEATURE_CARD_SUSPENSIONS.md](FEATURE_CARD_SUSPENSIONS.md)) | oui (version en vigueur pour la saison) |
 | `medals` | Médailles et seuils | `src/MatchMedals/Catalog/MedalCatalog.php`, `config/packages/match_medals.yaml`, tables `kp_medal_catalog`, `kp_medal_season` | oui (seuils figés au calcul de la saison) |
 | `equipment` | Contrôle équipement | `src/Scrutineering/EquipmentRules.php` | non |
 | `pdf-documents` | Documents PDF | `src/Pdf/PdfCatalog.php` | non |
 
-Catalogues **à venir** (rôles de désignation, types de rapport officiel, cumuls de cartons) : ils rejoignent le
+Catalogues **à venir** (rôles de désignation, types de rapport officiel) : ils rejoignent le
 document en implémentant la méthode commune (§ 3), sans toucher au document PDF.
 
 ## 3. Méthode commune : la description d'un catalogue
@@ -69,6 +70,7 @@ dans l'ordre du § 2.
 | Joueur en règle | Critères par niveau (contrôle bloquant ou alerte, licence de la saison, types de licence, certificat CK, pagaie minimale et son caractère bloquant pour la saison, surclassement) ; échelle des pagaies ; compétitions exigeant un surclassement et catégories exemptées ; forçage (profil maximal, statuts autorisés à l'ajout et au changement, statut donné à la copie) ; détermination du niveau |
 | Catégories d'âge | Table `kp_categorie` : code, libellé, âges, **années de naissance pour la saison** (déduites de la règle) ; bornes de plausibilité ; dates conventionnelles « inconnue » |
 | Règles de jeu du scoring | Enchaînement des périodes par type de match ; durées et pauses par défaut ; codes affichés ; cartons (chrono de pénalité, levée anticipée, retour du joueur) ; matrice de progression des cartons ; pénalités simultanées par équipe ; machine d'états du shot-clock |
+| Cumuls de cartons et suspensions | Version en vigueur pour la saison (« aucune version » avant la première saison couverte) ; sections couvertes ; règles dans l'ordre de départage : cartons comptés, compté sur (match, journée, saison), seuil, redéclenchement, matchs de suspension, jury d'appel |
 | Médailles et seuils | Version des règles ; seuils de la saison (copie figée si la saison a été calculée, sinon seuils en vigueur) ; éléments actifs du catalogue (code, nom, type, famille, explication rendue avec les seuils) |
 | Contrôle équipement | Paramètres contrôlés et valeur maximale ; signification des états |
 | Documents PDF | Pour chaque document : rôle minimal admin, options soumises à un rôle, version publique |
@@ -97,6 +99,8 @@ Chaque critère donne lieu à au moins un test nommé d'après son identifiant.
 - **RCAT-10** : `catalog` inconnu → 400.
 - **RCAT-11** : `rules-catalog` exige `ROLE_SUPER_ADMIN` (profil 2 → 403) ; il n'a pas de version publique.
 - **RCAT-12** (app4) : le lien n'est montré qu'au profil 1 (`canGetAdminPdf(1, 'rules-catalog')`).
+- **RCAT-13** (cumuls de cartons) : la version décrite est `SuspensionCatalog::forSeason(saison)`, règles dans son
+  ordre ; avant la première saison couverte (2026), la description l'indique, sans version.
 
 ## 6. Hors périmètre
 

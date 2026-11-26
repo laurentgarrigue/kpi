@@ -3,6 +3,8 @@
 namespace App\Tests\Unit\RuleCatalog;
 
 use App\AgeCategory\AgeCategoryRuleDescriber;
+use App\Discipline\SuspensionCatalog;
+use App\Discipline\SuspensionCatalogDescriber;
 use App\Eligibility\PlayerEligibilityRules;
 use App\Eligibility\PlayerEligibilityRulesDescriber;
 use App\Pdf\PdfCatalog;
@@ -30,6 +32,7 @@ final class RuleCatalogDescribersTest extends TestCase
         yield 'player-eligibility' => [new PlayerEligibilityRulesDescriber(), 'player-eligibility'];
         yield 'age-categories' => [new AgeCategoryRuleDescriber(new FfckAgeCategoryTable()), 'age-categories'];
         yield 'scoring' => [new ScoringRulesDescriber(), 'scoring'];
+        yield 'card-suspensions' => [new SuspensionCatalogDescriber(), 'card-suspensions'];
         yield 'equipment' => [new EquipmentRulesDescriber(), 'equipment'];
         yield 'pdf-documents' => [new PdfCatalogDescriber(), 'pdf-documents'];
     }
@@ -100,6 +103,25 @@ final class RuleCatalogDescribersTest extends TestCase
         self::assertSame('refusé (joueur exclu)', $progression['Rouge']['D']);
         self::assertSame('2', $penalties['Pénalités simultanées par équipe, au plus']);
         self::assertSame('10 min', self::pairs($description, 'Durées par défaut (la configuration de la compétition peut les remplacer)')['Mi-temps (M1, M2)']);
+    }
+
+    public function testRcat13CardSuspensionsDescribeTheVersionOfTheSeason(): void
+    {
+        $describer = new SuspensionCatalogDescriber();
+        $description = $describer->describe('2027');
+        $rules = self::rowsByFirstColumn($description, 'Règles (dans l\'ordre de départage)', 'code');
+        $catalog = SuspensionCatalog::forSeason('2027');
+
+        self::assertNotNull($catalog);
+        self::assertSame(sprintf('v%d (depuis la saison %s)', $catalog->version, $catalog->firstSeason), $description->version);
+        self::assertSame(array_map(static fn ($rule): string => $rule->code, $catalog->rules), array_keys($rules), 'order of the tie-break');
+        self::assertSame(['vert', 'saison', 8, 1, 'non'], [$rules['GREEN_SEASON']['cards'], $rules['GREEN_SEASON']['scope'], $rules['GREEN_SEASON']['threshold'], $rules['GREEN_SEASON']['matches'], $rules['GREEN_SEASON']['jury']]);
+        self::assertSame('journée (matchs différents)', $rules['YELLOW_RED_GAMEDAY']['scope']);
+        self::assertSame('Nationale', self::pairs($description, 'Champ d\'application')['Sections couvertes']);
+
+        $before = $describer->describe('2026');
+        self::assertNull($before->version, 'no version before the first season');
+        self::assertSame(['Aucune version du catalogue ne couvre la saison 2026.'], $before->sections[0]['lines']);
     }
 
     public function testRcat07EquipmentAndPdfDocumentsReadTheirCatalogue(): void
