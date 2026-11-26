@@ -191,6 +191,14 @@ const adminMenuGroups = computed<MenuGroup[]>(() => {
       label: t('menu.reports')
     })
   }
+  // Suspensions (cumuls de cartons, PAGE_SUSPENSIONS.md) : profils 1 et 2
+  if (profile <= 2) {
+    referentials.push({
+      to: '/card-suspensions',
+      icon: 'heroicons:no-symbol',
+      label: t('menu.card_suspensions')
+    })
+  }
   if (referentials.length > 0) {
     groups.push({
       key: 'referentials',

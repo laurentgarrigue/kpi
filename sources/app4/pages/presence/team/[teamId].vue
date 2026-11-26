@@ -2,6 +2,7 @@
 import type { Player, AddPlayerFormData, CopyCompositionFormData, AvailableComposition } from '~/types/presence'
 import type { PlayerAutocomplete } from '~/types'
 import { canGetAdminPdf } from '~/utils/pdf'
+import { canChangeStatus, canManageSuspensions, SUSPENDED_STATUS } from '~/utils/cardSuspensions'
 
 definePageMeta({
   layout: 'admin',
@@ -264,7 +265,7 @@ const filteredPlayers = computed(() => {
 const activePlayers = computed(() => filteredPlayers.value.filter(p => ['-', 'C'].includes(p.capitaine)))
 const coaches = computed(() => filteredPlayers.value.filter(p => p.capitaine === 'E'))
 const referees = computed(() => filteredPlayers.value.filter(p => p.capitaine === 'A'))
-const inactivePlayers = computed(() => filteredPlayers.value.filter(p => p.capitaine === 'X'))
+const inactivePlayers = computed(() => filteredPlayers.value.filter(p => p.capitaine === 'X' || p.capitaine === SUSPENDED_STATUS))
 
 // Season options for copy modal (current + 5 previous)
 const seasonOptions = computed(() => {
@@ -284,6 +285,8 @@ const toggleSelectAll = () => {
 // Inline editing
 const startEdit = (player: Player, field: 'numero' | 'capitaine') => {
   if (!canEdit.value) return
+  // Suspended status (S): changed by profiles 1-2 only (FEATURE_CARD_SUSPENSIONS.md S18)
+  if (field === 'capitaine' && !canChangeStatus(authStore.profile, player.capitaine)) return
   editingCell.value = { matric: player.matric, field }
   const val = field === 'numero' ? (player.numero || '').toString() : player.capitaine
   editingValue.value = val
@@ -604,7 +607,8 @@ const statusLabel = (capitaine: string): string => {
     'C': t('presence.status_captain'),
     'E': t('presence.status_coach'),
     'A': t('presence.status_referee'),
-    'X': t('presence.status_inactive')
+    'X': t('presence.status_inactive'),
+    'S': t('presence.status_suspended')
   }
   return map[capitaine] ?? capitaine
 }
@@ -902,6 +906,7 @@ const pdfLinks = computed(() => {
                 <option value="E">{{ t('presence.status_coach') }}</option>
                 <option value="A">{{ t('presence.status_referee') }}</option>
                 <option value="X">{{ t('presence.status_inactive') }}</option>
+                  <option v-if="canManageSuspensions(authStore.profile)" value="S">{{ t('presence.status_suspended') }}</option>
               </select>
             </td>
 
@@ -1015,6 +1020,7 @@ const pdfLinks = computed(() => {
                   <option value="E">{{ t('presence.status_coach') }}</option>
                   <option value="A">{{ t('presence.status_referee') }}</option>
                   <option value="X">{{ t('presence.status_inactive') }}</option>
+                  <option v-if="canManageSuspensions(authStore.profile)" value="S">{{ t('presence.status_suspended') }}</option>
                 </select>
               </td>
               <td class="px-3 py-1 text-sm font-medium text-header-900 dark:text-header-50">{{ formatNom(player.nom) }}<AdminEligibilityBadge :errors="player.eligibilityErrors" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" :advisory-errors="eligibility?.advisoryErrors" :playing="['-', 'C'].includes(player.capitaine)" /></td>
@@ -1115,6 +1121,7 @@ const pdfLinks = computed(() => {
                   <option value="E">{{ t('presence.status_coach') }}</option>
                   <option value="A">{{ t('presence.status_referee') }}</option>
                   <option value="X">{{ t('presence.status_inactive') }}</option>
+                  <option v-if="canManageSuspensions(authStore.profile)" value="S">{{ t('presence.status_suspended') }}</option>
                 </select>
               </td>
               <td class="px-3 py-1 text-sm font-medium text-header-900 dark:text-header-50">{{ formatNom(player.nom) }}<AdminEligibilityBadge :errors="player.eligibilityErrors" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" :advisory-errors="eligibility?.advisoryErrors" :playing="['-', 'C'].includes(player.capitaine)" /></td>
@@ -1215,6 +1222,7 @@ const pdfLinks = computed(() => {
                   <option value="E">{{ t('presence.status_coach') }}</option>
                   <option value="A">{{ t('presence.status_referee') }}</option>
                   <option value="X">{{ t('presence.status_inactive') }}</option>
+                  <option v-if="canManageSuspensions(authStore.profile)" value="S">{{ t('presence.status_suspended') }}</option>
                 </select>
               </td>
               <td class="px-3 py-1 text-sm font-medium text-header-900 dark:text-header-50">{{ formatNom(player.nom) }}<AdminEligibilityBadge :errors="player.eligibilityErrors" :enforcement="eligibility?.enforcement" :min-pagaie="minPagaie" :advisory-errors="eligibility?.advisoryErrors" :playing="['-', 'C'].includes(player.capitaine)" /></td>
@@ -1349,6 +1357,7 @@ const pdfLinks = computed(() => {
               <option value="E">{{ t('presence.status_coach') }}</option>
               <option value="A">{{ t('presence.status_referee') }}</option>
               <option value="X">{{ t('presence.status_inactive') }}</option>
+                  <option v-if="canManageSuspensions(authStore.profile)" value="S">{{ t('presence.status_suspended') }}</option>
             </select>
           </div>
         </div>

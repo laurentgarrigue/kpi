@@ -69,7 +69,8 @@
     "medals": "Medals",
     "designations": "Designations",
     "reports": "Reports",
-    "club_ranking": "Club ranking"
+    "club_ranking": "Club ranking",
+    "card_suspensions": "Suspensions"
   },
   "profile": "Profile",
   "logout": "Logout",
@@ -1451,7 +1452,8 @@
     "regional_control": "Regional check",
     "regional_validation_warning": "Regional competition: competition licence, certificate and yellow paddle checked (warnings only, no blocking)",
     "licence_not_competition": "Non-comp.",
-    "paddle_none": "none"
+    "paddle_none": "none",
+    "status_suspended": "Suspended"
   },
   "gamedays": {
     "display": {
@@ -3999,5 +4001,50 @@
     "regular_code": "Regular season",
     "no_publication": "No publication for this season.",
     "version": "Publication {n}"
+  },
+  "card_suspensions": {
+    "title": "Suspensions",
+    "forbidden": "Page restricted to profiles 1 and 2.",
+    "intro": "Suspensions detected from the card accumulations of season {season} (article 50). KPI records the accumulation; the decision remains with the commission and the appeal jury.",
+    "filter": {
+      "state": "State",
+      "search": "Player or licence"
+    },
+    "state": {
+      "ACTIVE": "Active",
+      "LIFTED": "Lifted",
+      "CANCELLED": "Cancelled",
+      "ALL": "All"
+    },
+    "empty": "No suspension.",
+    "column": {
+      "player": "Player",
+      "team": "Team",
+      "match": "Game",
+      "rule": "Rule",
+      "suspension": "Suspension",
+      "state": "State",
+      "actions": "Actions"
+    },
+    "match": "no. {number} on {date}",
+    "tally": "no. {tally}",
+    "matches": {
+      "one": "1 game",
+      "many": "{matches} games",
+      "more": "{matches} more, {total} in total for the gameday",
+      "none": "no more, {total} in total for the gameday"
+    },
+    "appeal_jury": "+ appeal jury",
+    "lifted": "Lifted on {date} by {by}",
+    "cancelled": "Cancelled on {date}",
+    "not_notified": "not notified (silent catch-up)",
+    "lift": "Lift",
+    "report": "Report",
+    "lift_title": "Lift the suspension?",
+    "lift_message": "Lift the suspension of {name}? The player gets back the previous status in the team's presence sheet.",
+    "rules": {
+      "title": "Rules of the season",
+      "none": "No rule for this season."
+    }
   }
 }
