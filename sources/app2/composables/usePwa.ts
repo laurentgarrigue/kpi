@@ -1,130 +1,110 @@
-import { ref, computed, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 
-// Singleton state - initialized once and shared across all usages
+/**
+ * Service worker lifecycle for app2 — contrat : `DOC/specs/PWA_AUTO_UPDATE.md` §4 (port of app4's).
+ *
+ * Pattern **prompt-to-update** : le nouveau worker est installé puis **attend**
+ * (`skipWaiting`/`clientsClaim` volontairement absents de `nuxt.config.ts`).
+ * `needRefresh` passe à `true`, `UpdatePrompt` affiche le bandeau « Recharger », et
+ * c'est l'utilisateur qui déclenche la bascule — jamais un rechargement surprise en
+ * pleine navigation.
+ *
+ * Re-vérifications : au chargement, au retour au premier plan, au retour en ligne et
+ * toutes les 60 minutes (un tournoi garde un onglet ouvert toute la journée).
+ *
+ * L'état online/offline n'est **pas** redéfini ici : il est lu depuis
+ * `useOnlineStatus()`, seule source de vérité côté app2.
+ */
+
+// Singleton state: one registration per document, shared by every caller.
 let initialized = false
-const isOnline = ref(true)
 const needRefresh = ref(false)
 const offlineReady = ref(false)
-let updateServiceWorker: (() => Promise<void>) | null = null
-let swRegistration: ServiceWorkerRegistration | null = null
+let updateServiceWorker: ((reloadPage?: boolean) => Promise<void>) | null = null
+let registration: ServiceWorkerRegistration | null = null
 
-// Initialize PWA only once
-const initializePwa = () => {
+const RECHECK_INTERVAL_MS = 60 * 60 * 1000
+
+/** Ask the browser to re-fetch the worker script (no-op when unchanged). */
+const checkForUpdates = async (): Promise<void> => {
+  if (!import.meta.env.PROD || !registration) return
+  try {
+    await registration.update()
+  } catch {
+    // Offline or server unreachable: the next check will do.
+  }
+}
+
+const register = (isOnline: Ref<boolean>): void => {
   if (initialized || !import.meta.client) return
   initialized = true
 
-  // Update online status
-  isOnline.value = navigator.onLine
-
-  // Monitor online/offline status
-  window.addEventListener('online', () => {
-    isOnline.value = true
-    // Check for updates when coming back online
-    checkForUpdates()
-  })
-
-  window.addEventListener('offline', () => {
-    isOnline.value = false
-  })
-
-  // Check for updates when app becomes visible
+  // Re-check when the tab comes back to the foreground…
   document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible' && navigator.onLine) {
-      // console.log('[PWA] App became visible, checking for updates...')
-      checkForUpdates()
-    }
+    if (document.visibilityState === 'visible' && navigator.onLine) void checkForUpdates()
+  })
+  // …and when connectivity returns (online state owned by useOnlineStatus).
+  watch(isOnline, (online) => {
+    if (online) void checkForUpdates()
   })
 
-  // Register service worker only in production
-  if (import.meta.env.PROD && 'serviceWorker' in navigator) {
-    import('virtual:pwa-register/vue').then(({ useRegisterSW }) => {
+  if (!import.meta.env.PROD || !('serviceWorker' in navigator)) return
+
+  import('virtual:pwa-register/vue')
+    .then(({ useRegisterSW }) => {
       const {
         offlineReady: swOfflineReady,
         needRefresh: swNeedRefresh,
-        updateServiceWorker: swUpdateServiceWorker
+        updateServiceWorker: swUpdate
       } = useRegisterSW({
         immediate: true,
-        onRegistered(registration) {
-          console.log('[PWA] Service Worker registered')
-          swRegistration = registration || null
-
-          // Check for updates periodically (every 60 minutes)
-          if (registration) {
+        onRegistered(reg) {
+          registration = reg ?? null
+          if (reg) {
             setInterval(() => {
-              if (navigator.onLine) {
-                console.log('[PWA] Periodic update check...')
-                registration.update()
-              }
-            }, 60 * 60 * 1000)
+              if (navigator.onLine) void reg.update()
+            }, RECHECK_INTERVAL_MS)
           }
         },
         onRegisterError(error) {
           console.error('[PWA] Service Worker registration error:', error)
-        },
-        onOfflineReady() {
-          console.log('[PWA] App ready to work offline')
-          offlineReady.value = true
-        },
-        onNeedRefresh() {
-          console.log('[PWA] New content available, please refresh')
-          needRefresh.value = true
         }
       })
 
-      updateServiceWorker = swUpdateServiceWorker
-
-      // Sync reactive refs INSIDE the initialization, only once
-      watch(swOfflineReady, (val) => { offlineReady.value = val })
-      watch(swNeedRefresh, (val) => { needRefresh.value = val })
-    }).catch((error) => {
-      console.log('[PWA] Service Worker not available:', error)
+      updateServiceWorker = swUpdate
+      watch(swOfflineReady, (value) => { offlineReady.value = value })
+      watch(swNeedRefresh, (value) => { needRefresh.value = value })
+    })
+    .catch(() => {
+      // Module unavailable (SW unsupported): the app keeps working, no prompt.
     })
 
-    // Listen to service worker lifecycle events
-    navigator.serviceWorker.addEventListener('controllerchange', () => {
-      console.log('[PWA] Service Worker: Controller changed')
-    })
-
-    navigator.serviceWorker.ready.then((registration) => {
-      console.log('[PWA] Service Worker: Ready')
-      swRegistration = registration
-
-      if (registration.waiting) {
-        console.log('[PWA] Service Worker: Waiting')
-        needRefresh.value = true
-      }
-    }).catch(() => {
-      // Service worker not ready, ignore
-    })
-  }
-}
-
-const checkForUpdates = async () => {
-  if (!import.meta.env.PROD || !swRegistration) {
-    return
-  }
-
-  try {
-    console.log('[PWA] Checking for updates...')
-    await swRegistration.update()
-    console.log('[PWA] Update check completed')
-  } catch (error) {
-    console.error('[PWA] Update check failed:', error)
-  }
+  // A worker already waiting when the page loads must also raise the banner.
+  void navigator.serviceWorker.ready.then((reg) => {
+    registration = reg
+    if (reg.waiting) needRefresh.value = true
+  }).catch(() => { /* no worker yet */ })
 }
 
 export const usePwa = () => {
-  // Initialize on first call
-  initializePwa()
+  const { isOnline } = useOnlineStatus()
+  register(isOnline)
 
-  const updateApp = async () => {
-    if (updateServiceWorker) {
-      await updateServiceWorker()
+  /** Load the new build: activate the waiting worker (it reloads the page), or simply reload (PWA-06b). */
+  const updateApp = async (): Promise<void> => {
+    const action = updateActionFor({
+      hasWaitingWorker: Boolean(registration?.waiting),
+      isControlled: Boolean(navigator.serviceWorker?.controller)
+    })
+    if (action === 'activate-waiting-worker' && updateServiceWorker) {
+      await updateServiceWorker(true)
+    } else {
+      window.location.reload()
     }
   }
 
   return {
-    isOnline: computed(() => isOnline.value),
+    isOnline,
     needRefresh: computed(() => needRefresh.value),
     offlineReady: computed(() => offlineReady.value),
     updateApp,

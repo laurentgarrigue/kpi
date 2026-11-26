@@ -90,9 +90,13 @@ export const usePwa = () => {
   const { isOnline } = useOnlineStatus()
   register(isOnline)
 
-  /** Activate the waiting worker and reload the page. */
+  /** Load the new build: activate the waiting worker (it reloads the page), or simply reload (PWA-06b). */
   const updateApp = async (): Promise<void> => {
-    if (updateServiceWorker) {
+    const action = updateActionFor({
+      hasWaitingWorker: Boolean(registration?.waiting),
+      isControlled: Boolean(navigator.serviceWorker?.controller)
+    })
+    if (action === 'activate-waiting-worker' && updateServiceWorker) {
       await updateServiceWorker(true)
     } else {
       window.location.reload()
