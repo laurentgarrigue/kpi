@@ -363,7 +363,7 @@ coupe **toutes** les sessions du compte, y compris les autres terrains d'un comp
 - Pour savoir si la chaîne est encore active, on suit `replaced_by` jusqu'au dernier maillon (10 maillons au plus,
   bien au-delà de ce que 60 s peuvent produire).
 - L'empreinte de la requête est celle de `KnownDeviceService::currentFingerprint()`, déjà utilisée au login.
-- **Pourquoi 72 h et pas de plafond absolu** (décision à valider) : le cookie doit survivre au JWT (24 h) pour
+- **Pourquoi 72 h et pas de plafond absolu** (**validé le 2026-11-26**) : le cookie doit survivre au JWT (24 h) pour
   servir ; 72 h couvrent un tournoi de week-end avec une tablette en veille la nuit. Un plafond absolu ne
   protégerait rien : `/auth/refresh` renouvelle déjà indéfiniment un JWT valide. Les leviers restent la
   déconnexion et la révocation d'appareil (`/profile/security`, lien de l'email).
