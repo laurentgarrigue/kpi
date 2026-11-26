@@ -37,3 +37,10 @@ CREATE TABLE IF NOT EXISTS `kp_card_suspension` (
   UNIQUE KEY `uniq_card_suspension_actif` (`carton_id`, `actif`),
   KEY `idx_card_suspension_saison` (`saison`, `matric`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Mise à niveau d'une table créée avant S16/S19 (colonnes ajoutées après la première version de ce script).
+ALTER TABLE `kp_card_suspension`
+  ADD COLUMN IF NOT EXISTS `equipe_id` int(10) unsigned DEFAULT NULL COMMENT 'Composition où le statut S a été posé (S16)',
+  ADD COLUMN IF NOT EXISTS `statut_avant` char(1) DEFAULT NULL COMMENT 'Statut du joueur avant S, restauré à la levée (S19)',
+  ADD COLUMN IF NOT EXISTS `levee_le` datetime DEFAULT NULL,
+  ADD COLUMN IF NOT EXISTS `levee_par` varchar(8) DEFAULT NULL COMMENT 'Compte qui a levé la suspension (profil 1-2)';
