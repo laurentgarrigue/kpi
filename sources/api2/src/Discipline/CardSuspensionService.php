@@ -99,12 +99,38 @@ final class CardSuspensionService
         $recipients = $this->recipients($card->matchId, $season);
         $this->send($recipients, $message->subject(), $message->body());
         $this->suspensions->markNotified($id, $now, $recipients, $reportId);
+        $team = $this->suspensions->teamOfCard($card->matchId, $card->matric);
+        if ($team !== null) {
+            $this->suspensions->suspend($id, $team, $card->matric);
+        }
+    }
+
+    /**
+     * Levée par un profil 1–2 une fois les matchs purgés (S19) : le joueur retrouve son statut d'avant.
+     *
+     * @return array<string, mixed> la suspension levée
+     *
+     * @throws SuspensionLiftRejected
+     */
+    public function lift(int $id, string $userCode): array
+    {
+        $row = $this->suspensions->find($id) ?? throw new SuspensionLiftRejected('not_found', 404);
+        if (CardSuspensionRepository::state($row) !== CardSuspensionRepository::ACTIVE) {
+            throw new SuspensionLiftRejected('not_active', 409);
+        }
+        $this->suspensions->lift($id, $userCode, $this->clock->now()->format('Y-m-d H:i:s'));
+        $this->suspensions->release($row);
+
+        return $this->suspensions->find($id) ?? $row;
     }
 
     /** @param array<string, mixed> $row */
     private function cancel(array $row, SuspensionCatalog $catalog, string $now): void
     {
         $this->suspensions->cancel((int) $row['id'], $now);
+        if ($row['levee_le'] === null) {
+            $this->suspensions->release($row);
+        }
         if ($row['notifiee_le'] === null) {
             return;
         }

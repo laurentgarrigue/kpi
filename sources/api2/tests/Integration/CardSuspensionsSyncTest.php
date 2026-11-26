@@ -11,7 +11,8 @@ use Symfony\Component\Mime\Email;
  * Synchronisation des suspensions (FEATURE_CARD_SUSPENSIONS.md SUS-11 à SUS-17). Fixtures « cumuls de cartons »,
  * saison 2996 : le joueur 9961 prend un jaune au match 9961 et un jaune puis un noir au match 9962, même journée
  * (événement 9961, délégué CNA 9964) ; ses cartons du match 9964 (non validé) et du match 9965 (section Tournoi) ne
- * comptent pas. Destinataires : RC 9962 (rc-sus@) et bureau CNA 9963 (bureau-sus@).
+ * comptent pas. Destinataires : RC 9962 (rc-sus@) et bureau CNA 9963 (bureau-sus@). Le joueur est capitaine (C) de l'équipe 9961,
+ * avec 9965.
  */
 final class CardSuspensionsSyncTest extends ApiTestCase
 {
@@ -117,6 +118,78 @@ final class CardSuspensionsSyncTest extends ApiTestCase
         self::assertSame([2, null], array_column($list['suspensions'], 'gamedayTotal'));
         $this->requestAs('TDIV', 'GET', '/admin/card-suspensions?season=' . self::SEASON, expectedStatus: 403);
         $this->requestAs('TADMIN', 'GET', '/admin/card-suspensions?season=abc', expectedStatus: 400);
+    }
+
+    public function testSus19TheSuspendedStatusIsSetOnTheTeamOfTheCardAndKeepsTheStatusBefore(): void
+    {
+        $this->sync();
+
+        self::assertSame('S', $this->statusOf(9961));
+        self::assertSame('-', $this->statusOf(9965));
+        $rows = $this->suspensions();
+        self::assertSame([9961, 9961], array_map('intval', array_column($rows, 'equipe_id')));
+        self::assertSame(['C', 'C'], array_column($rows, 'statut_avant'));
+    }
+
+    public function testSus19ASilentSyncLeavesTheStatusAlone(): void
+    {
+        $this->sync(silent: true);
+
+        self::assertSame('C', $this->statusOf(9961));
+    }
+
+    public function testSus22And23LiftingTheLastSuspensionGivesBackTheStatusBefore(): void
+    {
+        $this->sync();
+        [$yellow, $black] = array_map(static fn (array $row): int => (int) $row['id'], $this->suspensions());
+
+        $this->requestAs('TDIV', 'POST', "/admin/card-suspensions/$yellow/lift", expectedStatus: 403);
+        $lifted = $this->requestAs('TADMIN', 'POST', "/admin/card-suspensions/$yellow/lift");
+        self::assertSame(['LIFTED', 'TADMIN'], [$lifted['state'], $lifted['liftedBy']]);
+        self::assertSame('S', $this->statusOf(9961)); // retenu par la suspension du carton noir
+
+        $this->requestAs('TADMIN', 'POST', "/admin/card-suspensions/$black/lift");
+        self::assertSame('C', $this->statusOf(9961));
+        $this->requestAs('TADMIN', 'POST', "/admin/card-suspensions/$black/lift", expectedStatus: 409);
+        self::assertStringContainsString('0 detected, 0 notified, 0 cancelled', $this->sync());
+        self::assertSame('C', $this->statusOf(9961));
+    }
+
+    public function testSus24ACancelledSuspensionGivesBackTheStatusBefore(): void
+    {
+        $this->sync();
+        $this->connection->update('kp_match', ['Validation' => ''], ['Id' => 9962]);
+
+        $this->sync();
+
+        self::assertSame('C', $this->statusOf(9961));
+        $this->requestAs('TADMIN', 'POST', '/admin/card-suspensions/' . $this->suspensions()[0]['id'] . '/lift', expectedStatus: 409);
+    }
+
+    public function testSus20ASuspendedPlayerIsNeitherInitialisedNorOfferedOnAMatchSheet(): void
+    {
+        $this->sync();
+
+        $available = $this->requestAs('TADMIN', 'GET', '/admin/matches/9964/available-players?teamCode=B');
+        self::assertSame([9965], array_column($available['players'], 'matric'));
+        $this->requestAs('TADMIN', 'POST', '/admin/matches/9964/players/initialize', ['teamCode' => 'B']);
+        self::assertSame([9965], array_map('intval', $this->connection->fetchFirstColumn("SELECT Matric FROM kp_match_joueur WHERE Id_match = 9964 AND Equipe = 'B'")));
+    }
+
+    public function testSus21OnlyProfilesOneAndTwoGiveOrRemoveTheSuspendedStatus(): void
+    {
+        $this->requestAs('9962', 'PATCH', '/admin/teams/9961/players/9965', ['capitaine' => 'S'], 403);
+        $this->requestAs('TADMIN', 'PATCH', '/admin/teams/9961/players/9965', ['capitaine' => 'S']);
+        self::assertSame('S', $this->statusOf(9965));
+        $this->requestAs('9962', 'PATCH', '/admin/teams/9961/players/9965', ['capitaine' => '-'], 403);
+        $this->requestAs('9962', 'PATCH', '/admin/teams/9961/players/9965', ['numero' => 8]);
+        $this->requestAs('TADMIN', 'PATCH', '/admin/teams/9961/players/9965', ['capitaine' => '-', 'force' => true]); // joueur de test non en règle : forcé
+        self::assertSame('-', $this->statusOf(9965));
+    }
+
+    private function statusOf(int $matric): string
+    {
+        return (string) $this->connection->fetchOne('SELECT Capitaine FROM kp_competition_equipe_joueur WHERE Id_equipe = 9961 AND Matric = ?', [$matric]);
     }
 
     private function sync(bool $silent = false): string

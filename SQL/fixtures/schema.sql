@@ -644,6 +644,10 @@ CREATE TABLE `kp_card_suspension` (
   `annulee_le` datetime DEFAULT NULL,
   `destinataires` text DEFAULT NULL COMMENT 'Licences notifiées (JSON)',
   `rapport_id` int(11) DEFAULT NULL COMMENT 'Brouillon de rapport de jury d''appel (kp_report)',
+  `equipe_id` int(10) unsigned DEFAULT NULL COMMENT 'Composition où le statut S a été posé (S16)',
+  `statut_avant` char(1) DEFAULT NULL COMMENT 'Statut du joueur avant S, restauré à la levée (S19)',
+  `levee_le` datetime DEFAULT NULL,
+  `levee_par` varchar(8) DEFAULT NULL COMMENT 'Compte qui a levé la suspension (profil 1-2)',
   PRIMARY KEY (`id`),
   UNIQUE KEY `uniq_card_suspension_actif` (`carton_id`, `actif`),
   KEY `idx_card_suspension_saison` (`saison`, `matric`)

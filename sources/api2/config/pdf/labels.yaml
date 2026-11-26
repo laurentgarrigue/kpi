@@ -70,6 +70,7 @@ role.C: { fr: 'Capitaine', en: 'Captain' }
 role.E: { fr: 'Staff', en: 'Staff' }
 role.A: { fr: 'Arbitre', en: 'Referee' }
 role.X: { fr: 'Inactif', en: 'Inactive' }
+role.S: { fr: 'Suspendu', en: 'Suspended' }
 presence.title: { fr: 'Feuille de présence', en: 'Presence sheet' }
 presence.photos_title: { fr: 'Feuille de présence avec photos', en: 'Team roster' }
 presence.category_title: { fr: 'Présences par catégorie', en: 'Presence by category' }

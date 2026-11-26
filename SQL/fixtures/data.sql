@@ -850,4 +850,14 @@ INSERT INTO `kp_designation` (`id`, `saison`, `role`, `perimetre_type`, `perimet
   (9961, '2996', 'RC', 'COMPETITION', 'NSUS', 9962, 'C002', 'CNA', 1),
   (9962, '2996', 'BUREAU_CNA', 'NIVEAU', 'NATIONAL', 9963, 'C003', 'CNA', 1),
   (9963, '2996', 'DELEGUE_CNA', 'EVENEMENT', '9961', 9964, 'C003', 'CNA', 1);
+-- Compositions (S16, S17) : le joueur 9961 est capitaine de l'équipe 9961 (A au match 9961, B au match 9962) ;
+-- 9965 joue avec lui.
+INSERT INTO `kp_licence` (`Matric`, `Origine`, `Nom`, `Prenom`, `Sexe`, `Numero_club`, `Etat`) VALUES
+  (9965, '2996', 'COEQUIPIER', 'Joueur', 'M', 'C001', 'Actif');
+INSERT INTO `kp_competition_equipe_joueur` (`Id_equipe`, `Matric`, `Nom`, `Prenom`, `Sexe`, `Categ`, `Numero`, `Capitaine`) VALUES
+  (9961, 9961, 'SUSPENDU', 'Joueur', 'M', 'SEN', 5, 'C'),
+  (9961, 9965, 'COEQUIPIER', 'Joueur', 'M', 'SEN', 7, '-');
+INSERT INTO `kp_match_joueur` (`Id_match`, `Matric`, `Numero`, `Equipe`, `Capitaine`) VALUES
+  (9961, 9961, 5, 'A', 'C'),
+  (9962, 9961, 5, 'B', 'C');
 -- ---------------------------------------------------------------- fin cumuls de cartons

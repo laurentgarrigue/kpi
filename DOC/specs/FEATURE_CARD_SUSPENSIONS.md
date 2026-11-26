@@ -62,7 +62,11 @@ suspension, il est traité à part (§ 9).
 | S12 | Jury d'appel | Une suspension « jury d'appel » ouvre un **rapport de jury d'appel en brouillon** (catalogue des rapports, type `JURY_APPEL`) sur l'événement de la journée du match, ou sur la journée hors événement. Auteur : le délégué CNA effectif de la journée (président du jury, D27), saisi par `KPI` ; sans délégué, seuls les profils 1–2 le reprennent. Motif, match concerné et faits sont pré-remplis ; la composition du jury l'est par le moteur des rapports. La notification rappelle le brouillon et donne son lien. Une suspension annulée ne supprime pas le rapport. |
 | S13 | Déclenchement | Commande `app:card-suspensions:sync` lancée **par cron toutes les 10 minutes** sur la saison active (comme les médailles). `--season=AAAA` traite une autre saison ; `--silent` enregistre sans e-mail ni rapport (reprise d'une saison en cours lors de la mise en service). |
 | S15 | Cartons noirs d'une même journée | Sur une journée sportive, les suspensions des cartons noirs **ne s'additionnent pas** : la journée vaut la suspension la plus lourde atteinte (2 au 1er noir, **3 au total** au 2e, 4 au total si le 3e noir de la saison tombe ce jour-là). Chaque nouveau noir ne notifie que la différence (éventuellement aucun match de plus) et reste soumis au jury d'appel. Les jaunes et rouges, eux, s'additionnent (« chaque carton en plus », § 2). Décision du 2026-11-26. |
-| S14 | Consultation | `GET /admin/card-suspensions?season=` (profils 1–2) : suspensions de la saison, actives et annulées, et règles de la version en vigueur. |
+| S14 | Consultation | Page app4 **Suspensions** ([PAGE_SUSPENSIONS.md](PAGE_SUSPENSIONS.md)) sur `GET /admin/card-suspensions?season=` (profils 1–2) : suspensions de la saison (en vigueur, levées, annulées) et règles de la version en vigueur. |
+| S16 | Statut « Suspendu » | Nouveau statut `S` de la feuille de présence d'équipe (`kp_competition_equipe_joueur.Capitaine`). À la notification d'une suspension, KPI le pose sur la composition de l'**équipe avec laquelle le joueur a pris le carton** (l'équipe A ou B du match où il figure sur la feuille de match), et retient le statut d'avant. Les autres équipes du joueur ne sont pas touchées. Pas en mode `--silent`. Décision du 2026-11-26. |
+| S17 | Effet du statut | Un joueur `S` n'entre plus dans les feuilles de match de l'équipe : ni l'initialisation depuis l'équipe, ni l'ajout manuel ne le proposent (comme les statuts `A` et `X`). Il apparaît dans la section des inactifs de la feuille de présence et du PDF, avec le libellé « Suspendu ». Le legacy n'est pas modifié (ADR-0002) : ses écrans affichent le code `S`. |
+| S18 | Qui pose et lève le statut | Seuls les **profils 1 et 2** peuvent donner le statut `S` à un joueur ou le lui retirer, depuis la feuille de présence (`403` pour les autres profils) ; les autres modifications de la feuille restent ouvertes comme avant. |
+| S19 | Levée d'une suspension | Le décompte des matchs purgés n'est pas automatique : un profil 1–2 **lève** la suspension depuis la page Suspensions une fois les matchs purgés. La levée (date, compte) est enregistrée ; le joueur retrouve le statut d'avant si aucune autre suspension en vigueur et non levée ne le retient sur la même équipe et s'il est toujours `S`. Une suspension annulée (S11) libère le statut de la même façon. |
 
 ## 4. Données
 
@@ -82,6 +86,8 @@ Table `kp_card_suspension` (migration `SQL/migrations/2026-11-25_card_suspension
 | `detectee_le`, `notifiee_le`, `annulee_le` | Cycle de vie (S10, S11) ; `notifiee_le` reste vide en mode `--silent` |
 | `destinataires` | Licences notifiées (JSON), reprises pour l'annulation |
 | `rapport_id` | Brouillon de jury d'appel ouvert (S12) |
+| `equipe_id`, `statut_avant` | Composition où le statut `S` a été posé et statut à restaurer (S16, S19) |
+| `levee_le`, `levee_par` | Levée par un profil 1–2 (S19) |
 
 ## 5. Notification
 
@@ -96,7 +102,8 @@ Annulation : `KPI — Suspension annulée : NOM Prénom (licence)`, avec le moti
 
 | Endpoint | Rôle |
 |---|---|
-| `GET /admin/card-suspensions?season=AAAA` | Profils 1–2. `{ season, catalog: { version, firstSeason, sections, rules[] } \| null, suspensions[] }` ; chaque suspension avec joueur, section, compétition, match, règle(s), matchs, jury, état (`ACTIVE`, `CANCELLED`), dates et rapport. |
+| `POST /admin/card-suspensions/{id}/lift` | Profils 1–2. Lève une suspension en vigueur (S19) ; `409` si elle est annulée ou déjà levée. |
+| `GET /admin/card-suspensions?season=AAAA` | Profils 1–2. `{ season, catalog: { version, firstSeason, sections, rules[] } \| null, suspensions[] }` ; chaque suspension avec joueur, section, compétition, match, règle(s), matchs, jury, état (`ACTIVE`, `LIFTED`, `CANCELLED`), équipe, dates et rapport. |
 
 ## 7. Critères d'acceptation
 
@@ -129,6 +136,22 @@ Les tests portent le code du critère dans leur nom.
 - **SUS-10** — Étant donné les phases d'un tournoi CP de mêmes dates et lieu, alors elles forment une seule journée
   sportive (S6).
 
+**Statut « Suspendu » et levée (intégration, `CardSuspensionsSyncTest`, `PresenceSuspendedStatusTest`)**
+
+- **SUS-19** — Étant donné une suspension notifiée, alors le joueur a le statut `S` dans la composition de l'équipe
+  avec laquelle il a pris le carton, et `statut_avant` retient son statut d'avant ; en mode `--silent`, rien ne change.
+- **SUS-20** — Étant donné un joueur `S`, alors l'initialisation d'une feuille de match de son équipe ne le reprend
+  pas et il n'est pas proposé à l'ajout manuel.
+- **SUS-21** — Étant donné un profil 3 à 10, quand il donne le statut `S` à un joueur ou le change pour un joueur `S`,
+  alors `403` ; un profil 1–2 le peut.
+- **SUS-22** — Étant donné une suspension en vigueur, quand un profil 1–2 la lève, alors `levee_le` et `levee_par`
+  sont remplis et le joueur retrouve son statut d'avant ; une 2e levée, ou la levée d'une suspension annulée, rend `409` ;
+  un profil 3 reçoit `403`.
+- **SUS-23** — Étant donné deux suspensions en vigueur du même joueur sur la même équipe, quand on lève la première,
+  alors il reste `S` ; quand on lève la seconde, il retrouve le statut d'avant la première.
+- **SUS-24** — Étant donné une suspension annulée par une correction de feuille (S11), alors le statut `S` est levé de
+  la même façon.
+
 **Synchronisation et notifications (intégration, `CardSuspensionsSyncTest`)**
 
 - **SUS-11** — Seuls les matchs validés d'une section couverte comptent : un carton d'un match non validé ou d'une
@@ -146,19 +169,14 @@ Les tests portent le code du critère dans leur nom.
 - **SUS-17** — `GET /admin/card-suspensions` : profils 1–2 seulement (`403` sinon) ; rend le catalogue et les
   suspensions de la saison.
 
-## 8. À étudier : afficher la suspension (feuille de présence, console de scoring)
+## 8. Affichage de la suspension (décidé le 2026-11-26)
 
-Question ouverte de l'issue, **non implémentée**. Pistes :
+Option retenue : un **statut « Suspendu »** dans la feuille de présence de l'équipe (S16 à S19), posé par KPI et levé
+par les profils 1–2. Une alerte en lecture seule dans la console de scoring reste possible plus tard ; elle n'est pas
+nécessaire tant que le joueur suspendu n'entre plus dans la feuille de match (S17).
 
-| Option | Pour | Contre |
-|---|---|---|
-| A. Nouveau statut « suspendu » d'un joueur dans la **feuille de présence** (composition de l'équipe pour la journée), posé automatiquement à la détection et levé par un profil 1–2 | La feuille de présence est l'endroit où l'on choisit qui joue ; le responsable d'équipe le voit avant le match | Il faut savoir **quels** matchs purger (le « match suivant » dépend du calendrier et des forfaits) et qui lève la suspension |
-| B. Alerte dans la **console de scoring** à l'ouverture du match (joueur inscrit et suspendu) | Le dernier contrôle avant la mise à l'eau | Trop tard pour remplacer le joueur ; la table de marque n'a pas à arbitrer une suspension |
-| C. Les deux, A comme source et B en lecture seule | Cohérent | Coût le plus élevé |
-
-Recommandation : **A, puis B en lecture seule** une fois A validé, la suspension modifiable par les profils 1–2
-seulement. Préalable : décider comment compter les matchs purgés (matchs joués par l'équipe du joueur dans la même
-section après le match déclencheur, forfaits compris ou non).
+Reste à décider : le **décompte automatique des matchs purgés** (matchs joués par l'équipe du joueur dans la section
+après le match déclencheur, forfaits compris ou non), qui permettrait de lever le statut sans intervention.
 
 ## 9. Hors périmètre
 

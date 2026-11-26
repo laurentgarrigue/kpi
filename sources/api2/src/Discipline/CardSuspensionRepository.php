@@ -10,6 +10,9 @@ final class CardSuspensionRepository
     /** Section d'une compétition sans groupe : « Divers », jamais couverte (S4). */
     private const NO_SECTION = 100;
     private const VALIDATED = 'O';
+    public const ACTIVE = 'ACTIVE';
+    public const LIFTED = 'LIFTED';
+    public const CANCELLED = 'CANCELLED';
 
     public function __construct(private readonly Connection $connection)
     {
@@ -134,8 +137,9 @@ final class CardSuspensionRepository
     public function list(string $season): array
     {
         $rows = $this->connection->fetchAllAssociative(
-            "SELECT s.*, l.Nom, l.Prenom, l.Numero_club, m.Numero_ordre, m.Date_match, c.Libelle AS competition
+            "SELECT s.*, l.Nom, l.Prenom, l.Numero_club, m.Numero_ordre, m.Date_match, c.Libelle AS competition, ce.Libelle AS team
              FROM kp_card_suspension s
+             LEFT JOIN kp_competition_equipe ce ON ce.Id = s.equipe_id
              LEFT JOIN kp_licence l ON l.Matric = s.matric
              LEFT JOIN kp_match m ON m.Id = s.match_id
              LEFT JOIN kp_competition c ON c.Code = s.code_competition AND c.Code_saison = s.saison
@@ -145,7 +149,7 @@ final class CardSuspensionRepository
 
         return array_map(static fn (array $row): array => [
             'id' => (int) $row['id'],
-            'state' => $row['actif'] === null ? 'CANCELLED' : 'ACTIVE',
+            'state' => self::state($row),
             'matric' => (int) $row['matric'],
             'name' => trim(sprintf('%s %s', $row['Nom'] ?? '', $row['Prenom'] ?? '')),
             'club' => $row['Numero_club'],
@@ -164,7 +168,94 @@ final class CardSuspensionRepository
             'notifiedAt' => $row['notifiee_le'],
             'cancelledAt' => $row['annulee_le'],
             'reportId' => $row['rapport_id'] === null ? null : (int) $row['rapport_id'],
+            'team' => $row['equipe_id'] === null ? null : ['id' => (int) $row['equipe_id'], 'label' => $row['team']],
+            'liftedAt' => $row['levee_le'],
+            'liftedBy' => $row['levee_par'],
         ], $rows);
+    }
+
+    /** @param array<string, mixed> $row */
+    public static function state(array $row): string
+    {
+        return match (true) {
+            $row['actif'] === null => self::CANCELLED,
+            $row['levee_le'] !== null => self::LIFTED,
+            default => self::ACTIVE,
+        };
+    }
+
+    /** @return array<string, mixed>|null */
+    public function find(int $id): ?array
+    {
+        return $this->connection->fetchAssociative('SELECT * FROM kp_card_suspension WHERE id = ?', [$id]) ?: null;
+    }
+
+    /**
+     * Équipe avec laquelle le joueur a pris le carton (S16) : celle de sa feuille de match, sinon celle des deux
+     * équipes du match dont la composition le contient.
+     */
+    public function teamOfCard(int $matchId, int $matric): ?int
+    {
+        $team = $this->connection->fetchOne(
+            "SELECT IF(mj.Equipe = 'A', m.Id_equipeA, m.Id_equipeB) FROM kp_match_joueur mj JOIN kp_match m ON m.Id = mj.Id_match
+             WHERE mj.Id_match = ? AND mj.Matric = ? AND mj.Equipe IN ('A', 'B')",
+            [$matchId, $matric],
+        ) ?: $this->connection->fetchOne(
+            'SELECT cej.Id_equipe FROM kp_competition_equipe_joueur cej JOIN kp_match m ON cej.Id_equipe IN (m.Id_equipeA, m.Id_equipeB)
+             WHERE m.Id = ? AND cej.Matric = ? ORDER BY cej.Id_equipe LIMIT 1',
+            [$matchId, $matric],
+        );
+
+        return $team ? (int) $team : null;
+    }
+
+    /**
+     * Pose le statut « Suspendu » sur la composition (S16) et retient celui d'avant ; un joueur déjà suspendu garde
+     * le statut d'avant de sa première suspension en vigueur.
+     */
+    public function suspend(int $id, int $teamId, int $matric): void
+    {
+        $current = $this->connection->fetchOne('SELECT Capitaine FROM kp_competition_equipe_joueur WHERE Id_equipe = ? AND Matric = ?', [$teamId, $matric]);
+        if ($current === false) {
+            return;
+        }
+        $before = $current === SuspendedStatus::CODE
+            ? ($this->connection->fetchOne(
+                'SELECT statut_avant FROM kp_card_suspension WHERE equipe_id = ? AND matric = ? AND actif = 1 AND levee_le IS NULL AND id <> ? AND statut_avant IS NOT NULL ORDER BY id LIMIT 1',
+                [$teamId, $matric, $id],
+            ) ?: SuspendedStatus::DEFAULT_STATUS)
+            : ((string) $current === '' ? SuspendedStatus::DEFAULT_STATUS : (string) $current);
+        $this->connection->update('kp_competition_equipe_joueur', ['Capitaine' => SuspendedStatus::CODE], ['Id_equipe' => $teamId, 'Matric' => $matric]);
+        $this->connection->update('kp_card_suspension', ['equipe_id' => $teamId, 'statut_avant' => $before], ['id' => $id]);
+    }
+
+    /**
+     * Rend au joueur son statut d'avant (S19), si aucune autre suspension en vigueur et non levée ne le retient sur
+     * la même équipe et s'il est toujours suspendu.
+     *
+     * @param array<string, mixed> $row
+     */
+    public function release(array $row): void
+    {
+        if ($row['equipe_id'] === null) {
+            return;
+        }
+        $holding = (int) $this->connection->fetchOne(
+            'SELECT COUNT(*) FROM kp_card_suspension WHERE equipe_id = ? AND matric = ? AND actif = 1 AND levee_le IS NULL AND id <> ?',
+            [$row['equipe_id'], $row['matric'], $row['id']],
+        );
+        if ($holding > 0) {
+            return;
+        }
+        $this->connection->executeStatement(
+            'UPDATE kp_competition_equipe_joueur SET Capitaine = ? WHERE Id_equipe = ? AND Matric = ? AND Capitaine = ?',
+            [$row['statut_avant'] ?? SuspendedStatus::DEFAULT_STATUS, $row['equipe_id'], $row['matric'], SuspendedStatus::CODE],
+        );
+    }
+
+    public function lift(int $id, string $userCode, string $now): void
+    {
+        $this->connection->update('kp_card_suspension', ['levee_le' => $now, 'levee_par' => $userCode], ['id' => $id]);
     }
 
     /** Couleur actuelle d'un carton, ou null s'il a été supprimé de la timeline. */
