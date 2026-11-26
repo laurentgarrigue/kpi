@@ -93,9 +93,14 @@ final class AuthRefreshSessionTest extends ApiTestCase
         self::assertArrayHasKey('effectiveProfile', $body['user']);
     }
 
-    // ------------------------------------------------------- AUTH-RT-03 : rejeu
+    // ------------------------------------------------------- AUTH-RT-03 / AUTH-SC-12 : rejeu
 
-    public function testReusingRevokedRefreshTokenRevokesAllActiveTokens(): void
+    /**
+     * Le rejeu vient ici d'un autre appareil que celui du login (empreinte du client de test ≠ celle du login) :
+     * pas de délai de grâce (AUTH-SC-10), les sessions de l'appareil de la chaîne sont révoquées — ici les seules
+     * du compte. Le cas « autre appareil du même compte épargné » est dans AuthSessionContinuityTest.
+     */
+    public function testReusingRotatedTokenFromAnotherDeviceRevokesTheSessionsOfTheChainsDevice(): void
     {
         $this->postLogin('TADMIN', self::PASSWORD, ip: '198.51.100.3');
         $firstRefresh = $this->refreshCookieValue();
@@ -105,7 +110,7 @@ final class AuthRefreshSessionTest extends ApiTestCase
         $this->client->request('POST', '/auth/refresh-session');
         self::assertSame(200, $this->client->getResponse()->getStatusCode());
 
-        // Replay du vieux token → 401 ET toute la chaîne active du compte est révoquée.
+        // Replay du vieux token → 401 ET la chaîne de l'appareil est révoquée.
         $this->sendCookies(['kpi_refresh' => $firstRefresh]);
         $this->client->request('POST', '/auth/refresh-session');
         self::assertSame(401, $this->client->getResponse()->getStatusCode());
@@ -113,7 +118,7 @@ final class AuthRefreshSessionTest extends ApiTestCase
         $activeCount = (int) $this->connection->fetchOne(
             "SELECT COUNT(*) FROM kp_user_refresh_token WHERE user_code = 'TADMIN' AND revoked_at IS NULL",
         );
-        self::assertSame(0, $activeCount, 'tous les refresh tokens du compte doivent être révoqués en cas de rejeu');
+        self::assertSame(0, $activeCount, 'les refresh tokens de l\'appareil (seul connecté) doivent être révoqués en cas de rejeu');
     }
 
     // ------------------------------------------------------- AUTH-RT-02 : logout
