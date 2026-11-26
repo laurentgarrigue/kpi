@@ -27,3 +27,6 @@ Il n'existait **aucun catalogue** de cumuls de cartons au 2026-11-22 ; il a ét�
 
 - Changer une règle, c'est une PR sur un seul fichier et ses tests ; app4 suit sans modification.
 - Un miroir côté client n'est admis que pour un besoin hors ligne, avec des tests jumeaux.
+- Un catalogue soumis au bureau CNA a un **descripteur** (`App\RuleCatalog\RuleCatalogDescriber`) rangé à côté de
+  lui, qui lit ses valeurs pour l'état PDF `rules-catalog` ([FEATURE_RULES_CATALOG_PDF.md](../../../specs/FEATURE_RULES_CATALOG_PDF.md)).
+  Un nouveau catalogue (rôles de désignation, types de rapport) y entre en ajoutant son descripteur.

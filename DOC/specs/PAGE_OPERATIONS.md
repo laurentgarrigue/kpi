@@ -42,6 +42,7 @@ Page d'administration système regroupant les opérations sensibles réservées 
 | 13 | Gestion des groupes | = 1 | Lien externe | 🔧 Déplacer |
 | 14 | Mise à jour licenciés (PCE) | = 1 | Essentielle | ✅ Conserver |
 | 15 | Purge fichiers cache | = 1 | Essentielle | ✅ Conserver |
+| 15b | État PDF des règles métier | = 1 | Nouveau (#423) | ✅ Onglet Système |
 | 16 | Changer saison active | ≤ 2 | Essentielle | ✅ Conserver |
 | 17 | Ajouter une saison | ≤ 2 | Essentielle | ✅ Conserver |
 | 18 | Copier les RC | ≤ 2 | Utile | ✅ Conserver |
@@ -247,6 +248,14 @@ Page d'administration système regroupant les opérations sensibles réservées 
 **Dossiers concernés:**
 - `cache/match/`
 - `cache/event/`
+
+---
+
+### 15b. État PDF des règles métier
+
+**Description:** onglet Système, profil 1 : choisir une saison et un catalogue (ou tous, avec sommaire), puis ouvrir
+le PDF `rules-catalog` des valeurs des catalogues de règles d'api2. Spec :
+[FEATURE_RULES_CATALOG_PDF.md](FEATURE_RULES_CATALOG_PDF.md).
 
 ---
 

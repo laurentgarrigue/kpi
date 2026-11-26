@@ -201,3 +201,10 @@ club_ranking.adjustments: { fr: 'Ajustements', en: 'Adjustments' }
 club_ranking.reason: { fr: 'Motif', en: 'Reason' }
 club_ranking.reference_date: { fr: 'Date de référence (clubs des licenciés, qualifications)', en: 'Reference date (clubs of licensees, qualifications)' }
 club_ranking.version: { fr: 'Publication', en: 'Publication' }
+rules_catalog.title: { fr: 'Règles métier', en: 'Business rules' }
+rules_catalog.contents: { fr: 'Sommaire', en: 'Contents' }
+rules_catalog.number: { fr: 'N°', en: 'No.' }
+rules_catalog.catalog: { fr: 'Catalogue', en: 'Catalogue' }
+rules_catalog.code: { fr: 'Code', en: 'Code' }
+rules_catalog.version: { fr: 'Version', en: 'Version' }
+rules_catalog.sources: { fr: 'Fichiers source', en: 'Source files' }

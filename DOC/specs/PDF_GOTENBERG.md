@@ -441,6 +441,7 @@ Quand le classement porte des médailles, elles **remplacent** les mentions « Q
 | `cards` | FeuilleCards | — | Documents, section Contrôle (1–6) | `ROLE_ORGANIZER` + périmètre |
 | `qrcodes` | PdfQrCodes | ✅ | Documents, section Événement (1–2) | pas de version admin (données publiques) |
 | `qrcode-app` | PdfQrCodeApp | ✅ | Documents, section Événement (1–2) | pas de version admin |
+| `rules-catalog` | — (nouveau, issue #423) | — | Opérations › Système (1) | `ROLE_SUPER_ADMIN` : valeurs des catalogues de règles métier, [FEATURE_RULES_CATALOG_PDF.md](FEATURE_RULES_CATALOG_PDF.md) |
 
 Non migrés (aucun appel depuis app4, app3 ou app2, doublons d'une option) : FeuillePresencePhoto2,
 FeuilleControleEN (→ `lang=en`), FeuilleStats[EN] (→ `stats`), FeuilleCltNiveauNiveau / PdfCltNiveauNiveau (I6).

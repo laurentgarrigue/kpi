@@ -854,7 +854,22 @@
       "purge_button": "Purger le cache",
       "confirm_purge": "Confirmer la purge du cache ?",
       "success_purge": "Cache purgé : {matchFiles} fichiers match, {eventFiles} fichiers événement supprimés",
-      "error_purge": "Erreur lors de la purge"
+      "error_purge": "Erreur lors de la purge",
+      "rules_catalog": "Règles métier",
+      "rules_catalog_description": "État PDF des valeurs de chaque catalogue de règles (joueur en règle, catégories d'âge, scoring, cumuls de cartons, médailles, contrôle équipement, documents PDF), pour validation par le bureau CNA.",
+      "rules_catalog_season": "Saison",
+      "rules_catalog_catalog": "Catalogue",
+      "rules_catalog_all": "Tous les catalogues (avec sommaire)",
+      "rules_catalog_button": "Éditer le PDF",
+      "rules_catalogs": {
+        "player-eligibility": "Joueur en règle",
+        "age-categories": "Catégories d'âge",
+        "scoring": "Règles de jeu du scoring",
+        "card-suspensions": "Cumuls de cartons et suspensions",
+        "medals": "Médailles et seuils",
+        "equipment": "Contrôle équipement",
+        "pdf-documents": "Documents PDF"
+      }
     },
     "common": {
       "operation_success": "Opération réussie",
