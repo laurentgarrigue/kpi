@@ -7,7 +7,7 @@ namespace App\Discipline;
  */
 final class SuspensionMessage
 {
-    private const SECTION_LABELS = [2 => 'Nationale', 3 => 'Régionale'];
+    private const SECTION_LABELS = [2 => 'Nationale'];
 
     /**
      * @param array<string, mixed> $context    CardSuspensionRepository::context()

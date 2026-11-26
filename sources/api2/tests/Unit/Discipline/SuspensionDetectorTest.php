@@ -98,17 +98,22 @@ final class SuspensionDetectorTest extends TestCase
         }
     }
 
-    public function testSus08EachSectionHasItsOwnTally(): void
+    public function testSus08OnlyTheNationalSectionIsCountedAndTheOthersDoNotAddToIt(): void
     {
         $cards = [];
-        for ($i = 1; $i <= 4; ++$i) {
+        for ($i = 1; $i <= 3; ++$i) {
             $cards[] = $this->card(CardColor::Yellow, game: $i, day: "n$i", section: self::NATIONAL);
+        }
+        for ($i = 1; $i <= 4; ++$i) {
             $cards[] = $this->card(CardColor::Yellow, game: 10 + $i, day: "r$i", section: self::REGIONAL);
         }
 
-        $found = $this->detect($cards);
+        self::assertSame([], $this->detect($cards));
 
-        self::assertSame([self::NATIONAL, self::REGIONAL], array_map(static fn (DetectedSuspension $s): int => $s->card->section, $found));
+        $cards[] = $this->card(CardColor::Yellow, game: 20, day: 'n4', section: self::NATIONAL);
+        $found = $this->detect($cards);
+        self::assertCount(1, $found);
+        self::assertSame(self::NATIONAL, $found[0]->card->section);
     }
 
     public function testEachPlayerHasHisOwnTally(): void

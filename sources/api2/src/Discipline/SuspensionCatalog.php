@@ -13,8 +13,8 @@ namespace App\Discipline;
  */
 final class SuspensionCatalog
 {
-    /** Sections de compétition (`kp_groupe.section`) soumises au règlement fédéral : Nationale et Régionale (S4). */
-    private const FEDERAL_SECTIONS = [2, 3];
+    /** Sections de compétition (`kp_groupe.section`) couvertes : Nationale seulement (S4, décision du 2026-11-26). */
+    private const COVERED_SECTIONS = [2];
 
     /**
      * @param list<int>            $sections
@@ -68,7 +68,7 @@ final class SuspensionCatalog
     {
         $yellowRed = [CardColor::Yellow, CardColor::Red];
 
-        return new self(1, '2027', self::FEDERAL_SECTIONS, [
+        return new self(1, '2027', self::COVERED_SECTIONS, [
             new SuspensionRule('GREEN_SEASON', '8 cartons verts dans la saison', '8 green cards in the season',
                 [CardColor::Green], TallyScope::Season, 8, Repeat::EveryMultiple, 1, false),
             new SuspensionRule('YELLOW_RED_GAMEDAY', "2 cartons jaunes ou rouges dans des matchs différents d'une journée", '2 yellow or red cards in different games of a gameday',

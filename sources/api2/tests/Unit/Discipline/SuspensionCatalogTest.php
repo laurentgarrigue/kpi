@@ -21,12 +21,11 @@ final class SuspensionCatalogTest extends TestCase
         self::assertSame(1, SuspensionCatalog::forSeason('2998')?->version);
     }
 
-    public function testOnlyTheNationalAndRegionalSectionsAreCovered(): void
+    public function testOnlyTheNationalSectionIsCovered(): void
     {
         $catalog = SuspensionCatalog::forSeason('2027');
         self::assertTrue($catalog?->coversSection(2));
-        self::assertTrue($catalog?->coversSection(3));
-        foreach ([1, 4, 5, 100] as $section) {
+        foreach ([1, 3, 4, 5, 100] as $section) {
             self::assertFalse($catalog?->coversSection($section));
         }
     }
@@ -36,7 +35,7 @@ final class SuspensionCatalogTest extends TestCase
         $array = SuspensionCatalog::forSeason('2027')?->toArray();
         self::assertSame(1, $array['version']);
         self::assertSame('2027', $array['firstSeason']);
-        self::assertSame([2, 3], $array['sections']);
+        self::assertSame([2], $array['sections']);
         $black = $array['rules'][3];
         self::assertSame(
             ['code' => 'BLACK_GAME', 'labelFr' => '1 carton noir dans un match', 'labelEn' => '1 black card in a game',
