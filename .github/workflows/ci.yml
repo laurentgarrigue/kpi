@@ -212,6 +212,11 @@ jobs:
         working-directory: sources/${{ matrix.app }}
         run: npm run build
 
+      # PWA-05 (DOC/specs/PWA_AUTO_UPDATE.md) : le worker d'app2/app4 ne s'active que sur le bandeau « Recharger ».
+      - name: Service worker en prompt-to-update
+        if: steps.relevant.outputs.changed == 'true' && matrix.app != 'app3'
+        run: node scripts/ci/check-sw-prompt.mjs sources/${{ matrix.app }}/.output/public/sw.js
+
   # ---------------------------------------------------------------------------
   # 3. api2 — checks statiques Symfony SANS outils tiers à installer.
   #    Phase 1 : lint YAML + container + schéma. PHPStan/php-cs-fixer = Phase 2
@@ -527,6 +532,15 @@ jobs:
           # warnings), mais seul un vrai niveau `error` fait échouer le job.
           # À durcir en `warning` une fois la dette Dockerfile nettoyée (Phase 2/3).
           failure-threshold: error
+
+      # PWA-01 à PWA-04 (DOC/specs/PWA_AUTO_UPDATE.md) : en-têtes réellement servis par nginx-static*.conf.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Conf Nginx statique (cache + en-têtes de sécurité)
+        run: |
+          command -v nginx >/dev/null || (sudo apt-get update && sudo apt-get install -y nginx-light)
+          node --test scripts/ci/nginx-static.test.mjs
 
       - name: docker compose config (dev/preprod/prod)
         run: |
@@ -1064,7 +1078,7 @@ jobs:
 
   # ---------------------------------------------------------------------------
   # ---------------------------------------------------------------------------
-  # Tests des scripts de CI (synthèse et cliquet de couverture) — node --test, sans dépendance.
+  # Tests des scripts de CI (cliquet de couverture, contrôle du service worker, conf Nginx statique) — node --test.
   # ---------------------------------------------------------------------------
   tests-ci-scripts:
     needs: [changes]
@@ -1075,7 +1089,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-      - run: node --test scripts/ci/coverage-summary.test.mjs scripts/ci/coverage-check.test.mjs
+      - run: command -v nginx >/dev/null || (sudo apt-get update && sudo apt-get install -y nginx-light)
+      - run: node --test scripts/ci/coverage-summary.test.mjs scripts/ci/coverage-check.test.mjs scripts/ci/check-sw-prompt.test.mjs scripts/ci/nginx-static.test.mjs
 
   ci-summary:
     needs: [changes, lint-nuxt, build-nuxt, tests-app3, tests-ci-scripts, lint-api2, phpstan-api2, smoke-api2, tests-api2, lint-legacy, lint-docker, audit-composer, audit-npm, secrets-scan, trivy-config]

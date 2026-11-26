@@ -375,7 +375,7 @@ publication ou la présentation concernée doit être déplacée ou supprimée.
 
 | # | Chantier | État | Idéale | Impérative | Bloque |
 |---|---|---|---|---|---|
-| C8 | **Mise à jour automatique** d'app2 et app4 ([PWA_AUTO_UPDATE.md](../../specs/PWA_AUTO_UPDATE.md)) | app4 fait ; app2 et Nginx restent à faire (PWA_AUTO_UPDATE.md) | 18 déc. | **8 janv.** | Reel d'installation S2 |
+| C8 | **Mise à jour automatique** d'app2 et app4 ([PWA_AUTO_UPDATE.md](../../specs/PWA_AUTO_UPDATE.md)) | app4 fait ; app2 et Nginx faits sur la branche `feat/app2-pwa-auto-update` (2026-11-26, avec les en-têtes de sécurité Nginx) ; reste : merge, `make nginx_static_reload` en preprod puis prod, test smartphone (PWA-09/10) | 18 déc. | **8 janv.** | Reel d'installation S2 |
 | C9 | **Copie de composition par les responsables d'équipes et de clubs** : aujourd'hui le profil 7 édite, ajoute et supprime, mais **ne copie pas** (copie depuis une autre compétition : profils ≤ 4 ; vers les matchs : profils ≤ 6). Ouvrir la copie au profil 7 sur ses clubs, ou écrire le pas à pas sans elle | Livré en v2.12.1 (#403) : le profil 7 copie les compositions de ses clubs | Livré | **29 janv.** | Pas à pas S6 |
 | C10 | **Comptes des responsables d'équipes et de clubs** (profil 7) pour 2027 : existants, mandats passés à 2027, e-mail renseigné | À vérifier ; liste remontée par les régions après les plénières | 31 janv. | 26 févr. | O4 |
 | C12 | **Scrutineering en anglais** : relecture de l'interface app4 en anglais, guide bilingue | Interface traduite, à relire | 15 janv. | 5 févr. | Publications **EN** S6 |

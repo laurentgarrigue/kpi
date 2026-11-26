@@ -15,5 +15,5 @@
 </template>
 
 <script setup>
-// Network monitoring is handled by useOnlineStatus composable (used in AppHeader and other components)
+// Network monitoring: useOnlineStatus (AppHeader). Service worker updates: usePwa (UpdatePrompt).
 </script>

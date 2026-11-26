@@ -13,6 +13,8 @@ import { fileURLToPath } from 'node:url'
 import { summarizeClover, summarizeVitest } from './coverage-summary.mjs'
 
 const RAISE_FLOOR_MARGIN = 1
+// A regenerated lockfile alone weighs several MB of diff: execFileSync's default buffer (1 MB) kills git (ENOBUFS).
+const GIT_DIFF_MAX_BUFFER = 256 * 1024 * 1024
 
 const toRepoPath = (file, appDir, repoRoot) =>
   isAbsolute(file) ? relative(repoRoot, file).split('\\').join('/') : posix.normalize(posix.join(appDir, file))
@@ -62,6 +64,13 @@ export function parseChangedLines(diff) {
     }
   }
   return files
+}
+
+/** Lignes ajoutées ou modifiées dans <appDir> depuis <base> (`git diff -U0 <base>...HEAD`, lancé dans <cwd>). */
+export function changedLinesSince(base, appDir, cwd = process.cwd()) {
+  return parseChangedLines(
+    execFileSync('git', ['diff', '-U0', '--diff-filter=AM', `${base}...HEAD`, '--', appDir], { cwd, encoding: 'utf8', maxBuffer: GIT_DIFF_MAX_BUFFER }),
+  )
 }
 
 /** Part des lignes modifiées qui sont exécutables (présentes dans le rapport) et couvertes. */
@@ -127,9 +136,7 @@ function main(argv) {
     const coverage = format === 'clover'
       ? parseCloverLines(text, repoRoot)
       : parseLcov(readFileSync(option('--lcov'), 'utf8'), appDir, repoRoot)
-    const changed = parseChangedLines(
-      execFileSync('git', ['diff', '-U0', '--diff-filter=AM', `${base}...HEAD`, '--', appDir], { encoding: 'utf8' }),
-    )
+    const changed = changedLinesSince(base, appDir)
     diff = measureDiffCoverage(coverage, changed)
   }
 

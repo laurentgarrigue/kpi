@@ -1,8 +1,12 @@
 // COV-12 à COV-15 — `make ci_scripts_test`
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
+import { execFileSync } from 'node:child_process'
+import { mkdtempSync, writeFileSync, rmSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import {
-  checkFloor, parseLcov, parseCloverLines, parseChangedLines, measureDiffCoverage, evaluate,
+  checkFloor, parseLcov, parseCloverLines, parseChangedLines, measureDiffCoverage, evaluate, changedLinesSince,
 } from './coverage-check.mjs'
 
 const REPO = '/repo'
@@ -73,4 +77,25 @@ test('COV-13/14/15 évalue plancher + diff, liste les lignes non couvertes ; san
   assert.equal(ko.ok, false)
   assert.match(ko.messages.join('\n'), /f\.ts:2/)
   assert.equal(evaluate({ pct: 95, floor: 91, diff: null, diffThreshold: 80 }).ok, true)
+})
+
+test('COV-13 un diff de plusieurs Mo (lockfile régénéré) est lu en entier, sans dépasser le tampon', () => {
+  const repo = mkdtempSync(join(tmpdir(), 'coverage-diff-'))
+  const git = (...args) => execFileSync('git', ['-C', repo, '-c', 'user.name=ci', '-c', 'user.email=ci@example.invalid', ...args])
+  try {
+    git('init', '-q', '-b', 'main')
+    writeFileSync(join(repo, 'a.ts'), 'export const a = 1\n')
+    git('add', '.')
+    git('commit', '-q', '-m', 'base')
+    // ~3 Mo de lignes ajoutées : au-delà du tampon par défaut d'execFileSync (1 Mo).
+    writeFileSync(join(repo, 'package-lock.json'), `${'"x": "0123456789012345678901234567890123456789",\n'.repeat(60_000)}`)
+    writeFileSync(join(repo, 'a.ts'), 'export const a = 1\nexport const b = 2\n')
+    git('add', '.')
+    git('commit', '-q', '-m', 'big')
+    const changed = changedLinesSince('HEAD~1', '.', repo)
+    assert.deepEqual([...changed.get('a.ts')], [2])
+    assert.equal(changed.get('package-lock.json').size, 60_000)
+  } finally {
+    rmSync(repo, { recursive: true, force: true })
+  }
 })

@@ -1,5 +1,7 @@
 <template>
   <UApp :toaster="{ position: 'bottom-right', progress: true }">
+    <!-- Injects <link rel="manifest"> (@vite-pwa/nuxt does not add it on its own), as in app4. -->
+    <NuxtPwaManifest />
     <!-- Bandeau « préprod expérimentale » (Phase 7 CI/CD) : ne s'affiche que si
          une branche feature est déployée en préprod à la place de main.
          Hors préprod, le composant ne fait aucune requête et ne rend rien. -->
@@ -44,7 +46,7 @@ useHead({
   htmlAttrs: {
     lang: locale
   },
-  // Favicons and manifest are declared once, in nuxt.config.ts (app.head)
+  // Favicons are declared once, in nuxt.config.ts (app.head); the manifest link comes from <NuxtPwaManifest />.
   meta: [
     { name: 'viewport', content: 'width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes' },
     { name: 'format-detection', content: 'telephone=no' },
