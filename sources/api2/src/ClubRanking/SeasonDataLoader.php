@@ -169,39 +169,19 @@ final class SeasonDataLoader
     private function gamedays(string $season, array $clubs): array
     {
         $date = static fn (mixed $value): ?string => is_string($value) && $value !== '' && $value !== self::NO_DATE ? substr($value, 0, 10) : null;
-        $codes = self::clubCodesByLabel($clubs);
+        $resolver = new OrganiserClubResolver(array_column(array_map(static fn (Club $club): array => [$club->code, $club->label], $clubs), 1, 0));
 
         return array_map(
-            static function (array $row) use ($date, $codes): Gameday {
+            static function (array $row) use ($date, $resolver): Gameday {
                 $label = (string) ($row['Organisateur'] ?? '');
                 $code = trim((string) ($row['Code_organisateur'] ?? ''));
 
                 return new Gameday((int) $row['Id'], (string) $row['Code_competition'], $date($row['Date_debut']), $date($row['Date_fin']),
-                    (string) ($row['Lieu'] ?? ''), $code !== '' ? $code : ($codes[NameNormalizer::normalizeLabel($label)] ?? ''), $label,
+                    (string) ($row['Lieu'] ?? ''), $resolver->code($code, $label), $label,
                     (string) ($row['Delegue'] ?? ''), (string) ($row['ChefArbitre'] ?? ''));
             },
             $this->connection->fetchAllAssociative('SELECT Id, Code_competition, Date_debut, Date_fin, Lieu, Code_organisateur, Organisateur, Delegue, ChefArbitre FROM kp_journee WHERE Code_saison = ? ORDER BY Id', [$season]),
         );
-    }
-
-    /**
-     * The organiser of a gameday is often typed as a label, with no club code: the label of a club identifies it
-     * (HTML entities and accents ignored), unless two clubs share it.
-     *
-     * @param list<Club> $clubs
-     *
-     * @return array<string, string> normalised label → club code
-     */
-    private static function clubCodesByLabel(array $clubs): array
-    {
-        $codes = [];
-        foreach ($clubs as $club) {
-            $key = NameNormalizer::normalizeLabel($club->label);
-            $codes[$key] = isset($codes[$key]) ? '' : $club->code;
-        }
-        unset($codes['']);
-
-        return array_filter($codes, static fn (string $code): bool => $code !== '');
     }
 
     /** @return list<CompetitionManager> */

@@ -77,9 +77,9 @@ export const usePresenceStore = defineStore('presence', {
       return state.players.filter(p => ['-', 'C'].includes(p.capitaine))
     },
 
-    // Get inactive players (E, A, X)
+    // Get inactive players (E, A, X, S = suspended, FEATURE_CARD_SUSPENSIONS.md S17)
     inactivePlayers: (state): Player[] => {
-      return state.players.filter(p => ['E', 'A', 'X'].includes(p.capitaine))
+      return state.players.filter(p => ['E', 'A', 'X', 'S'].includes(p.capitaine))
     },
 
     // Eligibility rule set of the competition (null = no control), defined in api2 PlayerEligibilityRules

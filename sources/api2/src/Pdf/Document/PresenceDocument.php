@@ -34,7 +34,7 @@ final class PresenceDocument implements PdfDocumentProvider
     public const UNDER_21 = 'U21';
 
     /** Roles listed apart, after the rest of the team: A (referee), X (inactive). */
-    private const NON_PLAYER_ROLES = ['A', 'X'];
+    private const NON_PLAYER_ROLES = ['A', 'X', 'S'];
 
     /** Sections (kp_groupe.section) whose sheets check the paddle level and the medical certificate: national, regional. */
     private const LICENCE_CHECK_SECTIONS = [2, 3];
@@ -362,7 +362,7 @@ final class PresenceDocument implements PdfDocumentProvider
             'club' => (string) $player['Numero_club'],
             'referee' => PresencePlayer::referee($player['arbitre'], $player['niveau']),
             'birthdate' => self::date($player['Naissance']),
-            '_class' => in_array($player['Capitaine'], ['E', 'A', 'X'], true) ? 'pdf-row--muted' : '',
+            '_class' => in_array($player['Capitaine'], ['E', 'A', 'X', 'S'], true) ? 'pdf-row--muted' : '',
         ];
     }
 

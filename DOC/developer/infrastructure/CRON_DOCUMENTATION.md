@@ -8,12 +8,13 @@
 
 ## Vue d'ensemble
 
-Le système KPI utilise **4 tâches automatisées** :
+Le système KPI utilise **5 tâches automatisées** :
 
 1. **Import licences PCE** (FFCK) - Quotidien
 2. **Verrouillage présences** compétitions - Multi-quotidien
 3. **Purge RGPD des inscriptions** (site public) - Quotidien
 4. **Médailles de match** (site public, app2) - Toutes les 10 minutes
+5. **Cumuls de cartons et suspensions** (notifications au bureau CNA et aux RC) - Toutes les 10 minutes
 
 Ces tâches sont implémentées comme **services Symfony** dans API2, exposées à la fois comme :
 - **Endpoints HTTP** (`POST /admin/operations/...`) utilisables depuis app4
@@ -209,6 +210,38 @@ make api2_match_medals_compute season=2026
 ```
 
 Les autres saisons gardent leurs résultats et leurs seuils.
+
+## 5. Cumuls de cartons et suspensions
+
+Détecte dans la timeline des matchs validés de la **saison active** les cumuls de cartons de l'art. 50, enregistre
+chaque nouvelle suspension dans `kp_card_suspension`, la notifie **une seule fois** par e-mail au bureau CNA et aux RC
+de la compétition (Désignations), ouvre un brouillon de rapport de jury d'appel quand la règle le prévoit, et annule
+(avec un e-mail) les suspensions qu'une correction de feuille fait disparaître. Spec :
+[FEATURE_CARD_SUSPENSIONS.md](../../specs/FEATURE_CARD_SUSPENSIONS.md).
+
+| Composant | Fichier |
+|-----------|---------|
+| Service | `sources/api2/src/Discipline/CardSuspensionService.php` |
+| Catalogue des règles | `sources/api2/src/Discipline/SuspensionCatalog.php` |
+| Commande (cron) | `app:card-suspensions:sync` (`make api2_card_suspensions_sync`) |
+
+### Configuration CRON
+
+À ajouter dans le dépôt **vps-manager**, sur le modèle des médailles (préprod décalée de 5 minutes) :
+
+```cron
+# Cumuls de cartons - toutes les 10 minutes (prod ; préprod : 5-59/10 et kpi_preprod_api2)
+*/10 * * * * docker exec -t kpi_api2 php bin/console app:card-suspensions:sync > $LOGS_BASE_DIR/cron/card-suspensions-sync.log 2>&1
+```
+
+### Mise en service sur une saison en cours
+
+Pour ne pas envoyer d'un coup les suspensions passées de la saison, la première passe est **silencieuse** : elle
+enregistre sans e-mail ni rapport, puis le cron ne notifie que les nouvelles.
+
+```bash
+make api2_card_suspensions_sync silent=1
+```
 
 ## Notification email
 

@@ -109,7 +109,6 @@ watch(() => form.niveau, (newVal) => {
 // Competitions loaded dynamically based on selected seasons
 const competitions = ref<Competition[]>([])
 const competitionsLoading = ref(false)
-const competitionSearch = ref('')
 
 async function loadCompetitions() {
   competitionsLoading.value = true
@@ -131,24 +130,9 @@ async function loadCompetitions() {
   finally { competitionsLoading.value = false }
 }
 
-const groupedCompetitions = computed(() => {
-  const q = competitionSearch.value.trim().toLowerCase()
-  const filtered = q
-    ? competitions.value.filter(c => c.code.toLowerCase().includes(q) || c.libelle.toLowerCase().includes(q))
-    : competitions.value
-  const groups: Record<string, { label: string; items: Competition[] }> = {}
-  for (const c of filtered) {
-    const key = String(c.section)
-    if (!groups[key]) groups[key] = { label: c.sectionLabel, items: [] }
-    groups[key].items.push(c)
-  }
-  return groups
-})
-
 // Reload competitions when selected seasons change
 watch(() => form.filtreSaison, () => {
   if (expanded.value) loadCompetitions()
-  competitionSearch.value = ''
 }, { deep: true })
 
 function resetForm() {
@@ -161,7 +145,6 @@ function resetForm() {
   form.idEvenement = []
   allCompetitions.value = false
   competitions.value = []
-  competitionSearch.value = ''
   selectedClubs.value = []
   clubQuery.value = ''
   clubResults.value = []
@@ -182,10 +165,8 @@ function toggleSeason(code: string) {
   else form.filtreSaison.push(code)
 }
 
-function toggleCompetition(code: string) {
-  const idx = form.filtreCompetition.indexOf(code)
-  if (idx >= 0) form.filtreCompetition.splice(idx, 1)
-  else form.filtreCompetition.push(code)
+function onCompetitionsChange(codes: string[]) {
+  form.filtreCompetition = codes
   allCompetitions.value = false
 }
 
@@ -320,48 +301,13 @@ function handleSave() {
               <input type="checkbox" :checked="allCompetitions" @change="toggleAllCompetitions">
               <span class="font-medium">{{ t('users.modal.filter_competitions_all') }}</span>
             </label>
-            <div class="relative mb-1.5">
-              <input
-                v-model="competitionSearch"
-                type="text"
-                class="w-full px-2 py-1 text-sm border border-header-200 dark:border-header-700 rounded bg-white dark:bg-header-900 text-header-900 dark:text-header-50 focus:ring-1 focus:ring-primary-400 focus:border-primary-400"
-                :class="competitionSearch ? 'pr-6' : ''"
-                :placeholder="t('users.modal.filter_competitions_search')"
-              >
-              <button
-                v-if="competitionSearch"
-                class="absolute right-1.5 top-1/2 -translate-y-1/2 text-header-600 dark:text-header-300 hover:text-header-900 dark:hover:text-header-50 p-2"
-                @click="competitionSearch = ''"
-              >
-                <UIcon name="i-heroicons-x-mark" class="w-5 h-5" />
-              </button>
-            </div>
-            <div class="relative max-h-28 overflow-y-auto">
-              <div v-if="competitionsLoading" class="absolute inset-0 flex items-center justify-center bg-white/70 dark:bg-header-900/70">
-                <span class="text-xs text-header-600 dark:text-header-300">{{ t('common.loading') }}</span>
-              </div>
-              <template v-if="!competitionsLoading">
-                <template v-for="(group, key) in groupedCompetitions" :key="key">
-                  <div class="text-xs font-semibold text-header-600 dark:text-header-300 mt-1 mb-0.5">— {{ group.label }} —</div>
-                  <label
-                    v-for="c in group.items"
-                    :key="c.code"
-                    class="flex items-center gap-1.5 text-sm mb-0.5 cursor-pointer text-header-900 dark:text-header-50"
-                  >
-                    <input
-                      type="checkbox"
-                      :checked="form.filtreCompetition.includes(c.code)"
-                      :disabled="allCompetitions"
-                      @change="toggleCompetition(c.code)"
-                    >
-                    {{ c.code }} - {{ c.libelle }}
-                  </label>
-                </template>
-                <div v-if="Object.keys(groupedCompetitions).length === 0" class="text-xs text-header-600 dark:text-header-300 italic py-1">
-                  {{ t('users.modal.filter_competitions_no_results') }}
-                </div>
-              </template>
-            </div>
+            <AdminCompetitionChecklist
+              :model-value="form.filtreCompetition"
+              :competitions="competitions"
+              :disabled="allCompetitions"
+              :loading="competitionsLoading"
+              @update:model-value="onCompetitionsChange"
+            />
           </div>
         </div>
       </div>

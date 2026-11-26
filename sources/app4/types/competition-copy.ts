@@ -65,6 +65,7 @@ export interface CompetitionCopyPrefill {
   responsableInsc: string | null
   responsableR1: string | null
   organisateur: string | null
+  codeOrganisateur: string | null
   delegue: string | null
 }
 
@@ -100,6 +101,7 @@ export interface CopyCompetitionPayload {
   responsableInsc: string | null
   responsableR1: string | null
   organisateur: string | null
+  codeOrganisateur: string | null
   delegue: string | null
   initPremierTour: boolean
   /** CP only: an empty form field stays empty instead of falling back to each journee's value */

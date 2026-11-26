@@ -97,7 +97,12 @@ class CompetitionCodeRenameService
         $renameColumn('kp_competition', 'Code');
         $renameColumn('kp_competition_equipe', 'Code_compet');
         $renameColumn('kp_journee', 'Code_competition');
-        $renameColumn('kp_rc', 'Code_competition');
+        // Désignations posées sur la compétition, tous rôles (RC compris depuis l'absorption de kp_rc, ADR-0003)
+        [$designationCondition, $designationParams] = $this->seasonScope('saison', $season);
+        $this->connection->executeStatement(
+            "UPDATE kp_designation SET perimetre_id = ? WHERE perimetre_type = 'COMPETITION' AND perimetre_id = ?$designationCondition",
+            [$targetCode, $sourceCode, ...$designationParams]
+        );
         $renameColumn('kp_form', 'competition_code', 'competition_season');
 
         // Reference (grouping) code, and the group it points to (foreign key)

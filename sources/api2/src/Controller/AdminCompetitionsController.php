@@ -157,7 +157,7 @@ class AdminCompetitionsController extends AbstractController
                        (SELECT COUNT(*) FROM kp_match m
                         INNER JOIN kp_journee j ON m.Id_journee = j.Id
                         WHERE j.Code_competition = c.Code AND j.Code_saison = c.Code_saison) as nbMatchs,
-                       (SELECT COUNT(*) FROM kp_rc rc WHERE rc.Code_competition = c.Code AND rc.Code_saison = c.Code_saison) as nbRc
+                       (SELECT COUNT(*) FROM kp_designation d WHERE d.role = 'RC' AND d.perimetre_type = 'COMPETITION' AND d.perimetre_id = c.Code AND d.saison = c.Code_saison) as nbRc
                 FROM kp_competition c
                 LEFT JOIN kp_groupe g ON c.Code_ref = g.Groupe
                 $whereClause
@@ -368,7 +368,7 @@ class AdminCompetitionsController extends AbstractController
                        (SELECT COUNT(*) FROM kp_match m
                         INNER JOIN kp_journee j ON m.Id_journee = j.Id
                         WHERE j.Code_competition = c.Code AND j.Code_saison = c.Code_saison) as nbMatchs,
-                       (SELECT COUNT(*) FROM kp_rc rc WHERE rc.Code_competition = c.Code AND rc.Code_saison = c.Code_saison) as nbRc
+                       (SELECT COUNT(*) FROM kp_designation d WHERE d.role = 'RC' AND d.perimetre_type = 'COMPETITION' AND d.perimetre_id = c.Code AND d.saison = c.Code_saison) as nbRc
                 FROM kp_competition c
                 LEFT JOIN kp_groupe g ON c.Code_ref = g.Groupe
                 WHERE c.Code = ? AND c.Code_saison = ?";

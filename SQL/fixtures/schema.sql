@@ -488,8 +488,11 @@ CREATE TABLE `kp_user_mandat` (
   `limitation_equipe_club` varchar(50) DEFAULT NULL,
   `filtre_journee` mediumtext NOT NULL DEFAULT '',
   `id_evenement` varchar(20) NOT NULL DEFAULT '',
+  `designation_role` varchar(20) DEFAULT NULL,   -- mandat généré par les Désignations (2026-11-23_designations_mandates.sql)
+  `designation_saison` char(4) DEFAULT NULL,
   PRIMARY KEY (`id`),
-  KEY `fk_mandat_user` (`user_code`)
+  KEY `fk_mandat_user` (`user_code`),
+  UNIQUE KEY `uniq_generated_mandate` (`user_code`, `designation_saison`, `designation_role`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
 
 -- Durcissement authentification (AUTH_HARDENING.md § 4) : lien compte KPI ↔ identifiant OAuth
@@ -556,6 +559,98 @@ CREATE TABLE `kp_user_password_renewal` (
   `required_at` datetime DEFAULT NULL,
   `renewed_at` datetime DEFAULT NULL,
   PRIMARY KEY (`user_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Désignations (FEATURE_DESIGNATIONS.md § 8.1, SQL/migrations/2026-11-22_designations.sql).
+DROP TABLE IF EXISTS `kp_designation`;
+CREATE TABLE `kp_designation` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `saison` char(4) NOT NULL,
+  `role` varchar(20) NOT NULL COMMENT 'Code du catalogue des rôles',
+  `perimetre_type` enum('NIVEAU','COMPETITION','EQUIPE','EVENEMENT','JOURNEE') NOT NULL,
+  `perimetre_id` varchar(20) NOT NULL COMMENT 'NATIONAL, code compétition, id équipe, événement ou journée',
+  `matric` int(11) unsigned NOT NULL COMMENT 'Licence (kp_licence.Matric)',
+  `club` varchar(6) DEFAULT NULL COMMENT 'Club fournisseur figé à la création (D22)',
+  `autorite` enum('CNA','ORGANISATEUR') NOT NULL DEFAULT 'CNA' COMMENT 'D23',
+  `ordre` smallint(6) NOT NULL DEFAULT 1,
+  `qualite` varchar(100) DEFAULT NULL COMMENT 'Précision libre (ex. représentant FFCK au jury d''appel)',
+  `created_by` varchar(8) DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uniq_designation` (`saison`, `role`, `perimetre_type`, `perimetre_id`, `matric`),
+  KEY `idx_perimetre` (`perimetre_type`, `perimetre_id`),
+  KEY `idx_matric` (`matric`, `saison`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Rapports officiels (SQL/migrations/2026-11-23_reports.sql).
+DROP TABLE IF EXISTS `kp_report_submission`;
+DROP TABLE IF EXISTS `kp_report`;
+CREATE TABLE `kp_report` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `type` varchar(30) NOT NULL,
+  `version_modele` smallint(6) NOT NULL,
+  `perimetre_type` enum('COMPETITION','EVENEMENT','JOURNEE','MATCH') NOT NULL,
+  `perimetre_id` varchar(20) NOT NULL,
+  `saison` char(4) NOT NULL,
+  `auteur_matric` int(11) unsigned DEFAULT NULL COMMENT 'Licence de l''auteur (arbitre dont un officiel saisit le rapport, D17)',
+  `saisi_par` varchar(8) NOT NULL COMMENT 'Compte qui a saisi le rapport',
+  `etat` enum('BROUILLON','SOUMIS') NOT NULL DEFAULT 'BROUILLON',
+  `soumis_le` datetime DEFAULT NULL,
+  `hors_delai` tinyint(1) NOT NULL DEFAULT 0,
+  `reponses` longtext NOT NULL DEFAULT '{}',
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `idx_report_perimetre` (`perimetre_type`, `perimetre_id`),
+  KEY `idx_report_saison` (`saison`, `type`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `kp_report_submission` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `report_id` int(11) NOT NULL,
+  `numero` smallint(6) NOT NULL,
+  `version_modele` smallint(6) NOT NULL,
+  `reponses` longtext NOT NULL,
+  `donnees_kpi` longtext NOT NULL COMMENT 'Données KPI pré-remplies au moment de la soumission (JSON)',
+  `destinataires` text NOT NULL COMMENT 'Licences des destinataires (JSON)',
+  `submitted_at` datetime NOT NULL,
+  `submitted_by` varchar(8) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uniq_report_numero` (`report_id`, `numero`),
+  CONSTRAINT `fk_submission_report` FOREIGN KEY (`report_id`) REFERENCES `kp_report` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Cumuls de cartons et suspensions (FEATURE_CARD_SUSPENSIONS.md § 4)
+DROP TABLE IF EXISTS `kp_card_suspension`;
+CREATE TABLE `kp_card_suspension` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `saison` char(4) NOT NULL,
+  `section` int(11) NOT NULL COMMENT 'kp_groupe.section de la compétition (décompte par section, S3)',
+  `matric` int(11) unsigned NOT NULL,
+  `carton_id` varchar(32) CHARACTER SET ascii COLLATE ascii_general_ci NOT NULL COMMENT 'kp_match_detail.Id du carton déclencheur',
+  `match_id` int(10) unsigned NOT NULL,
+  `journee_id` int(11) NOT NULL,
+  `code_competition` varchar(12) NOT NULL,
+  `regle` varchar(30) NOT NULL COMMENT 'Règle retenue (App\\Discipline\\SuspensionCatalog)',
+  `regles` text NOT NULL COMMENT 'Toutes les règles déclenchées par ce carton (JSON)',
+  `version_regles` smallint(6) NOT NULL,
+  `decompte` smallint(6) NOT NULL COMMENT 'Décompte de la règle retenue (4e carton de la saison…)',
+  `matchs` smallint(6) NOT NULL COMMENT 'Matchs que ce carton ajoute à la suspension',
+  `matchs_journee` smallint(6) DEFAULT NULL COMMENT 'Total de la journée sportive pour une règle qui ne s''additionne pas sur la journée (S15)',
+  `jury_appel` tinyint(1) NOT NULL DEFAULT 0,
+  `actif` tinyint(1) DEFAULT 1 COMMENT '1 = en vigueur, NULL = annulée',
+  `detectee_le` datetime NOT NULL,
+  `notifiee_le` datetime DEFAULT NULL COMMENT 'Vide si enregistrée en mode --silent',
+  `annulee_le` datetime DEFAULT NULL,
+  `destinataires` text DEFAULT NULL COMMENT 'Licences notifiées (JSON)',
+  `rapport_id` int(11) DEFAULT NULL COMMENT 'Brouillon de rapport de jury d''appel (kp_report)',
+  `equipe_id` int(10) unsigned DEFAULT NULL COMMENT 'Composition où le statut S a été posé (S16)',
+  `statut_avant` char(1) DEFAULT NULL COMMENT 'Statut du joueur avant S, restauré à la levée (S19)',
+  `levee_le` datetime DEFAULT NULL,
+  `levee_par` varchar(8) DEFAULT NULL COMMENT 'Compte qui a levé la suspension (profil 1-2)',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uniq_card_suspension_actif` (`carton_id`, `actif`),
+  KEY `idx_card_suspension_saison` (`saison`, `matric`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Durcissement authentification (AUTH_HARDENING.md § 2.3) : journal des tentatives de login,
@@ -870,15 +965,17 @@ SET FOREIGN_KEY_CHECKS = 1;
 -- ---------------------------------------------------------------- ticket RSF-03 : changer un code compétition
 -- Responsables de compétition (RC), suivis par le renommage d'un code compétition.
 SET FOREIGN_KEY_CHECKS = 0;
+-- kp_rc est une vue sur kp_designation (SQL/migrations/2026-11-23_designations_absorb_kp_rc.sql, ADR-0003).
 DROP TABLE IF EXISTS `kp_rc`;
-CREATE TABLE `kp_rc` (
-  `Id` int(11) NOT NULL AUTO_INCREMENT,
-  `Code_competition` varchar(10) DEFAULT NULL,
-  `Code_saison` varchar(8) NOT NULL,
-  `Ordre` int(11) NOT NULL,
-  `Matric` int(11) UNSIGNED NOT NULL DEFAULT 0,
-  PRIMARY KEY (`Id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_general_ci;
+DROP VIEW IF EXISTS `kp_rc`;
+CREATE OR REPLACE VIEW `kp_rc` AS
+SELECT d.id AS Id,
+       IF(d.perimetre_type = 'NIVEAU', NULL, CONVERT(d.perimetre_id USING utf8mb3) COLLATE utf8mb3_general_ci) AS Code_competition,
+       CONVERT(d.saison USING utf8mb3) COLLATE utf8mb3_general_ci AS Code_saison,
+       d.ordre AS Ordre,
+       d.matric AS Matric
+FROM kp_designation d
+WHERE d.role = 'RC';
 -- Échec provoqué (test d'atomicité) : renommer en TSTFAIL viole cette contrainte au DERNIER UPDATE du renommage
 -- (filtres de mandat), après les compétitions, engagements, journées et RC. Absente de la prod.
 ALTER TABLE `kp_user_mandat` ADD CONSTRAINT `chk_fixture_rename_failure` CHECK (`filtre_competition` NOT LIKE '%|TSTFAIL|%');

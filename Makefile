@@ -63,12 +63,12 @@ app4_npm_install app4_npm_ls app4_npm_clean app4_npm_update app4_npm_add app4_np
 app_wsm_generate_dev app_wsm_generate_preprod app_wsm_generate_prod \
 app_live_generate_dev app_live_generate_preprod app_live_generate_prod \
 backend_npm_install backend_npm_add backend_npm_update backend_npm_ls backend_npm_clean backend_npm_init \
-backend_composer_install backend_composer_update backend_composer_require backend_composer_require_dev backend_composer_dump backend_bash \
+backend_composer_install backend_composer_update backend_composer_require backend_composer_require_dev backend_composer_dump backend_bash api2_bash \
 api2_composer_install api2_composer_update api2_composer_require api2_cache_clear api2_cache_warmup api2_migrations_diff api2_migrations_migrate \
 api2_restart api2_logs api2_logs_errors mercure_generate_secret pdf_tokens_sync gotenberg_logs \
 api2_test api2_test_unit api2_test_integration api2_test_fixtures api2_coverage app2_test app2_coverage app3_coverage app4_coverage ci_scripts_test test db_migrate \
 dev dev_status dev_logs dev_down dev_certs app2_logs app4_logs \
-api2_assets_install api2_jwt_generate_keys api2_match_medals_compute api2_match_medals_sync \
+api2_assets_install api2_jwt_generate_keys api2_match_medals_compute api2_match_medals_sync api2_card_suspensions_sync \
 db_bash \
 backend_worker_status backend_worker_logs backend_worker_restart \
 wordpress_backup wordpress_restore \
@@ -917,6 +917,9 @@ api2_logs_errors: ## Filtre uniquement les erreurs dans les logs d'API2
 		| tail -50 \
 		|| echo "Aucune erreur dans les 2000 dernières lignes"
 
+api2_bash: ## Ouvre un shell bash dans le container API2 (FrankenPHP)
+	$(DOCKER_EXEC_API2) bash
+
 TRAEFIK_CERTS_PATH ?= /home/laurent/Documents/dev/traefik/certs
 
 dev_certs: ## Régénère le certificat mkcert pour les domaines .localhost (supprime les alertes Firefox)
@@ -980,6 +983,11 @@ api2_match_medals_compute: ## Calcule les médailles de match d'une saison avec 
 
 api2_match_medals_sync: ## Met à jour les médailles des matchs validés nouveaux ou modifiés (ce que fait le cron)
 	$(DOCKER_EXEC_API2_NON_INTERACTIVE) php bin/console app:match-medals:sync
+
+# Cumuls de cartons et suspensions (DOC/specs/FEATURE_CARD_SUSPENSIONS.md S13) : ce que fait le cron toutes les 10 min,
+# sur la saison active. silent=1 enregistre sans e-mail ni rapport (mise en service sur une saison en cours).
+api2_card_suspensions_sync: ## Détecte les cumuls de cartons et notifie les nouvelles suspensions (make api2_card_suspensions_sync [season=AAAA] [silent=1])
+	$(DOCKER_EXEC_API2_NON_INTERACTIVE) php bin/console app:card-suspensions:sync $(if $(season),--season=$(season)) $(if $(silent),--silent)
 
 api2_assets_install: ## Installe les assets pour API2
 	@echo "Installation des assets pour API2 (container: $(API2_CONTAINER_NAME))..."

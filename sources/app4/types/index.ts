@@ -109,3 +109,11 @@ export interface PlayerAutocomplete {
   arbitre: string | null
   label: string // Format: "12345 - DUPONT Jean (3512 - Club Name)"
 }
+
+/** Compétition d'une liste à cocher groupée par section (AdminCompetitionChecklist). */
+export interface ChecklistCompetition {
+  code: string
+  libelle: string
+  section: number
+  sectionLabel: string
+}

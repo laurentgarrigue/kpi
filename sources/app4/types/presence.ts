@@ -16,7 +16,7 @@ export interface Player {
 
   // Team/Match composition
   numero: number
-  capitaine: '-' | 'C' | 'E' | 'A' | 'X' // Team: all | Match: -, C, E only
+  capitaine: '-' | 'C' | 'E' | 'A' | 'X' | 'S' // Team: all (S = suspended, profiles 1-2) | Match: -, C, E only
 
   // License info
   origine: string // season of license
@@ -170,7 +170,7 @@ export interface AddPlayerFormData {
 
   // Common
   numero?: number
-  capitaine?: '-' | 'C' | 'E' | 'A' | 'X'
+  capitaine?: '-' | 'C' | 'E' | 'A' | 'X' | 'S'
 
   // Optional referee
   arbitre?: '' | 'REG' | 'IR' | 'NAT' | 'INT' | 'OTM' | 'JO'

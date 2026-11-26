@@ -538,7 +538,7 @@ const formatDate = (dateStr: string) => {
 
             <!-- Certificate -->
             <td class="px-3 py-1 text-sm">
-              <span :class="player.certifCK === 'OUI' ? 'text-success-700' : 'text-danger-600 dark:text-danger-300'">
+              <span :class="player.certifCK === 'OUI' ? 'text-success-700 dark:text-success-300' : 'text-danger-600 dark:text-danger-300'">
                 {{ player.certifCK === 'OUI' ? t('common.yes') : t('common.no') }}
               </span>
             </td>
@@ -561,7 +561,7 @@ const formatDate = (dateStr: string) => {
             <tr
               v-for="player in coaches"
               :key="player.matric"
-              class="hover:bg-header-50 dark:hover:bg-header-800 bg-orange-100/50"
+              class="hover:bg-header-50 dark:hover:bg-header-800 bg-orange-100/50 dark:bg-orange-950/60"
             >
               <td v-if="canEdit" class="px-3 py-1">
                 <input v-model="selectedPlayerIds" type="checkbox" :value="player.matric" class="rounded border-header-300 dark:border-header-700" >
@@ -578,11 +578,19 @@ const formatDate = (dateStr: string) => {
                   {{ getLicenseDisplay(player) }}
                 </NuxtLink>
               </td>
-              <td class="px-3 py-1 text-sm text-header-600 dark:text-header-300">{{ player.numeroClub }}</td>
+              <td class="px-3 py-1 text-sm text-header-600 dark:text-header-300">
+                <NuxtLink
+                  :to="`/clubs?code=${player.numeroClub}`"
+                  class="link-value"
+                  :title="t('teams_page.columns.club')"
+                >
+                  {{ player.numeroClub }}
+                </NuxtLink>
+              </td>
               <td class="px-3 py-1 text-sm text-header-600 dark:text-header-300"><AdminAgeCategory :code="player.categ" :sexe="player.sexe" /></td>
               <td class="px-3 py-1 text-sm text-header-900 dark:text-header-50">{{ player.pagaieLabel }}</td>
               <td class="px-3 py-1 text-sm">
-                <span :class="player.certifCK === 'OUI' ? 'text-success-700' : 'text-danger-600 dark:text-danger-300'">
+                <span :class="player.certifCK === 'OUI' ? 'text-success-700 dark:text-success-300' : 'text-danger-600 dark:text-danger-300'">
                   {{ player.certifCK === 'OUI' ? t('common.yes') : t('common.no') }}
                 </span>
               </td>
@@ -657,7 +665,7 @@ const formatDate = (dateStr: string) => {
           </div>
           <div class="flex items-center gap-2">
             <span class="text-header-600 dark:text-header-300">{{ t('common.certificate') }}:</span>
-            <span :class="player.certifCK === 'OUI' ? 'text-success-700' : 'text-danger-600 dark:text-danger-300'">
+            <span :class="player.certifCK === 'OUI' ? 'text-success-700 dark:text-success-300' : 'text-danger-600 dark:text-danger-300'">
               {{ player.certifCK === 'OUI' ? t('common.yes') : t('common.no') }}
             </span>
           </div>

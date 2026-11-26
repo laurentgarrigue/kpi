@@ -613,9 +613,10 @@ INSERT INTO `kp_competition`
   ('TSTRB', '2998', 'Régionale B', '', '', '', 'N', 'TSTRN', 'CHPT', 'END', NULL),
   ('TSTMU', '2999', 'Multi régionale', '', '', '', 'N', 'TSTMU', 'MULTI', 'ATT', '["TSTRN","TSTRB"]'),
   ('TSTMU', '2998', 'Multi régionale', '', '', '', 'N', 'TSTMU', 'MULTI', 'END', '["TSTRN","TSTRB"]');
-INSERT INTO `kp_rc` (`Id`, `Code_competition`, `Code_saison`, `Ordre`, `Matric`) VALUES
-  (9801, 'TSTRN', '2999', 1, 9511),
-  (9802, 'TSTRN', '2998', 1, 9511);
+-- RC (vue kp_rc sur kp_designation, ADR-0003)
+INSERT INTO `kp_designation` (`id`, `saison`, `role`, `perimetre_type`, `perimetre_id`, `matric`, `club`, `autorite`, `ordre`) VALUES
+  (9821, '2999', 'RC', 'COMPETITION', 'TSTRN', 9511, 'C001', 'CNA', 1),
+  (9822, '2998', 'RC', 'COMPETITION', 'TSTRN', 9511, 'C001', 'CNA', 1);
 INSERT INTO `kp_user_mandat` (`id`, `user_code`, `libelle`, `niveau`, `filtre_saison`, `filtre_competition`, `limitation_equipe_club`, `filtre_journee`, `id_evenement`) VALUES
   (9801, 'TDIV', 'Mandat régional actif', 4, '|2999|', '|TSTRN|TSTRB|', NULL, '', ''),
   (9802, 'TDIV', 'Mandat régional passé', 4, '|2998|', '|TSTRN|TSTRB|', NULL, '', '');
@@ -762,3 +763,101 @@ INSERT INTO `kp_user` (`Code`, `Pwd`, `Identite`, `Mail`, `Tel`, `Fonction`, `Ni
   ('TSCOREP', '', 'Table PCM Test', 'scorep@example.test', '', '', 9, '|PCM|', '|2997|', '', '', NULL, ''),  -- profil 9 : feuille de match, aucune copie
   ('TVIEWP', '', 'Lecteur PCM Test', 'viewp@example.test', '', '', 8, '|PCM|', '|2997|', '', '', NULL, '');  -- profil 8 : lecture seule
 -- ---------------------------------------------------------------- fin copie de composition de match
+
+-- ---------------------------------------------------------------- désignations (FEATURE_DESIGNATIONS.md, ticket 03)
+-- Saison 2998 : NDES nationale (journées 9801, 9802 dans l'événement 9801), REGDES régionale (journée 9803),
+-- équipe 9801 (NDES, club C001). Licenciés 9811 (C001, délégué CNA de l'événement 9801 et compte « 9811 » de
+-- profil 5), 9812 (C002), 9813 (sans club). Compte TSUPER (profil 1), TADMIN (profil 2), TDIV (profil 3).
+INSERT INTO `kp_competition`
+  (`Code`, `Code_saison`, `Code_niveau`, `Libelle`, `BandeauLink`, `LogoLink`, `SponsorLink`, `Bandeau_actif`, `Code_ref`) VALUES
+  ('NDES', '2998', 'NAT', 'Nationale Désignations', '', '', '', 'N', 'NDES'),
+  ('REGDES', '2998', 'REG', 'Régionale Désignations', '', '', '', 'N', 'REGDES');
+INSERT INTO `kp_journee` (`Id`, `Code_competition`, `Code_saison`, `Date_debut`, `Date_fin`, `Nom`, `Lieu`) VALUES
+  (9801, 'NDES', '2998', '2998-03-07', '2998-03-08', 'Étape 1', 'Désiville'),
+  (9802, 'NDES', '2998', '2998-03-07', '2998-03-08', 'Étape 1 bis', 'Désiville'),
+  (9803, 'REGDES', '2998', '2998-04-04', '2998-04-04', 'Régionale', 'Régiville');
+INSERT INTO `kp_evenement` (`Id`, `Libelle`, `Lieu`, `Date_debut`, `Date_fin`, `Publication`, `app`) VALUES
+  (9801, 'Étape Désignations', 'Désiville', '2998-03-07', '2998-03-08', 'N', 'N');
+INSERT INTO `kp_evenement_journee` (`Id_evenement`, `Id_journee`) VALUES (9801, 9801), (9801, 9802);
+INSERT INTO `kp_competition_equipe` (`Id`, `Code_compet`, `Code_saison`, `Libelle`, `Code_club`) VALUES
+  (9801, 'NDES', '2998', 'Désignés Un', 'C001'),
+  (9802, 'NDES', '2998', 'Désignés Deux', 'C002');
+-- Match 9801 de la journée 9801 : arbitre principal 9813 (désigné par sa licence, sans compte), rapports officiels
+INSERT INTO `kp_match` (`Id`, `Id_journee`, `Numero_ordre`, `Date_match`, `Id_equipeA`, `Id_equipeB`, `ScoreA`, `ScoreB`, `Arbitre_principal`, `Matric_arbitre_principal`) VALUES
+  (9801, 9801, 1, '2998-03-07', 9801, 9802, '3', '2', 'DESIGNE Sansclub (9813)', 9813);
+INSERT INTO `kp_licence` (`Matric`, `Origine`, `Nom`, `Prenom`, `Sexe`, `Numero_club`, `Etat`) VALUES
+  (9811, '2998', 'DESIGNE', 'Délégué', 'M', 'C001', 'Actif'),
+  (9812, '2998', 'DESIGNE', 'Arbitre', 'F', 'C002', 'Actif'),
+  (9813, '2998', 'DESIGNE', 'Sansclub', 'M', NULL, 'Actif'),
+  (9814, '2998', 'DESIGNE', 'Profilsept', 'F', 'C003', 'Actif'),   -- compte « 9814 » de profil 7 (mandats générés)
+  (9815, '2998', 'DESIGNE', 'Bureau', 'M', 'C003', 'Actif');        -- compte « 9815 » de profil 2 (bureau CNA)
+INSERT INTO `kp_user` (`Code`, `Pwd`, `Identite`, `Mail`, `Tel`, `Fonction`, `Niveau`, `Filtre_competition`, `Filtre_saison`, `Filtre_competition_sql`, `Filtre_journee`) VALUES
+  ('9811', '', 'Délégué Désigné', 'delegue@example.test', '', '', 5, '|NDES|', '|2998|', '', ''),
+  ('9814', '', 'Profil Sept', 'sept@example.test', '', '', 7, '|NDES|', '|2998|', '', ''),
+  ('9815', '', 'Bureau CNA', 'bureau@example.test', '', '', 2, '', '', '', '');
+INSERT INTO `kp_designation` (`id`, `saison`, `role`, `perimetre_type`, `perimetre_id`, `matric`, `club`, `autorite`, `ordre`) VALUES
+  (9801, '2998', 'DELEGUE_CNA', 'EVENEMENT', '9801', 9811, 'C001', 'CNA', 1);
+-- ---------------------------------------------------------------- fin désignations
+
+-- ---------------------------------------------------------------- cumuls de cartons (FEATURE_CARD_SUSPENSIONS.md)
+-- Consommé par tests/Integration/CardSuspensionsSyncTest.php. Saison 2996, utilisée par ce seul jeu (aucun autre
+-- carton) : NSUS nationale (section 2 ; journée 9961 dans l'événement 9961, journée 9962 hors événement), TSUS en
+-- section Tournoi (4, non couverte). Joueur 9961 : jaune au match 9961, jaune puis noir au match 9962 (même journée),
+-- deux jaunes au match 9964 NON validé, noir au match 9965 (TSUS). Destinataires : RC 9962, bureau CNA 9963 ;
+-- délégué CNA 9964 sur l'événement.
+INSERT INTO `kp_groupe` (`section`, `ordre`, `Code_niveau`, `Groupe`, `Libelle`, `Libelle_en`) VALUES
+  (2, 10, 'NAT', 'TSTSUS', 'Groupe Suspensions', 'Suspensions group'),
+  (4, 10, 'INT', 'TSTSUT', 'Groupe Tournoi Suspensions', 'Suspensions tournament group');
+INSERT INTO `kp_competition`
+  (`Code`, `Code_saison`, `Code_niveau`, `Libelle`, `BandeauLink`, `LogoLink`, `SponsorLink`, `Bandeau_actif`, `Code_ref`, `Code_typeclt`) VALUES
+  ('NSUS', '2996', 'NAT', 'Nationale Suspensions', '', '', '', 'N', 'TSTSUS', 'CHPT'),
+  ('TSUS', '2996', 'INT', 'Tournoi Suspensions', '', '', '', 'N', 'TSTSUT', 'CP');
+INSERT INTO `kp_journee` (`Id`, `Code_competition`, `Code_saison`, `Date_debut`, `Date_fin`, `Nom`, `Lieu`) VALUES
+  (9961, 'NSUS', '2996', '2996-03-07', '2996-03-08', 'Étape 1', 'Susville'),
+  (9962, 'NSUS', '2996', '2996-04-04', '2996-04-04', 'Étape 2', 'Susville'),
+  (9963, 'TSUS', '2996', '2996-05-01', '2996-05-02', 'Tournoi', 'Tourville');
+INSERT INTO `kp_evenement` (`Id`, `Libelle`, `Lieu`, `Date_debut`, `Date_fin`, `Publication`, `app`) VALUES
+  (9961, 'Étape Suspensions', 'Susville', '2996-03-07', '2996-03-08', 'N', 'N');
+INSERT INTO `kp_evenement_journee` (`Id_evenement`, `Id_journee`) VALUES (9961, 9961);
+INSERT INTO `kp_competition_equipe` (`Id`, `Code_compet`, `Code_saison`, `Libelle`, `Code_club`) VALUES
+  (9961, 'NSUS', '2996', 'Suspensions Un', 'C001'),
+  (9962, 'NSUS', '2996', 'Suspensions Deux', 'C002'),
+  (9963, 'TSUS', '2996', 'Tournoi Un', 'C001'),
+  (9964, 'TSUS', '2996', 'Tournoi Deux', 'C002');
+INSERT INTO `kp_match` (`Id`, `Id_journee`, `Numero_ordre`, `Date_match`, `Heure_match`, `Id_equipeA`, `Id_equipeB`, `ScoreA`, `ScoreB`, `Validation`) VALUES
+  (9961, 9961, 1, '2996-03-07', '10:00', 9961, 9962, '2', '1', 'O'),
+  (9962, 9961, 2, '2996-03-07', '14:00', 9962, 9961, '0', '3', 'O'),
+  (9963, 9962, 1, '2996-04-04', '10:00', 9961, 9962, '1', '1', 'O'),
+  (9964, 9962, 2, '2996-04-04', '11:00', 9962, 9961, '0', '0', ''),
+  (9965, 9963, 1, '2996-05-01', '10:00', 9963, 9964, '4', '0', 'O');
+INSERT INTO `kp_match_detail` (`Id`, `Id_match`, `Periode`, `Temps`, `Id_evt_match`, `Competiteur`, `Numero`, `Equipe_A_B`, `date_insert`) VALUES
+  ('sus-9961-01', 9961, 'M1', '00:05:00', 'J', 9961, '5', 'A', '2996-03-07 10:05:00'),
+  ('sus-9962-01', 9962, 'M1', '00:08:00', 'J', 9961, '5', 'B', '2996-03-07 14:02:00'),
+  ('sus-9962-02', 9962, 'M2', '00:04:00', 'D', 9961, '5', 'B', '2996-03-07 14:20:00'),
+  ('sus-9964-01', 9964, 'M1', '00:06:00', 'J', 9961, '5', 'B', '2996-04-04 11:04:00'),
+  ('sus-9964-02', 9964, 'M2', '00:03:00', 'J', 9961, '5', 'B', '2996-04-04 11:18:00'),
+  ('sus-9965-01', 9965, 'M1', '00:07:00', 'D', 9961, '5', 'A', '2996-05-01 10:03:00');
+INSERT INTO `kp_licence` (`Matric`, `Origine`, `Nom`, `Prenom`, `Sexe`, `Numero_club`, `Etat`) VALUES
+  (9961, '2996', 'SUSPENDU', 'Joueur', 'M', 'C001', 'Actif'),
+  (9962, '2996', 'SUSPENSIONS', 'Rc', 'F', 'C002', 'Actif'),
+  (9963, '2996', 'SUSPENSIONS', 'Bureau', 'M', 'C003', 'Actif'),
+  (9964, '2996', 'SUSPENSIONS', 'Délégué', 'F', 'C003', 'Actif');
+INSERT INTO `kp_user` (`Code`, `Pwd`, `Identite`, `Mail`, `Tel`, `Fonction`, `Niveau`, `Filtre_competition`, `Filtre_saison`, `Filtre_competition_sql`, `Filtre_journee`) VALUES
+  ('9962', '', 'RC Suspensions', 'rc-sus@example.test', '', '', 4, '|NSUS|', '|2996|', '', ''),
+  ('9963', '', 'Bureau Suspensions', 'bureau-sus@example.test', '', '', 2, '', '', '', ''),
+  ('9964', '', 'Délégué Suspensions', 'delegue-sus@example.test', '', '', 5, '|NSUS|', '|2996|', '', '');
+INSERT INTO `kp_designation` (`id`, `saison`, `role`, `perimetre_type`, `perimetre_id`, `matric`, `club`, `autorite`, `ordre`) VALUES
+  (9961, '2996', 'RC', 'COMPETITION', 'NSUS', 9962, 'C002', 'CNA', 1),
+  (9962, '2996', 'BUREAU_CNA', 'NIVEAU', 'NATIONAL', 9963, 'C003', 'CNA', 1),
+  (9963, '2996', 'DELEGUE_CNA', 'EVENEMENT', '9961', 9964, 'C003', 'CNA', 1);
+-- Compositions (S16, S17) : le joueur 9961 est capitaine de l'équipe 9961 (A au match 9961, B au match 9962) ;
+-- 9965 joue avec lui.
+INSERT INTO `kp_licence` (`Matric`, `Origine`, `Nom`, `Prenom`, `Sexe`, `Numero_club`, `Etat`) VALUES
+  (9965, '2996', 'COEQUIPIER', 'Joueur', 'M', 'C001', 'Actif');
+INSERT INTO `kp_competition_equipe_joueur` (`Id_equipe`, `Matric`, `Nom`, `Prenom`, `Sexe`, `Categ`, `Numero`, `Capitaine`) VALUES
+  (9961, 9961, 'SUSPENDU', 'Joueur', 'M', 'SEN', 5, 'C'),
+  (9961, 9965, 'COEQUIPIER', 'Joueur', 'M', 'SEN', 7, '-');
+INSERT INTO `kp_match_joueur` (`Id_match`, `Matric`, `Numero`, `Equipe`, `Capitaine`) VALUES
+  (9961, 9961, 5, 'A', 'C'),
+  (9962, 9961, 5, 'B', 'C');
+-- ---------------------------------------------------------------- fin cumuls de cartons

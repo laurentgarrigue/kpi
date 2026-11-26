@@ -9,7 +9,7 @@ use Doctrine\DBAL\Connection;
 class PresenceRepository
 {
     /** Captain first, players, then staff, referees and inactive players (order of the legacy sheets). */
-    private const ROLE_ORDER = "FIELD(IF(j.Capitaine = 'C', '-', IF(j.Capitaine = '', '-', j.Capitaine)), '-', 'E', 'A', 'X')";
+    private const ROLE_ORDER = "FIELD(IF(j.Capitaine = 'C', '-', IF(j.Capitaine = '', '-', j.Capitaine)), '-', 'E', 'A', 'X', 'S')";
 
     public function __construct(private readonly Connection $connection)
     {
