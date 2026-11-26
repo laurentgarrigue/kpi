@@ -30,6 +30,7 @@ final class PdfCatalogTest extends TestCase
             PdfCatalog::CARDS => 'ROLE_ORGANIZER',
             PdfCatalog::SCHEMA => 'ROLE_VIEWER',                         // as the Schema page
             PdfCatalog::CLUB_RANKING => 'ROLE_SUPER_ADMIN',              // PAGE_CLASSEMENT_NATIONAL_CLUBS.md Q-1: profile 1
+            PdfCatalog::RULES_CATALOG => 'ROLE_SUPER_ADMIN',             // FEATURE_RULES_CATALOG_PDF.md RCAT-11
         ];
 
         foreach ($expected as $document => $role) {
@@ -56,5 +57,17 @@ final class PdfCatalogTest extends TestCase
         self::assertTrue(PdfCatalog::isPublicDocument(PdfCatalog::RANKING));
         self::assertTrue(PdfCatalog::isPublicDocument(PdfCatalog::GAMES_GRID));
         self::assertFalse(PdfCatalog::isPublicDocument(PdfCatalog::CLUB_RANKING), 'published by profile 1 as a file, no public route yet');
+        self::assertFalse(PdfCatalog::isPublicDocument(PdfCatalog::RULES_CATALOG), 'RCAT-11');
+    }
+
+    public function testEveryDocumentIsListedOnce(): void
+    {
+        $documents = PdfCatalog::documents();
+
+        self::assertSame(array_values(array_unique($documents)), $documents);
+        self::assertContains(PdfCatalog::RULES_CATALOG, $documents);
+        self::assertContains(PdfCatalog::QRCODES, $documents, 'public only');
+        self::assertSame(['visa' => 'ROLE_ORGANIZER', 'view=birthyear' => 'ROLE_ADMIN', 'category=U21' => 'ROLE_ORGANIZER'], PdfCatalog::optionRolesOf(PdfCatalog::PRESENCE));
+        self::assertSame([], PdfCatalog::optionRolesOf(PdfCatalog::RANKING));
     }
 }

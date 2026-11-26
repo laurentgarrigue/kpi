@@ -13,6 +13,9 @@ describe('canGetAdminPdf (PDF_GOTENBERG.md § 7, PDF-FRONT-04)', () => {
     expect(canGetAdminPdf(3, 'referees-pool')).toBe(false)
     expect(canGetAdminPdf(1, 'club-ranking')).toBe(true) // PAGE_CLASSEMENT_NATIONAL_CLUBS.md Q-1: profile 1 only
     expect(canGetAdminPdf(2, 'club-ranking')).toBe(false)
+    expect(canGetAdminPdf(1, 'rules-catalog')).toBe(true) // FEATURE_RULES_CATALOG_PDF.md RCAT-12
+    expect(canGetAdminPdf(2, 'rules-catalog')).toBe(false)
+    expect(canGetAdminPdf(10, 'rules-catalog')).toBe(false)
   })
 
   it('gives the profile 10 the presence and control sheets only (I1)', () => {
