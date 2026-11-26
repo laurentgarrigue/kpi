@@ -60,6 +60,17 @@ _Avoid_ : badge, trophée ; ne pas confondre avec les médailles du classement (
 Infériorité numérique provoquée par un carton : 2 minutes de jeu levées au premier but adverse, ou jusqu'à la fin du match pour un rouge définitif.
 _Avoid_ : pénalité (seul)
 
+**Journée sportive** :
+Unité « journée » des règles de cartons : une journée (`kp_journee`), sauf les phases d'un tournoi (CP) de mêmes dates et lieu, qui n'en font qu'une.
+_Avoid_ : phase (une phase n'est qu'une partie d'une journée sportive de tournoi)
+
+**Cumul de cartons** :
+Nombre de cartons d'une couleur pris par un licencié sur un match, une journée sportive ou une saison d'une section, compté dans la timeline des matchs validés et comparé aux seuils de l'art. 50 (FEATURE_CARD_SUSPENSIONS.md).
+
+**Suspension** :
+Nombre de matchs, avec ou sans jury d'appel, qu'un cumul de cartons entraîne selon le catalogue de la saison. KPI la constate et la notifie ; il ne la prononce pas.
+_Avoid_ : sanction (décision humaine), exclusion (infériorité numérique pendant le match)
+
 **Arbitre désigné** :
 Arbitre principal ou secondaire d'un match identifié par son numéro de licence, et non par un simple libellé saisi à la main. Seuls les arbitres désignés comptent dans les statistiques d'arbitrage.
 

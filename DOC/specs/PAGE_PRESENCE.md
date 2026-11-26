@@ -247,6 +247,7 @@ Codes d'erreur : `Saison_licence`, `Type_licence`, `Certif`, `Pagaie_couleur`, `
 | `E` | Entraîneur (non joueur) | ❌ Non | ✅ Oui |
 | `A` | Arbitre (non joueur) | ❌ Non | ❌ Non |
 | `X` | Inactif | ❌ Non | ❌ Non |
+| `S` | Suspendu (cumul de cartons, [FEATURE_CARD_SUSPENSIONS.md](FEATURE_CARD_SUSPENSIONS.md) S16–S19) : posé par KPI, donné ou retiré par les profils 1–2 seulement | ❌ Non | ❌ Non |
 
 **Match Mode** (kp_match_joueur.Capitaine):
 

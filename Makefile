@@ -68,7 +68,7 @@ api2_composer_install api2_composer_update api2_composer_require api2_cache_clea
 api2_restart api2_logs api2_logs_errors mercure_generate_secret pdf_tokens_sync gotenberg_logs \
 api2_test api2_test_unit api2_test_integration api2_test_fixtures api2_coverage app2_test app2_coverage app3_coverage app4_coverage ci_scripts_test test db_migrate \
 dev dev_status dev_logs dev_down dev_certs app2_logs app4_logs \
-api2_assets_install api2_jwt_generate_keys api2_match_medals_compute api2_match_medals_sync \
+api2_assets_install api2_jwt_generate_keys api2_match_medals_compute api2_match_medals_sync api2_card_suspensions_sync \
 db_bash \
 backend_worker_status backend_worker_logs backend_worker_restart \
 wordpress_backup wordpress_restore \
@@ -983,6 +983,11 @@ api2_match_medals_compute: ## Calcule les médailles de match d'une saison avec 
 
 api2_match_medals_sync: ## Met à jour les médailles des matchs validés nouveaux ou modifiés (ce que fait le cron)
 	$(DOCKER_EXEC_API2_NON_INTERACTIVE) php bin/console app:match-medals:sync
+
+# Cumuls de cartons et suspensions (DOC/specs/FEATURE_CARD_SUSPENSIONS.md S13) : ce que fait le cron toutes les 10 min,
+# sur la saison active. silent=1 enregistre sans e-mail ni rapport (mise en service sur une saison en cours).
+api2_card_suspensions_sync: ## Détecte les cumuls de cartons et notifie les nouvelles suspensions (make api2_card_suspensions_sync [season=AAAA] [silent=1])
+	$(DOCKER_EXEC_API2_NON_INTERACTIVE) php bin/console app:card-suspensions:sync $(if $(season),--season=$(season)) $(if $(silent),--silent)
 
 api2_assets_install: ## Installe les assets pour API2
 	@echo "Installation des assets pour API2 (container: $(API2_CONTAINER_NAME))..."

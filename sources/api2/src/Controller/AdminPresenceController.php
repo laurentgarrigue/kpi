@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\AgeCategory\AgeCategoryRule;
 use App\AgeCategory\CompositionAgeCategories;
+use App\Discipline\SuspendedStatus;
 use App\Eligibility\PlayerEligibilityChecker;
 use App\Entity\User;
 use App\Service\ActiveSeason;
@@ -122,7 +123,7 @@ class AdminPresenceController extends AbstractController
                     AND s.Saison = ?
                 WHERE cej.Id_equipe = ?
                 ORDER BY
-                    FIELD(IF(cej.Capitaine='C', '-', cej.Capitaine), '-', 'E', 'A', 'X'),
+                    FIELD(IF(cej.Capitaine='C', '-', cej.Capitaine), '-', 'E', 'A', 'X', 'S'),
                     cej.Numero,
                     cej.Nom,
                     cej.Prenom";
@@ -203,6 +204,9 @@ class AdminPresenceController extends AbstractController
         $capitaine = $data['capitaine'] ?? '-';
         $eligibilityLevel = $this->eligibility->levelFor($teamInfo['code_compet'], $teamInfo['code_niveau']);
         $warnings = [];
+        if (SuspendedStatus::denies($user->getEffectiveNiveau(), SuspendedStatus::DEFAULT_STATUS, (string) $capitaine)) {
+            return $this->json(['message' => 'Profile <= 2 required for the suspended status'], Response::HTTP_FORBIDDEN);
+        }
 
         if ($mode === 'create') {
             // Create new non-licensed player (profile <= 4 or the scrutineer)
@@ -356,6 +360,17 @@ class AdminPresenceController extends AbstractController
 
         if (empty($updateData)) {
             return $this->json(['message' => 'No fields to update'], Response::HTTP_BAD_REQUEST);
+        }
+
+        // Suspended status (S): given or removed by profiles 1-2 only, FEATURE_CARD_SUSPENSIONS.md S18
+        if (isset($updateData['Capitaine'])) {
+            $previousStatus = $this->connection->fetchOne(
+                'SELECT Capitaine FROM kp_competition_equipe_joueur WHERE Id_equipe = ? AND Matric = ?',
+                [$teamId, $matric]
+            );
+            if ($previousStatus !== false && SuspendedStatus::denies($user->getEffectiveNiveau(), (string) $previousStatus, (string) $updateData['Capitaine'])) {
+                return $this->json(['message' => 'Profile <= 2 required for the suspended status'], Response::HTTP_FORBIDDEN);
+            }
         }
 
         // Eligibility rules on status change, see App\Eligibility\PlayerEligibilityRules
@@ -913,15 +928,14 @@ class AdminPresenceController extends AbstractController
             return $this->json(['message' => "Team {$teamCode} not assigned to this match"], Response::HTTP_BAD_REQUEST);
         }
 
-        // Copy from kp_competition_equipe_joueur (excluding X and A statuses)
+        // Copy from kp_competition_equipe_joueur (excluding A, X and S statuses, FEATURE_CARD_SUSPENSIONS.md S17)
         // Only include players whose Matric exists in kp_licence (FK constraint on kp_match_joueur)
         $sql = "REPLACE INTO kp_match_joueur (Id_match, Matric, Numero, Equipe, Capitaine)
                 SELECT ?, cej.Matric, cej.Numero, ?, cej.Capitaine
                 FROM kp_competition_equipe_joueur cej
                 INNER JOIN kp_licence l ON l.Matric = cej.Matric
                 WHERE cej.Id_equipe = ?
-                AND cej.Capitaine <> 'X'
-                AND cej.Capitaine <> 'A'";
+                AND cej.Capitaine NOT IN (" . SuspendedStatus::offMatchSheetSql() . ")";
 
         $this->connection->executeStatement($sql, [$matchId, $teamCode, $teamId]);
 
@@ -1450,7 +1464,7 @@ class AdminPresenceController extends AbstractController
     }
 
     /**
-     * Team presence sheet players and staff (E), not referee (A) nor inactive (X), with a licence (FK of
+     * Team presence sheet players and staff (E), not referee (A), inactive (X) nor suspended (S), with a licence (FK of
      * kp_match_joueur), not yet in the match composition of the team: the same players as the initialization.
      *
      * @return list<array<string, mixed>>
@@ -1462,7 +1476,7 @@ class AdminPresenceController extends AbstractController
              FROM kp_competition_equipe_joueur cej
              INNER JOIN kp_licence l ON l.Matric = cej.Matric
              WHERE cej.Id_equipe = ?
-             AND cej.Capitaine NOT IN ('A', 'X')
+             AND cej.Capitaine NOT IN (" . SuspendedStatus::offMatchSheetSql() . ")
              AND cej.Matric NOT IN (SELECT mj.Matric FROM kp_match_joueur mj WHERE mj.Id_match = ? AND mj.Equipe = ?)
              ORDER BY cej.Numero, cej.Nom, cej.Prenom",
             [$teamId, $matchId, $teamCode]

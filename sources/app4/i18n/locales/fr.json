@@ -69,7 +69,8 @@
     "medals": "Médailles",
     "designations": "Désignations",
     "reports": "Rapports",
-    "club_ranking": "Classement des clubs"
+    "club_ranking": "Classement des clubs",
+    "card_suspensions": "Suspensions"
   },
   "profile": "Profil",
   "logout": "Déconnexion",
@@ -1463,7 +1464,8 @@
     "regional_control": "Contrôle régional",
     "regional_validation_warning": "Compétition régionale : licence compétition, certificat et pagaie jaune vérifiés (alertes, sans blocage)",
     "licence_not_competition": "Non compét.",
-    "paddle_none": "aucune"
+    "paddle_none": "aucune",
+    "status_suspended": "Suspendu"
   },
   "gamedays": {
     "display": {
@@ -4011,5 +4013,50 @@
     "regular_code": "Saison régulière",
     "no_publication": "Aucune publication pour cette saison.",
     "version": "Publication {n}"
+  },
+  "card_suspensions": {
+    "title": "Suspensions",
+    "forbidden": "Page réservée aux profils 1 et 2.",
+    "intro": "Suspensions détectées par les cumuls de cartons de la saison {season} (article 50). KPI constate le cumul ; la décision reste à la commission et au jury d'appel.",
+    "filter": {
+      "state": "État",
+      "search": "Joueur ou licence"
+    },
+    "state": {
+      "ACTIVE": "En vigueur",
+      "LIFTED": "Levées",
+      "CANCELLED": "Annulées",
+      "ALL": "Toutes"
+    },
+    "empty": "Aucune suspension.",
+    "column": {
+      "player": "Joueur",
+      "team": "Équipe",
+      "match": "Match",
+      "rule": "Règle",
+      "suspension": "Suspension",
+      "state": "État",
+      "actions": "Actions"
+    },
+    "match": "n° {number} du {date}",
+    "tally": "{tally}e",
+    "matches": {
+      "one": "1 match",
+      "many": "{matches} matchs",
+      "more": "{matches} de plus, {total} au total pour la journée",
+      "none": "aucun de plus, {total} au total pour la journée"
+    },
+    "appeal_jury": "+ jury d'appel",
+    "lifted": "Levée le {date} par {by}",
+    "cancelled": "Annulée le {date}",
+    "not_notified": "non notifiée (reprise silencieuse)",
+    "lift": "Lever",
+    "report": "Rapport",
+    "lift_title": "Lever la suspension ?",
+    "lift_message": "Lever la suspension de {name} ? Il retrouvera son statut d'avant dans la feuille de présence de son équipe.",
+    "rules": {
+      "title": "Règles de la saison",
+      "none": "Aucune règle pour cette saison."
+    }
   }
 }

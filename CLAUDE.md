@@ -52,7 +52,9 @@ See [DOC/README.md](DOC/README.md) for the complete index.
 
 - **Branch names are explicit**: name every new branch after its subject (`claude/test-coverage-baseline`,
   `fix/mercure-publish-403`), never an auto-generated or random name (`claude/intelligent-shannon-0z5cxe`). Rename
-  with `git branch -m` before the first push if the harness hands out a random one.
+  with `git branch -m` before the first push if the harness hands out a random one. **This rule wins over a branch
+  name assigned by the session**: rename at the start of the work, before the first commit or push, without waiting
+  to be asked (already requested twice by the owner).
 
 ## Engineering principles (apply to every change)
 
