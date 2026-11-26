@@ -105,3 +105,10 @@ Chaque critère donne lieu à au moins un test nommé d'après son identifiant.
   `FormRules`, `JournalCategories`) : règles techniques, pas soumises au bureau CNA. Ils pourront rejoindre le
   document avec un descripteur.
 - Édition des valeurs depuis le PDF ou app4 : changer une règle reste une PR sur le catalogue et ses tests.
+
+## 7. Décisions (validées le 2026-11-26)
+
+- **D1** : contenu des catalogues en français uniquement ; `lang=en` ne traduit que le titre, le sommaire et le cartouche.
+- **D2** : les catalogues d'affichage public, éditorial et journal restent hors du document (§ 6).
+- **D3** : app4 tient sa propre liste des catalogues (`RULE_CATALOGS`, `utils/pdf.ts`), à garder alignée sur les
+  descripteurs d'api2 (`RuleCatalogs`).
