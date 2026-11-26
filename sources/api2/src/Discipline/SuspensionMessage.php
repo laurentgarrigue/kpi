@@ -11,7 +11,8 @@ final class SuspensionMessage
 
     /**
      * @param array<string, mixed> $context    CardSuspensionRepository::context()
-     * @param list<SuspensionRule> $otherRules règles déclenchées par le même carton, non retenues (S8)
+     * @param list<SuspensionRule> $otherRules   règles déclenchées par le même carton, non retenues (S8)
+     * @param int|null             $gamedayTotal total de la journée sportive d'une règle « au total » (S15)
      */
     public function __construct(
         private readonly int $matric,
@@ -24,6 +25,7 @@ final class SuspensionMessage
         private readonly bool $appealJury,
         private readonly array $otherRules = [],
         private readonly ?string $reportLink = null,
+        private readonly ?int $gamedayTotal = null,
     ) {
     }
 
@@ -107,8 +109,18 @@ final class SuspensionMessage
 
     private function suspensionLabel(): string
     {
-        $label = $this->matches === 1 ? '1 match (le match suivant)' : sprintf('%d matchs', $this->matches);
+        $label = self::matchesLabel($this->matches);
+        if ($this->gamedayTotal !== null && $this->gamedayTotal !== $this->matches) {
+            $label = $this->matches === 0
+                ? sprintf('aucun match de plus, %d matchs au total pour la journée', $this->gamedayTotal)
+                : sprintf('%d de plus, soit %d matchs au total pour la journée', $this->matches, $this->gamedayTotal);
+        }
 
         return $this->appealJury ? $label . " + jury d'appel" : $label;
+    }
+
+    private static function matchesLabel(int $matches): string
+    {
+        return $matches === 1 ? '1 match (le match suivant)' : sprintf('%d matchs', $matches);
     }
 }

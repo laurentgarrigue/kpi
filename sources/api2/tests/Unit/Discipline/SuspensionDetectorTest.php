@@ -90,12 +90,43 @@ final class SuspensionDetectorTest extends TestCase
         ]);
 
         self::assertSame(['BLACK_GAME', 'BLACK_GAMEDAY', 'BLACK_SEASON', 'BLACK_SEASON'], array_map(static fn (DetectedSuspension $s): string => $s->rule->code, $found));
-        self::assertSame([2, 3, 4, 4], array_map(static fn (DetectedSuspension $s): int => $s->matches, $found));
+        // 3 matchs AU TOTAL pour la journée d1 (S15) : le 2e noir n'ajoute qu'un match ; d2 et d3 sont d'autres journées
+        self::assertSame([2, 1, 4, 4], array_map(static fn (DetectedSuspension $s): int => $s->matches, $found));
+        self::assertSame([2, 3, 4, 4], array_map(static fn (DetectedSuspension $s): ?int => $s->gamedayTotal, $found));
         self::assertSame(['BLACK_GAME', 'BLACK_GAMEDAY'], $found[1]->ruleCodes());
         self::assertSame(['BLACK_GAME', 'BLACK_SEASON'], $found[2]->ruleCodes());
         foreach ($found as $suspension) {
             self::assertTrue($suspension->appealJury);
         }
+    }
+
+    public function testSus18BlackCardSuspensionsOfTheSameGamedayDoNotAddUp(): void
+    {
+        $found = $this->detect([
+            $this->card(CardColor::Black, game: 1, day: 'd1'),
+            $this->card(CardColor::Black, game: 2, day: 'd1'),
+            $this->card(CardColor::Black, game: 3, day: 'd1'),
+            $this->card(CardColor::Black, game: 4, day: 'd1'),
+        ]);
+
+        // 2, puis 3 au total, puis le 3e noir de la saison porte la journée à 4, le 4e ne la porte pas plus haut
+        self::assertSame([2, 3, 4, 4], array_map(static fn (DetectedSuspension $s): ?int => $s->gamedayTotal, $found));
+        self::assertSame([2, 1, 1, 0], array_map(static fn (DetectedSuspension $s): int => $s->matches, $found));
+        foreach ($found as $suspension) {
+            self::assertTrue($suspension->appealJury); // chaque noir reste soumis au jury d'appel
+        }
+    }
+
+    public function testYellowAndRedSuspensionsOfTheSameGamedayStillAddUp(): void
+    {
+        $found = $this->detect([
+            $this->card(CardColor::Yellow, game: 1, day: 'd1'),
+            $this->card(CardColor::Yellow, game: 2, day: 'd1'),
+            $this->card(CardColor::Red, game: 2, day: 'd1'),
+        ]);
+
+        self::assertSame([1, 1], array_map(static fn (DetectedSuspension $s): int => $s->matches, $found));
+        self::assertSame([null, null], array_map(static fn (DetectedSuspension $s): ?int => $s->gamedayTotal, $found));
     }
 
     public function testSus08OnlyTheNationalSectionIsCountedAndTheOthersDoNotAddToIt(): void

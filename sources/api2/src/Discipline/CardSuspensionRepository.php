@@ -73,6 +73,7 @@ final class CardSuspensionRepository
             'version_regles' => $catalogVersion,
             'decompte' => $suspension->tally,
             'matchs' => $suspension->matches,
+            'matchs_journee' => $suspension->gamedayTotal,
             'jury_appel' => (int) $suspension->appealJury,
             'detectee_le' => $now,
         ]);
@@ -157,6 +158,7 @@ final class CardSuspensionRepository
             'catalogVersion' => (int) $row['version_regles'],
             'tally' => (int) $row['decompte'],
             'matches' => (int) $row['matchs'],
+            'gamedayTotal' => $row['matchs_journee'] === null ? null : (int) $row['matchs_journee'],
             'appealJury' => (bool) $row['jury_appel'],
             'detectedAt' => $row['detectee_le'],
             'notifiedAt' => $row['notifiee_le'],

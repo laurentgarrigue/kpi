@@ -41,6 +41,18 @@ final class SuspensionMessageTest extends TestCase
         self::assertStringContainsString('https://app4.test/reports/7', $body);
     }
 
+    public function testSus18ASecondBlackCardOfTheDayGivesTheIncreaseAndTheGamedayTotal(): void
+    {
+        $more = new SuspensionMessage(9961, self::CONTEXT, CardColor::Black, $this->rule('BLACK_GAMEDAY'), 2, 2, 1, true, gamedayTotal: 3);
+        self::assertStringContainsString("Suspension : 1 de plus, soit 3 matchs au total pour la journée + jury d'appel", $more->body());
+
+        $none = new SuspensionMessage(9961, self::CONTEXT, CardColor::Black, $this->rule('BLACK_SEASON'), 2, 4, 0, true, gamedayTotal: 4);
+        self::assertStringContainsString("Suspension : aucun match de plus, 4 matchs au total pour la journée + jury d'appel", $none->body());
+
+        $first = new SuspensionMessage(9961, self::CONTEXT, CardColor::Black, $this->rule('BLACK_GAME'), 2, 1, 2, true, gamedayTotal: 2);
+        self::assertStringContainsString("Suspension : 2 matchs + jury d'appel", $first->body());
+    }
+
     public function testTheCancellationMailNamesTheCancelledSuspension(): void
     {
         $message = new SuspensionMessage(9961, self::CONTEXT, CardColor::Black, $this->rule('BLACK_GAME'), 2, 1, 2, true);

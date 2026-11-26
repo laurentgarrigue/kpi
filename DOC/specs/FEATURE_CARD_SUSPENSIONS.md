@@ -1,6 +1,6 @@
 # Spécification - Cumuls de cartons, suspensions et notifications
 
-## Statut : 🚧 EN COURS (2026-11-26) — détection, notifications et brouillon de jury livrés ; décisions du 26/11 appliquées (§ 10) ; affichage à étudier (§ 8)
+## Statut : 🚧 EN COURS (2026-11-26) — détection, notifications et brouillon de jury livrés ; décisions du 26/11 appliquées (§ 10, S15) ; affichage à étudier (§ 8)
 
 **Issue** : [laurentgarrigue/kpi#424](https://github.com/laurentgarrigue/kpi/issues/424)
 **Décisions d'architecture** : [ADR-0004](../developer/reference/adr/0004-regles-metier-en-catalogues-api2.md) (catalogue en
@@ -61,6 +61,7 @@ suspension, il est traité à part (§ 9).
 | S11 | Correction de la feuille | Quand un carton déclencheur disparaît ou ne déclenche plus la même suspension (match dévalidé, carton supprimé ou modifié, ordre changé), la suspension est **annulée** (conservée, datée) et ses destinataires reçoivent un e-mail d'annulation ; la nouvelle situation est détectée et notifiée comme une nouvelle suspension. |
 | S12 | Jury d'appel | Une suspension « jury d'appel » ouvre un **rapport de jury d'appel en brouillon** (catalogue des rapports, type `JURY_APPEL`) sur l'événement de la journée du match, ou sur la journée hors événement. Auteur : le délégué CNA effectif de la journée (président du jury, D27), saisi par `KPI` ; sans délégué, seuls les profils 1–2 le reprennent. Motif, match concerné et faits sont pré-remplis ; la composition du jury l'est par le moteur des rapports. La notification rappelle le brouillon et donne son lien. Une suspension annulée ne supprime pas le rapport. |
 | S13 | Déclenchement | Commande `app:card-suspensions:sync` lancée **par cron toutes les 10 minutes** sur la saison active (comme les médailles). `--season=AAAA` traite une autre saison ; `--silent` enregistre sans e-mail ni rapport (reprise d'une saison en cours lors de la mise en service). |
+| S15 | Cartons noirs d'une même journée | Sur une journée sportive, les suspensions des cartons noirs **ne s'additionnent pas** : la journée vaut la suspension la plus lourde atteinte (2 au 1er noir, **3 au total** au 2e, 4 au total si le 3e noir de la saison tombe ce jour-là). Chaque nouveau noir ne notifie que la différence (éventuellement aucun match de plus) et reste soumis au jury d'appel. Les jaunes et rouges, eux, s'additionnent (« chaque carton en plus », § 2). Décision du 2026-11-26. |
 | S14 | Consultation | `GET /admin/card-suspensions?season=` (profils 1–2) : suspensions de la saison, actives et annulées, et règles de la version en vigueur. |
 
 ## 4. Données
@@ -75,7 +76,8 @@ Table `kp_card_suspension` (migration `SQL/migrations/2026-11-25_card_suspension
 | `match_id`, `journee_id`, `code_competition` | Match déclencheur et son périmètre |
 | `regle`, `regles` | Règle retenue ; toutes les règles déclenchées par ce carton (JSON, S8) |
 | `version_regles` | Version du catalogue appliquée |
-| `matchs`, `jury_appel` | Suspension retenue |
+| `matchs`, `jury_appel` | Matchs que ce carton ajoute à la suspension ; jury d'appel |
+| `matchs_journee` | Total de la journée sportive pour les cartons noirs (S15), vide sinon |
 | `actif` | `1` pour la suspension en vigueur, `NULL` une fois annulée ; unicité `(carton_id, actif)` : une seule suspension active par carton |
 | `detectee_le`, `notifiee_le`, `annulee_le` | Cycle de vie (S10, S11) ; `notifiee_le` reste vide en mode `--silent` |
 | `destinataires` | Licences notifiées (JSON), reprises pour l'annulation |
@@ -118,6 +120,8 @@ Les tests portent le code du critère dans leur nom.
   `YELLOW_RED_SEASON`.
 - **SUS-07** — Étant donné un carton noir, alors `BLACK_GAME` : 2 matchs + jury d'appel ; le 2e carton noir de la
   journée retient `BLACK_GAMEDAY` (3 matchs) et liste `BLACK_GAME` ; le 3e de la saison retient `BLACK_SEASON` (4 matchs).
+- **SUS-18** — Étant donné 4 cartons noirs dans la même journée sportive, alors les totaux de la journée sont 2, 3, 4, 4
+  et les matchs ajoutés 2, 1, 1, 0 ; chacun garde le jury d'appel ; l'e-mail donne l'ajout et le total (S15).
 - **SUS-08** — Étant donné 3 cartons jaunes en section Nationale et 4 en section Régionale, alors rien ; un 4e jaune
   en Nationale déclenche `YELLOW_RED_SEASON` (S3, S4).
 - **SUS-09** — Étant donné un carton qui déclenche `YELLOW_RED_GAMEDAY` et `YELLOW_RED_SEASON`, alors une seule
@@ -174,12 +178,12 @@ Cas où un même carton atteint plusieurs règles (S8) :
 | Carton | Règles atteintes | Retenu | Sans non-cumul |
 |---|---|---|---|
 | Jaune ou rouge qui est à la fois le 2e match avec carton de la journée (ou un carton en plus) et un multiple de 4 sur la saison | `YELLOW_RED_GAMEDAY` + `YELLOW_RED_SEASON` | 1 match | 2 matchs |
-| 2e noir de la journée (ou un noir en plus), moins de 3 noirs sur la saison | `BLACK_GAME` + `BLACK_GAMEDAY` | 3 matchs + jury | 5 matchs |
+| 2e noir de la journée (ou un noir en plus), moins de 3 noirs sur la saison | `BLACK_GAME` + `BLACK_GAMEDAY` | 3 matchs + jury (au total pour la journée, S15) | 5 matchs |
 | 3e noir de la saison (ou un noir en plus), seul noir de sa journée | `BLACK_GAME` + `BLACK_SEASON` | 4 matchs + jury | 6 matchs |
 | 3e noir de la saison (ou un noir en plus), 2e noir de sa journée (ou plus) | `BLACK_GAME` + `BLACK_GAMEDAY` + `BLACK_SEASON` | 4 matchs + jury | 9 matchs |
 
-Un carton vert n'atteint jamais qu'une règle. Deux cartons différents donnent deux suspensions, qui s'ajoutent.
+Un carton vert n'atteint jamais qu'une règle.
 
-**Question ouverte** : sur deux cartons noirs de la même journée, KPI notifie aujourd'hui 2 matchs (1er noir) puis
-3 matchs (2e noir), soit 5 matchs au total. Le règlement veut-il plutôt 3 matchs **au total** pour la journée (le 2e
-noir porte la suspension de 2 à 3) ? Même question pour le 3e noir de la saison (4 matchs en plus, ou 4 au total).
+Deux cartons différents donnent deux suspensions. Les jaunes et rouges s'additionnent ; les noirs d'une même journée
+sportive ne s'additionnent pas : **3 matchs au total pour la journée** (S15, décision du 2026-11-26). Le 3e noir de la
+saison tombé un autre jour ajoute ses 4 matchs.

@@ -74,7 +74,8 @@ final class CardSuspensionService
     /** @param array<string, mixed> $row */
     private static function unchanged(array $row, DetectedSuspension $suspension): bool
     {
-        return $row['regle'] === $suspension->rule->code && (int) $row['matchs'] === $suspension->matches && (bool) $row['jury_appel'] === $suspension->appealJury;
+        return $row['regle'] === $suspension->rule->code && (int) $row['matchs'] === $suspension->matches
+            && ($row['matchs_journee'] === null ? null : (int) $row['matchs_journee']) === $suspension->gamedayTotal && (bool) $row['jury_appel'] === $suspension->appealJury;
     }
 
     private function notify(int $id, string $season, DetectedSuspension $suspension, string $now): void
@@ -93,6 +94,7 @@ final class CardSuspensionService
             $suspension->appealJury,
             array_values(array_filter($suspension->rules, static fn (SuspensionRule $rule): bool => $rule !== $suspension->rule)),
             $reportId === null ? null : rtrim($this->app4Url, '/') . '/reports/' . $reportId,
+            $suspension->gamedayTotal,
         );
         $recipients = $this->recipients($card->matchId, $season);
         $this->send($recipients, $message->subject(), $message->body());
@@ -120,6 +122,7 @@ final class CardSuspensionService
             (int) $row['decompte'],
             (int) $row['matchs'],
             (bool) $row['jury_appel'],
+            gamedayTotal: $row['matchs_journee'] === null ? null : (int) $row['matchs_journee'],
         );
         $recipients = array_map('intval', json_decode((string) ($row['destinataires'] ?? '[]'), true, 512, JSON_THROW_ON_ERROR) ?? []);
         $this->send($recipients, $message->cancellationSubject(), $message->cancellationBody());
@@ -185,7 +188,8 @@ final class CardSuspensionService
         $teams = sprintf('%s - %s', $context['team_a'] ?? '?', $context['team_b'] ?? '?');
         try {
             return $this->reportService->openSystemDraft(ReportTypeCatalog::JURY_APPEL, $scope, $scopeId, $season, $delegate?->matric, [
-                'reason' => sprintf('Suspension de %d matchs + jury d\'appel : %s, licence %d (%s).', $suspension->matches, $context['player'] ?? '', $suspension->card->matric, $suspension->rule->labelFr),
+                'reason' => sprintf('Suspension de %d matchs%s + jury d\'appel : %s, licence %d (%s).', $suspension->gamedayTotal ?? $suspension->matches,
+                    $suspension->gamedayTotal === null ? '' : ' au total pour la journée', $context['player'] ?? '', $suspension->card->matric, $suspension->rule->labelFr),
                 'matches' => [['number' => (string) ($context['Numero_ordre'] ?? ''), 'teams' => $teams]],
                 'facts' => sprintf('Carton %s pris par %s (licence %d) au match n° %s du %s, %s. Règles atteintes : %s.',
                     $suspension->card->color->labelFr(), $context['player'] ?? '', $suspension->card->matric, $context['Numero_ordre'] ?? '', $context['Date_match'] ?? '', $teams,

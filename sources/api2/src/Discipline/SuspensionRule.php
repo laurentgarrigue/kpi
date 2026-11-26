@@ -9,6 +9,8 @@ final class SuspensionRule
      * @param list<CardColor> $cards         couleurs comptées
      * @param bool            $distinctGames le seuil compte des matchs différents, pas des cartons (« 2 jaunes ou
      *                                       rouges dans des matchs différents d'une journée »)
+     * @param bool            $gamedayTotal  sur une même journée sportive, les suspensions de ces règles ne
+     *                                       s'additionnent pas : la journée vaut la plus lourde (S15)
      */
     public function __construct(
         public readonly string $code,
@@ -21,6 +23,7 @@ final class SuspensionRule
         public readonly int $matches,
         public readonly bool $appealJury,
         public readonly bool $distinctGames = false,
+        public readonly bool $gamedayTotal = false,
     ) {
     }
 
@@ -41,6 +44,7 @@ final class SuspensionRule
             'threshold' => $this->threshold,
             'repeat' => $this->repeat->value,
             'distinctGames' => $this->distinctGames,
+            'gamedayTotal' => $this->gamedayTotal,
             'matches' => $this->matches,
             'appealJury' => $this->appealJury,
         ];

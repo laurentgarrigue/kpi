@@ -114,6 +114,7 @@ final class CardSuspensionsSyncTest extends ApiTestCase
         self::assertSame(['BLACK_GAME', 'YELLOW_RED_GAMEDAY'], array_column($list['suspensions'], 'rule'));
         self::assertSame('SUSPENDU Joueur', $list['suspensions'][0]['name']);
         self::assertSame('ACTIVE', $list['suspensions'][0]['state']);
+        self::assertSame([2, null], array_column($list['suspensions'], 'gamedayTotal'));
         $this->requestAs('TDIV', 'GET', '/admin/card-suspensions?season=' . self::SEASON, expectedStatus: 403);
         $this->requestAs('TADMIN', 'GET', '/admin/card-suspensions?season=abc', expectedStatus: 400);
     }

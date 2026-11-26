@@ -39,11 +39,12 @@ final class SuspensionCatalogTest extends TestCase
         $black = $array['rules'][3];
         self::assertSame(
             ['code' => 'BLACK_GAME', 'labelFr' => '1 carton noir dans un match', 'labelEn' => '1 black card in a game',
-                'cards' => ['D'], 'scope' => 'GAME', 'threshold' => 1, 'repeat' => 'EVERY_CARD_AFTER', 'distinctGames' => false,
+                'cards' => ['D'], 'scope' => 'GAME', 'threshold' => 1, 'repeat' => 'EVERY_CARD_AFTER', 'distinctGames' => false, 'gamedayTotal' => true,
                 'matches' => 2, 'appealJury' => true],
             $black,
         );
         self::assertSame(['J', 'R'], $array['rules'][1]['cards']);
         self::assertTrue($array['rules'][1]['distinctGames']);
+        self::assertFalse($array['rules'][1]['gamedayTotal']);
     }
 }

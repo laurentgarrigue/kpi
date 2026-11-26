@@ -21,6 +21,8 @@ final class SuspensionDetector
         $tallies = [];
         /** @var array<string, array<int, true>> $games */
         $games = [];
+        /** @var array<string, int> $gamedayTotals suspension déjà notifiée par journée, pour les règles « au total » */
+        $gamedayTotals = [];
         $found = [];
         foreach ($cards as $card) {
             if (!$catalog->coversSection($card->section)) {
@@ -40,15 +42,18 @@ final class SuspensionDetector
                 }
             }
             if ($triggered !== []) {
-                $found[] = self::suspension($card, $triggered);
+                $found[] = self::suspension($card, $triggered, $gamedayTotals);
             }
         }
 
         return $found;
     }
 
-    /** @param non-empty-list<array{SuspensionRule, int}> $triggered */
-    private static function suspension(Card $card, array $triggered): DetectedSuspension
+    /**
+     * @param non-empty-list<array{SuspensionRule, int}> $triggered
+     * @param array<string, int>                          $gamedayTotals
+     */
+    private static function suspension(Card $card, array $triggered, array &$gamedayTotals): DetectedSuspension
     {
         [$retained, $tally] = $triggered[0];
         foreach ($triggered as [$rule, $ruleTally]) {
@@ -57,14 +62,25 @@ final class SuspensionDetector
             }
         }
         $rules = array_column($triggered, 0);
+        $matches = $retained->matches;
+        $gamedayTotal = null;
+        if ($retained->gamedayTotal) {
+            // S15 : sur la journée, le total est la suspension la plus lourde ; ce carton n'ajoute que la différence
+            $key = implode('|', [$card->section, $card->matric, $card->gamedayKey]);
+            $already = $gamedayTotals[$key] ?? 0;
+            $gamedayTotal = max($already, $retained->matches);
+            $matches = $gamedayTotal - $already;
+            $gamedayTotals[$key] = $gamedayTotal;
+        }
 
         return new DetectedSuspension(
             $card,
             $retained,
             $rules,
             $tally,
-            $retained->matches,
+            $matches,
             array_filter($rules, static fn (SuspensionRule $rule): bool => $rule->appealJury) !== [],
+            $gamedayTotal,
         );
     }
 }

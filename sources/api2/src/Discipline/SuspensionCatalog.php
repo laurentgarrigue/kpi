@@ -76,11 +76,11 @@ final class SuspensionCatalog
             new SuspensionRule('YELLOW_RED_SEASON', '4 cartons jaunes ou rouges dans la saison', '4 yellow or red cards in the season',
                 $yellowRed, TallyScope::Season, 4, Repeat::EveryMultiple, 1, false),
             new SuspensionRule('BLACK_GAME', '1 carton noir dans un match', '1 black card in a game',
-                [CardColor::Black], TallyScope::Game, 1, Repeat::EveryCardAfter, 2, true),
+                [CardColor::Black], TallyScope::Game, 1, Repeat::EveryCardAfter, 2, true, gamedayTotal: true),
             new SuspensionRule('BLACK_GAMEDAY', '2 cartons noirs dans une journée', '2 black cards in a gameday',
-                [CardColor::Black], TallyScope::Gameday, 2, Repeat::EveryCardAfter, 3, true),
+                [CardColor::Black], TallyScope::Gameday, 2, Repeat::EveryCardAfter, 3, true, gamedayTotal: true),
             new SuspensionRule('BLACK_SEASON', '3 cartons noirs dans la saison', '3 black cards in the season',
-                [CardColor::Black], TallyScope::Season, 3, Repeat::EveryCardAfter, 4, true),
+                [CardColor::Black], TallyScope::Season, 3, Repeat::EveryCardAfter, 4, true, gamedayTotal: true),
         ]);
     }
 }
