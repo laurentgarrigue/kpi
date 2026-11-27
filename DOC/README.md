@@ -130,6 +130,7 @@ nouveau site public app3, avec leurs critères d'acceptation. Index et statut pa
 - **[LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md](developer/in-progress/LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md)** - Refonte du scoring live : stratégie, décisions actées et plan en 9 lots (point de situation en §0)
 - **[SCORING_ROLLOUT_CHECKLIST.md](developer/in-progress/SCORING_ROLLOUT_CHECKLIST.md)** - Scoring live : checklist de déploiement — remise à niveau dev, porte de validation, tests fonctionnels par lot, preprod/prod
 - **[SCORING_SHOTCLOCK_REMOTE_DISPLAYS_STUDY.md](developer/in-progress/SCORING_SHOTCLOCK_REMOTE_DISPLAYS_STUDY.md)** - Étude : afficheurs de chronomètre de tir déportés (aide à la décision)
+- **[SCORING_EXTENDED_STATS_STUDY.md](developer/in-progress/SCORING_EXTENDED_STATS_STUDY.md)** - Étude : statistiques de jeu étendues (possession, passes, tirs, arrêts, interceptions) sans impacter la table de marque
 - **[AUTH_HARDENING.md](developer/in-progress/AUTH_HARDENING.md)** - Durcissement de l'authentification : plan par phases (1a, 1b, 2 livrées ; appareils et TOTP à venir)
 - **[AUTH_HARDENING_ROLLOUT_CHECKLIST.md](developer/in-progress/AUTH_HARDENING_ROLLOUT_CHECKLIST.md)** - Durcissement de l'authentification : checklist de déploiement par phase
 - **[ROADMAP_KPI.md](developer/in-progress/ROADMAP_KPI.md)** - Feuille de route
