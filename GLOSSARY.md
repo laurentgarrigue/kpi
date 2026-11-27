@@ -77,11 +77,11 @@ Arbitre principal ou secondaire d'un match identifié par son numéro de licence
 ## Officiels et responsables
 
 **Désignation** :
-Attribution nominative d'un rôle (RC, responsable d'équipe, R1, représentant CNA, membre du jury d'appel…) à un licencié, sur un périmètre (compétition, équipe, événement ou journée) et pour une saison. C'est la seule source de vérité de « qui tient quel rôle » ([ADR-0003](DOC/developer/reference/adr/0003-designations-source-unique-absorbe-kp-rc.md)).
+Attribution nominative d'un rôle (RC, responsable d'équipe, R1, délégué CNA, membre du jury d'appel…) à un licencié, sur un périmètre (compétition, équipe, événement ou journée) et pour une saison. C'est la seule source de vérité de « qui tient quel rôle » ([ADR-0003](DOC/developer/reference/adr/0003-designations-source-unique-absorbe-kp-rc.md)).
 _Avoid_ : nomination, affectation, officiel saisi
 
 **Catalogue des rôles** :
-Liste unique, définie dans api2, des rôles désignables, avec pour chacun ses libellés (français selon le niveau de la compétition, anglais), les types de périmètre autorisés et le profil du mandat généré.
+Liste unique, définie dans api2, des rôles désignables, avec pour chacun les types de périmètre autorisés et le profil du mandat généré.
 
 **Officiel** :
 Personne qui a une Désignation sur un périmètre (héritée ou non), ou arbitre désigné d'un match de ce périmètre. Les profils 1 et 2 sont officiels partout. Un responsable d'équipe n'est pas un officiel.
@@ -90,12 +90,12 @@ Personne qui a une Désignation sur un périmètre (héritée ou non), ou arbitr
 Membres du bureau de la commission nationale d'activité, désignés pour une saison sur toutes les compétitions nationales.
 _Avoid_ : bureau CNAKP (libellé du profil 2)
 
-**Représentant CNA** (*Chief Official*) :
-Officiel principal désigné sur un événement ou une journée (rôle `DELEGUE_CNA`), à tous les niveaux : « Représentant CNA » pour une compétition nationale, « Officiel principal » pour les autres sections, international compris. Il préside le jury d'appel et rédige le bilan de journée.
-_Avoid_ : délégué CNA (ancien libellé), délégué fédéral (libellé du profil 5), délégué (seul)
+**Délégué CNA** :
+Officiel désigné par la commission nationale d'activité sur un événement ou une journée. Il préside le jury d'appel et rédige le bilan de journée.
+_Avoid_ : délégué fédéral (libellé du profil 5), délégué (seul)
 
 **Jury d'appel** :
-Instance qui statue sur les réclamations d'un événement ou d'une journée. Elle est composée de Désignations : le représentant CNA (président), le R1, un représentant des équipes et, pour les finales, des représentants des instances fédérales. Le rapport de jury d'appel peut modifier cette composition pour une affaire.
+Instance qui statue sur les réclamations d'un événement ou d'une journée. Elle est composée de Désignations : le délégué CNA (président), le R1, un représentant des équipes et, pour les finales, des représentants des instances fédérales. Le rapport de jury d'appel peut modifier cette composition pour une affaire.
 
 **Représentant des équipes** :
 Licencié qui représente les équipes au jury d'appel d'un événement ou d'une journée, souvent désigné sur place.
@@ -106,16 +106,10 @@ Document rédigé dans app4 par un officiel désigné ou un arbitre (bilan de jo
 _Avoid_ : formulaire (réservé aux formulaires d'inscription publics, FEATURE_FORMS.md)
 
 **Bilan de journée** :
-Rapport officiel du représentant CNA sur un événement, ou sur une journée hors événement, rédigé au plus tard 3 jours après la fin.
+Rapport officiel du délégué CNA sur un événement, ou sur une journée hors événement, rédigé au plus tard 3 jours après la fin.
 
-**Juge arbitre** (*Referee Manager*) :
-Officiel désigné qui dirige le corps arbitral d'un événement ou d'une journée ; « Chef arbitre » hors compétition nationale.
-
-**Resp. contrôle matériel** (*Chief Scrutineer*) :
-Officiel désigné qui dirige le contrôle de l'équipement d'un événement ou d'une journée.
-
-**Resp. tables de marque** (*Chief Table Official*) :
-Officiel désigné qui dirige les tables de marque d'un événement ou d'une journée.
+**Juge arbitre** :
+Officiel désigné qui dirige le corps arbitral d'un événement ou d'une journée.
 _Avoid_ : chef des arbitres, chef arbitre (anciennes appellations)
 
 **Arbitre non-joueur** :

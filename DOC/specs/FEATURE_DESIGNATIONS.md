@@ -33,7 +33,7 @@ Périmètre technique : app4 (saisie), api2 (modèle, règles, PDF), app3 si bes
 | D5 | Compte | Si un licencié désigné n'a pas de compte, le compte est créé automatiquement (`Code` = licence, profil de base 8, **limité aux compétitions de la Désignation** et à sa saison, jamais à toutes), **seulement si son email est connu**. La base des licences n'ayant pas d'email, il est saisi avec la Désignation (`email`, facultatif) ; il ne sert qu'à créer le compte. Le profil de base ni les filtres d'un compte existant ne sont jamais modifiés ; une Désignation ultérieure ne les élargit que par le mandat généré (D6). |
 | D6 | Mandat | Un **mandat généré par saison et par rôle**, dont le périmètre est l'union des Désignations de ce rôle. Il est recalculé à chaque création ou suppression de Désignation, et supprimé quand il n'en reste plus. |
 | D7 | Personnes désignables | Toute personne de la base des joueurs, Joueurs internationaux compris. Sans email, la Désignation est enregistrée sans compte ni mandat. |
-| D8 | Profils des mandats | RC → 4 ; responsable d'équipe → 7 (avec `limitation_equipe_club` = club de l'équipe) ; représentant CNA → 5 ; R1 et juge arbitre → 6 ; arbitre non-joueur, resp. contrôle matériel et resp. tables de marque → aucun mandat ; représentant des athlètes et autres membres du jury d'appel → aucun mandat. Un profil 3–4 désigné garde ses droits et bascule par le sélecteur de mandat. |
+| D8 | Profils des mandats | RC → 4 ; responsable d'équipe → 7 (avec `limitation_equipe_club` = club de l'équipe) ; délégué CNA → 5 ; R1 et juge arbitre → 6 ; arbitre non-joueur → aucun mandat ; représentant des athlètes et autres membres du jury d'appel → aucun mandat. Un profil 3–4 désigné garde ses droits et bascule par le sélecteur de mandat. |
 | D9 | Périmètres emboîtés | Une Désignation se pose sur l'**événement**, la **compétition** (saison) ou la **journée**. Pour une journée et un rôle donnés, la Désignation la plus précise l'emporte : journée, puis compétition, puis événement. Cas du tournoi (CP) : on désigne une fois sur la compétition (une catégorie) ou sur l'événement, et toutes les phases en héritent. On ne désigne sur une phase que pour faire une exception. |
 | D10 | Périmètre du mandat | Calculé depuis les journées effectivement couvertes : `filtre_competition` pour une Désignation sur une compétition, `filtre_journee` pour un événement ou une journée. Il est recalculé quand une journée est créée, supprimée ou (dés)associée à un événement. |
 | D11 | Tableaux de suivi | Vues de couverture : rôles requis non pourvus par compétition, événement, journée et équipe ; club de chaque officiel désigné ; répartition par club et par personne pour l'équilibre des désignations et les rétributions (§ 4). |
@@ -51,11 +51,10 @@ Périmètre technique : app4 (saisie), api2 (modèle, règles, PDF), app3 si bes
 | D23 | Autorité de désignation | Chaque Désignation porte qui l'a décidée : `CNA` (par défaut) ou `ORGANISATEUR`. Pour `ARBITRE_NJ` : désigné par le club organisateur → rétribution au club fournisseur ; désigné par la CNA (pool arbitres) → budget CNA, pas de rétribution au club. |
 | D24 | Ordre de livraison | 1. Fusion du classement national des clubs tel quel. 2. Désignations. 3. Bascule des calculateurs 7.3.1, 7.3.2, 7.3.4 sur `kp_designation`, la table d'alias restant pour les saisons antérieures. |
 | D25 | Contenu du bilan de journée | Structure validée le 2026-11-22, § 7. |
-| D26 | Rôles requis et états du suivi | Exigences par niveau dans le catalogue des rôles (nationales = codes `N…`, `CF…`) : RC requis partout ; responsable d'équipe, représentant CNA, R1 et juge arbitre requis en nationale (par équipe ou par journée, héritage compris) ; le reste facultatif, **à tous les niveaux, international compris** : aucun rôle de journée n'est « sans objet » (corrigé le 2026-11-27 : le délégué CNA et le jury d'appel étaient à tort sans objet hors nationale, ce qui masquait les titulaires repris sur les compétitions internationales). États : **rouge** = rôle requis non pourvu ; **orange** = pourvu par une personne sans email ; **vert** = pourvu (y compris par une personne du même club qu'une équipe engagée, signalée par le triangle d'alerte sans changer la couleur). Détail § 4. |
-| D27 | Jury d'appel | Applicable à tous les niveaux (« membre du jury » hors nationale, D31). Composition par défaut (journées nationales) : délégué CNA (président de droit) + R1, repris de leurs Désignations, + un **représentant des équipes** (rôle `REP_EQUIPES`, alimente la colonne legacy `Rep_athletes`). En finale, des Désignations `JURY_APPEL` avec qualité (« représentant FFCK », « membre du bureau CNA »…) complètent le jury. Le rapport de jury d'appel reprend la composition et peut la **modifier pour l'affaire** (absence, récusation), dans le rapport seulement. Le délégué CNA peut créer les Désignations `REP_EQUIPES` et `JURY_APPEL` de son périmètre (sans mandat). Le **représentant des clubs** n'existe que dans le bilan de journée et ne siège pas au jury. |
+| D26 | Rôles requis et états du suivi | Exigences par niveau dans le catalogue des rôles (nationales = codes `N…`, `CF…`) : RC requis partout ; responsable d'équipe, délégué CNA, R1 et juge arbitre requis en nationale (par équipe ou par journée, héritage compris) ; le reste facultatif. États : **rouge** = rôle requis non pourvu ; **orange** = pourvu par une personne sans email ; **vert** = pourvu (y compris par une personne du même club qu'une équipe engagée, signalée par le triangle d'alerte sans changer la couleur). Détail § 4. |
+| D27 | Jury d'appel | Composition par défaut (journées nationales) : délégué CNA (président de droit) + R1, repris de leurs Désignations, + un **représentant des équipes** (rôle `REP_EQUIPES`, alimente la colonne legacy `Rep_athletes`). En finale, des Désignations `JURY_APPEL` avec qualité (« représentant FFCK », « membre du bureau CNA »…) complètent le jury. Le rapport de jury d'appel reprend la composition et peut la **modifier pour l'affaire** (absence, récusation), dans le rapport seulement. Le délégué CNA peut créer les Désignations `REP_EQUIPES` et `JURY_APPEL` de son périmètre (sans mandat). Le **représentant des clubs** n'existe que dans le bilan de journée et ne siège pas au jury. |
 | D28 | Rédacteurs et destinataires des rapports | **Incident** : tout officiel du périmètre (ou saisi pour un arbitre, D17) → délégué CNA et juge arbitre du périmètre, RC des compétitions concernées, copie au rédacteur. **Jury d'appel** : président du jury (délégué CNA) → bureau CNA, RC concernés, membres du jury, copie au rédacteur ; notification aux responsables des équipes en cause ; date et heure d'affichage sur site. **Évaluation d'arbitrage** : saisie par l'évaluateur s'il est déjà officiel du périmètre, sinon par le bureau CNA (pas de rôle évaluateur pour l'instant) → juge arbitre du périmètre, bureau CNA, copie au rédacteur ; **pas de copie à l'arbitre évalué** ; lecture réservée à ces personnes ; note sur 50 calculée (somme des 5 blocs sur 10). |
 | D29 | PDF vierge | Première version : PDF vierge **imprimable** seulement, généré par Gotenberg depuis le catalogue (annotation possible dans un lecteur PDF). Pas de PDF à champs ni de `.docx` tant que le terrain ne le demande pas. |
-| D31 | Libellés des rôles par niveau (2026-11-27) | Le libellé d'un rôle dépend du niveau de la compétition (nationale = `N…`, `CF…` ; « autres » = international, régional, tournois, continental, divers) et se traduit en anglais (un libellé anglais commun aux niveaux). Le catalogue (api2) les porte, app4 ne fait que choisir : `DELEGUE_CNA` = **Représentant CNA** (nationale) / **Officiel principal** (autres) / *Chief Official* (ex « Délégué CNA ») ; `RC` = **Responsable de compétition (RC)** / *Competition Organiser* ; `R1` = **Responsable organisation (R1)** / *Technical Organiser* ; `JUGE_ARBITRE` = **Juge arbitre** (nationale) / **Chef arbitre** (autres) / *Referee Manager* ; `JURY_APPEL` = **Membre du jury d'appel** (nationale) / **Membre du jury** (autres) / *Jury of Appeal member*. Deux rôles de journée ajoutés : `CHEF_CONTROLE` **Resp. contrôle matériel** / *Chief Scrutineer* et `RESP_TABLES` **Resp. tables de marque** / *Chief Table Official* (un titulaire par périmètre, facultatifs, sans mandat ni colonne legacy). Sans niveau connu (menus, récapitulatif, exports), les deux libellés français sont affichés : « Représentant CNA / Officiel principal ». Les codes des rôles ne changent pas. |
 | D30 | Reprise des saisies legacy | Deux sources coexistaient pour les officiels d'une journée : le texte des colonnes legacy de `kp_journee` (saisi avant les Désignations) et `kp_designation`. Les Désignations deviennent la source ; la commande `app:designations:backfill-legacy --season=AAAA [--apply]` (simulation par défaut) reprend en Désignations ce qui est lisible (licence entre parenthèses), sans jamais toucher à un rôle déjà désigné, et liste le reste. Le RC (`Responsable_insc`) est repris sur la compétition quand toutes ses journées désignent la même licence. Le club organisateur est identifié partout comme le fait le classement national des clubs : `Code_organisateur` d'abord, sinon le libellé (`OrganiserClubResolver`) ; le formulaire de journée et la copie de compétition enregistrent désormais le code et pas seulement le libellé. **Ordre : la bascule du classement (D24 étape 3) ne se fait qu'après la reprise de la saison concernée** ; tant qu'elle n'est pas faite, le classement continue de lire les colonnes legacy, qui restent recopiées depuis les Désignations. |
 
 ## 3. Questions ouvertes
@@ -79,18 +78,16 @@ scoring autonomes (`.scratch/scoring-ecrans-autonomes/`), cumuls de cartons et n
   club qu'une équipe engagée) et l'équilibre entre clubs.
 - **Rôles requis** (D26) :
 
-  | Rôle (libellé nationale / autres, D31) | Nationales (`N…`, `CF…`) | Autres (international, régional, tournois…) |
+  | Rôle | Nationales (`N…`, `CF…`) | Régionales et autres |
   |---|---|---|
-  | Responsable de compétition (RC) | Requis par compétition | Requis par compétition |
+  | RC | Requis par compétition | Requis par compétition |
   | Responsable d'équipe | Requis par équipe engagée | Facultatif |
-  | Représentant CNA / Officiel principal | Requis par journée (héritage compris) | Facultatif |
-  | Responsable organisation (R1) | Requis par journée | Facultatif |
-  | Juge arbitre / Chef arbitre | Requis par journée | Facultatif |
-  | Resp. contrôle matériel | Facultatif | Facultatif |
-  | Resp. tables de marque | Facultatif | Facultatif |
+  | Délégué CNA | Requis par journée (héritage compris) | Sans objet |
+  | R1 | Requis par journée | Facultatif |
+  | Juge arbitre | Requis par journée | Facultatif |
   | Arbitre non-joueur | Facultatif | Facultatif |
   | Représentant des équipes | Facultatif (souvent désigné sur place) | Facultatif |
-  | Autres membres du jury d'appel / du jury | Facultatif, sauf finales | Facultatif |
+  | Autres membres du jury d'appel | Facultatif, sauf finales | Sans objet |
 
 - **États** : rouge (requis non pourvu), orange (pourvu sans email),
   vert (pourvu ; l'officiel du même club qu'une équipe engagée reste vert, avec le triangle et le message d'alerte).
@@ -162,7 +159,7 @@ Pour le camping, on note sa **disponibilité** (oui / non) en plus de la note de
 
 ### 8.2 Catalogues (api2, ADR-0004)
 
-- `App\Designation\RoleCatalog` : pour chaque rôle, libellés français par niveau et anglais (D31), périmètres autorisés, profil du mandat (ou aucun), exigence par
+- `App\Designation\RoleCatalog` : pour chaque rôle, périmètres autorisés, profil du mandat (ou aucun), exigence par
   niveau (D26), qui peut le désigner (profils 1 à 3, le bureau CNA restant aux profils 1–2 car son mandat est de profil 2 ; délégué CNA pour `REP_EQUIPES` et `JURY_APPEL`, D27), colonne
   legacy recopiée (`Delegue`, `Responsable_R1`, `ChefArbitre`, `Rep_athletes`, `Arb_nj1…5`).
 - `App\Report\ReportTypeCatalog` : par type et par version, sections, champs, champs calculés et pré-remplis,
@@ -175,7 +172,7 @@ Pour le camping, on note sa **disponibilité** (oui / non) en plus de la note de
 | `GET/POST/PATCH/DELETE /admin/designations` | CRUD (filtres saison, rôle, périmètre, personne, club) |
 | `GET /admin/designations/coverage` | Matrice de couverture (D11, D26) |
 | `GET /admin/designations/summary` | Récapitulatif par personne et par club |
-| `GET /admin/designations/roles` | Catalogue des rôles actif (app4 ne le réimplémente pas), avec `labels.national|other.fr|en` (D31) |
+| `GET /admin/designations/roles` | Catalogue des rôles actif (app4 ne le réimplémente pas) |
 | `GET /admin/reports/types` | Catalogue des types de rapport |
 | `GET/POST /admin/reports`, `GET/PATCH /admin/reports/{id}`, `POST /admin/reports/{id}/submit`, `POST /admin/reports/{id}/reopen` | Rapports et cycle de vie |
 | `GET /admin/reports/prefill?scopeType=&scopeId=&season=` | Données KPI du périmètre |
@@ -221,11 +218,6 @@ Les tests portent le code du critère dans leur nom. « National » = compétiti
   « NOM Prénom (licence) » (format legacy) des Désignations effectives de la journée, pour les **rôles touchés** par
   le changement ; la colonne d'un rôle qu'aucune Désignation ne touche reste telle quelle (transition, ADR-0002). La
   création d'une phase et la (dés)association à un événement recopient aussi les rôles hérités.
-- **DES-12** — Étant donné le catalogue des rôles, alors chaque rôle a son libellé français pour une compétition
-  nationale, pour une autre section, et son libellé anglais (D31) ; app4 affiche celui du niveau de la compétition de la
-  ligne (suivi, fenêtre « Officiels » d'une journée, fenêtre « Désigner »), dans la langue de l'interface, et les deux
-  libellés français quand le niveau n'est pas connu. `CHEF_CONTROLE` et `RESP_TABLES` se désignent sur un événement,
-  une compétition ou une journée, un titulaire au plus, sans compte ni mandat.
 
 **Absorption de `kp_rc` et legacy (D4, ADR-0002)**
 
@@ -266,9 +258,8 @@ Les tests portent le code du critère dans leur nom. « National » = compétiti
 
 **Suivi des désignations (D11, D26)**
 
-- **SUI-01** — Étant donné une journée nationale sans représentant CNA (ni hérité), alors sa case « Représentant CNA »
-  est rouge ; pour une journée d'une autre section (régionale, internationale…), la case « Officiel principal » est
-  vide et facultative (jamais « sans objet ») ; idem pour le jury.
+- **SUI-01** — Étant donné une journée nationale sans délégué CNA (ni hérité), alors sa case « Délégué CNA » est
+  rouge ; pour une journée régionale, la case est « sans objet ».
 - **SUI-02** — Étant donné une équipe engagée en nationale sans responsable désigné, alors elle figure dans la
   liste des équipes sans responsable.
 - **SUI-03** — Étant donné une case pourvue par héritage, alors elle est distinguée d'une case pourvue en propre et
@@ -356,17 +347,9 @@ Les tests portent le code du critère dans leur nom. « National » = compétiti
 - **REP-04** — Étant donné une compétition dont toutes les journées renseignent le même `Responsable_insc` et qui n'a
   pas de RC, alors la reprise désigne ce RC sur la compétition ; si les journées divergent, rien n'est créé et le cas est listé.
 - **REP-05** — Sans `--apply`, la commande n'écrit rien ; avec, elle est rejouable sans doublon.
-- **REP-06** — Étant donné une journée d'une compétition internationale (ou de toute autre section) dont `Delegue`
-  contient « NOM Prénom (licence) », alors la reprise crée la Désignation `DELEGUE_CNA` (« Officiel principal » hors
-  nationale, « Représentant CNA » en nationale) comme en nationale.
 - **ORG-01** — Étant donné une journée créée ou modifiée en choisissant un club dans la liste, alors `Code_organisateur`
   est enregistré avec le libellé ; une saisie libre du libellé vide le code.
 - **ORG-02** — Étant donné une journée avec un code ou un libellé de club, alors le tableau des journées du suivi des
   Désignations affiche le même club organisateur que le classement national des clubs (code d'abord, sinon libellé
   identifiant un seul club).
 - **ORG-03** — Étant donné une copie de compétition, alors le code du club organisateur est copié avec le libellé.
-- **ORG-04** — Étant donné la page Journées, quand on clique sur le club organisateur d'une journée, alors la fenêtre
-  « Officiels et club organisateur » s'ouvre ; le club y figure comme un rôle (libellé | valeur, vert s'il est renseigné).
-  Comme dans Désignations, un profil 1 à 4 le modifie par le bouton crayon (fenêtre de recherche dans la liste des
-  clubs, code et libellé enregistrés, ORG-01) et le retire par la corbeille après confirmation, sauf compétition
-  terminée (lecture seule).

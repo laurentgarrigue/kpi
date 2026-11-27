@@ -26,7 +26,7 @@ final class DesignationMandatesTest extends ApiTestCase
         self::assertSame('created', $created['account']);
         self::assertSame(['Niveau' => 8, 'Mail' => 'arbitre@example.test', 'Identite' => 'DESIGNE Arbitre'], $this->account('9812'));
         self::assertTrue((bool) $this->connection->fetchOne("SELECT 1 FROM kp_user_token WHERE user = '9812'"));
-        self::assertSame(['libelle' => 'Responsable organisation (R1) 2998', 'niveau' => 6, 'filtre_competition' => '|NDES|', 'filtre_journee' => '9801'], $this->mandate('9812', 'R1'));
+        self::assertSame(['libelle' => 'R1 2998', 'niveau' => 6, 'filtre_competition' => '|NDES|', 'filtre_journee' => '9801'], $this->mandate('9812', 'R1'));
     }
 
     public function testMan12ANewAccountIsLimitedToTheCompetitionsOfItsDesignation(): void
@@ -63,7 +63,7 @@ final class DesignationMandatesTest extends ApiTestCase
 
         self::assertSame(1, (int) $this->connection->fetchOne("SELECT COUNT(*) FROM kp_user_mandat WHERE user_code = '9814'"));
         self::assertSame(
-            ['libelle' => 'Responsable organisation (R1) 2998', 'niveau' => 6, 'filtre_competition' => '|NDES|REGDES|', 'filtre_journee' => '9801,9802,9803'],
+            ['libelle' => 'R1 2998', 'niveau' => 6, 'filtre_competition' => '|NDES|REGDES|', 'filtre_journee' => '9801,9802,9803'],
             $this->mandate('9814', 'R1'),
         );
     }
@@ -73,7 +73,7 @@ final class DesignationMandatesTest extends ApiTestCase
         $this->designate(['role' => 'RC', 'scopeType' => 'COMPETITION', 'scopeId' => 'NDES', 'matric' => 9814]);
 
         self::assertSame(
-            ['libelle' => 'Responsable de compétition (RC) 2998', 'niveau' => 4, 'filtre_competition' => '|NDES|', 'filtre_journee' => ''],
+            ['libelle' => 'Responsable de compétition 2998', 'niveau' => 4, 'filtre_competition' => '|NDES|', 'filtre_journee' => ''],
             $this->mandate('9814', 'RC'),
         );
     }

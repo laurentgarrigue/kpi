@@ -1570,7 +1570,7 @@
       "toggle_section": "Publication",
       "edit_section": "Modifier"
     },
-    "officials_title": "Officiels et club organisateur",
+    "officials_title": "Officiels de la journée",
     "officials_comite": "Comité de compétition",
     "officials_jury": "Jury d'appel",
     "officials_print": "Imprimer feuille d'instances",
@@ -1591,20 +1591,9 @@
       "11": "Novembre",
       "12": "Décembre"
     },
-    "officials_by_designations": "Les officiels (RC, R1, représentant CNA ou officiel principal, juge arbitre ou chef arbitre, resp. contrôle matériel, resp. tables de marque, représentant des équipes, arbitres non-joueurs) se désignent avec le bouton « Officiels » de la journée ou dans Référentiels › Désignations."
+    "officials_by_designations": "Les officiels (RC, R1, délégué, juge arbitre, représentant des équipes, arbitres non-joueurs) se désignent avec le bouton « Officiels » de la journée ou dans Référentiels › Désignations."
   },
   "games": {
-    "init_starters": {
-      "button": "Init. titulaires",
-      "title": "Initialiser les titulaires",
-      "description": "Remplace la composition des feuilles de match par celle des feuilles de présence (joueurs actifs, numéros, capitaines, staff).",
-      "limit": "Seuls les matchs non verrouillés sont mis à jour.",
-      "scope": "Périmètre",
-      "scope_team": "Une équipe",
-      "scope_journee": "Une journée / phase",
-      "scope_competition": "Une compétition",
-      "success": "{count} match(s) mis à jour"
-    },
     "title": "Gestion des Matchs",
     "add": "Ajouter un match",
     "edit": "Modifier le match",
@@ -3794,8 +3783,8 @@
         "infraction": "Infraction"
       },
       "qualifier": {
-        "DELEGUE_CNA": "Représentant CNA / Officiel principal",
-        "JUGE_ARBITRE": "Juge arbitre / Chef arbitre",
+        "DELEGUE_CNA": "Délégué CNA",
+        "JUGE_ARBITRE": "Juge arbitre",
         "ARBITRE_NJ": "Arbitre non-joueur (désigné par l'organisateur)",
         "yellow": "Jaune",
         "red": "Rouge",

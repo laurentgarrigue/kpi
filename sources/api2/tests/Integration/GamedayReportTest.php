@@ -46,7 +46,7 @@ final class GamedayReportTest extends ApiTestCase
 
         $report = $this->create('9811', 'EVENEMENT', '9801');
 
-        self::assertContains(['role' => 'Représentant CNA', 'name' => 'DESIGNE Délégué', 'matric' => 9811], $report['answers']['officials']);
+        self::assertContains(['role' => 'Délégué CNA', 'name' => 'DESIGNE Délégué', 'matric' => 9811], $report['answers']['officials']);
         self::assertSame([['name' => 'DESIGNE Sansclub', 'matric' => 9813, 'games' => 1]], $report['answers']['referees']);
         self::assertSame([1, 0], [$report['answers']['matches_planned'], $report['answers']['matches_played']]);
         $kpi = $this->requestAs('9811', 'GET', '/admin/reports/prefill?scopeType=EVENEMENT&scopeId=9801&season=2998');
@@ -93,7 +93,7 @@ final class GamedayReportTest extends ApiTestCase
 
         $error = $this->requestAs('9811', 'PATCH', "/admin/reports/$id", ['answers' => ['officials' => [['role' => 'R1', 'presence' => 'peut-être']]]], 422);
         self::assertSame('invalid', $error['fields']['officials']);
-        $saved = $this->requestAs('9811', 'PATCH', "/admin/reports/$id", ['answers' => ['officials' => [['role' => 'Représentant CNA', 'matric' => 9811, 'presence' => 'present']], 'site_water' => 3, 'site_pitches' => 4]]);
+        $saved = $this->requestAs('9811', 'PATCH', "/admin/reports/$id", ['answers' => ['officials' => [['role' => 'Délégué CNA', 'matric' => 9811, 'presence' => 'present']], 'site_water' => 3, 'site_pitches' => 4]]);
         self::assertSame(7, $saved['answers']['site_total']);
     }
 

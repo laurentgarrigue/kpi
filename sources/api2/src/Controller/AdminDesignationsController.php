@@ -224,7 +224,7 @@ final class AdminDesignationsController extends AbstractController
         $roles = RoleCatalog::all();
         $header = $people ? ['Personne', 'Club', 'Libellé du club'] : ['Club', 'Libellé du club', 'Personnes'];
         foreach ($roles as $role) {
-            array_push($header, $role->labelAllLevels() . ' (désignations)', $role->labelAllLevels() . ' (journées)');
+            array_push($header, $role->label . ' (désignations)', $role->label . ' (journées)');
         }
         $table = [$header];
         foreach ($rows as $row) {
@@ -424,10 +424,6 @@ final class AdminDesignationsController extends AbstractController
         return [
             'code' => $role->code,
             'label' => $role->label,
-            'labels' => [
-                'national' => ['fr' => $role->labelFor(true), 'en' => $role->labelFor(true, 'en')],
-                'other' => ['fr' => $role->labelFor(false), 'en' => $role->labelFor(false, 'en')],
-            ],
             'scopes' => array_map(static fn (ScopeType $scope): string => $scope->value, $role->scopes),
             'mandateProfile' => $role->mandateProfile,
             'requirement' => ['national' => $role->nationalRequirement->value, 'other' => $role->otherRequirement->value],

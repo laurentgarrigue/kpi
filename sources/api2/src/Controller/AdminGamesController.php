@@ -5,7 +5,6 @@ namespace App\Controller;
 use App\Entity\User;
 use App\MatchMedals\MatchMedalService;
 use App\Service\EventCacheService;
-use App\Service\MatchStartersService;
 use App\Service\ScoringLiveService;
 use App\Trait\AdminLoggableTrait;
 use Doctrine\DBAL\Connection;
@@ -34,7 +33,6 @@ class AdminGamesController extends AbstractController
         private readonly EventCacheService $eventCache,
         private readonly ScoringLiveService $scoringLive,
         private readonly MatchMedalService $matchMedals,
-        private readonly MatchStartersService $matchStarters,
     ) {
     }
 
@@ -1148,70 +1146,6 @@ class AdminGamesController extends AbstractController
         $this->matchMedals->refreshGames(array_values($ids));
 
         return $this->json(['updated' => count($ids), 'validation' => $newValue]);
-    }
-
-    /**
-     * Bulk « Init titulaires »: copy the team compositions into the score sheets of one scope.
-     *
-     * Scope: one team (its side only), one gameday or one competition. Locked games
-     * (Validation = 'O'), ended competitions and games the user may not edit are skipped.
-     */
-    #[Route('/bulk/init-starters', name: 'admin_games_bulk_init_starters', methods: ['POST'])]
-    #[IsGranted('ROLE_ORGANIZER')]
-    public function bulkInitStarters(Request $request): JsonResponse
-    {
-        /** @var User|null $user */
-        $user = $this->getUser();
-        if ($user && $user->getEffectiveNiveau() > 6) {
-            return $this->json(['message' => 'Insufficient permissions'], Response::HTTP_FORBIDDEN);
-        }
-
-        $data = json_decode($request->getContent(), true) ?? [];
-        $season = (string) ($data['season'] ?? '');
-        $scope = (string) ($data['scope'] ?? '');
-        $value = (string) ($data['value'] ?? '');
-        $columns = ['team' => '', 'journee' => 'm.Id_journee', 'competition' => 'j.Code_competition'];
-
-        if ($season === '' || $value === '' || !isset($columns[$scope])) {
-            return $this->json(['message' => 'season, scope (team|journee|competition) and value are required'], Response::HTTP_BAD_REQUEST);
-        }
-
-        $where = $scope === 'team' ? '(m.Id_equipeA = ? OR m.Id_equipeB = ?)' : "{$columns[$scope]} = ?";
-        $params = $scope === 'team' ? [(int) $value, (int) $value] : [$value];
-        $matches = $this->connection->executeQuery(
-            "SELECT m.Id, m.Id_equipeA, m.Id_equipeB
-             FROM kp_match m
-             INNER JOIN kp_journee j ON j.Id = m.Id_journee
-             WHERE j.Code_saison = ? AND $where
-               AND (m.Validation IS NULL OR m.Validation != 'O')",
-            [$season, ...$params]
-        )->fetchAllAssociative();
-
-        $authorized = array_flip($this->filterAuthorizedMatchIds(array_map(fn($m) => (int) $m['Id'], $matches), $user));
-
-        $initialized = 0;
-        $this->connection->beginTransaction();
-        try {
-            foreach ($matches as $match) {
-                if (!isset($authorized[(int) $match['Id']])) {
-                    continue;
-                }
-                foreach (['A' => (int) $match['Id_equipeA'], 'B' => (int) $match['Id_equipeB']] as $side => $teamId) {
-                    if ($teamId > 0 && ($scope !== 'team' || $teamId === (int) $value)) {
-                        $this->matchStarters->copyRoster((int) $match['Id'], $side, $teamId);
-                    }
-                }
-                $initialized++;
-            }
-            $this->connection->commit();
-        } catch (\Throwable $e) {
-            $this->connection->rollBack();
-            return $this->json(['message' => 'Error initializing starters: ' . $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
-        }
-
-        $this->logActionForSeason('Init titulaires matchs', null, "$scope=$value : $initialized match(s)");
-
-        return $this->json(['matchCount' => $initialized, 'skipped' => count($matches) - $initialized]);
     }
 
     /**

@@ -60,17 +60,9 @@ export interface CoverageMatrix {
   competitions: CoverageCompetition[]
 }
 
-/** Libellé d'un rôle par langue ; il dépend du niveau de la compétition (DES-12). */
-export interface RoleLabels {
-  fr: string
-  en: string
-}
-
 export interface RoleDefinition {
   code: string
-  /** Libellé français des compétitions nationales (repli quand `labels` manque). */
   label: string
-  labels?: { national: RoleLabels, other: RoleLabels }
   scopes: ScopeType[]
   mandateProfile: number | null
   authorities: string[]
@@ -122,29 +114,7 @@ export const canAddHolder = (cell: CoverageCell, kind: RowKind, role: RoleDefini
 /** Un rôle se modifie (ajout, retrait) si le profil de l'utilisateur le permet ; sinon il se consulte seulement. */
 export const canEditRole = (role: RoleDefinition | undefined, profile: number): boolean => !!role && profile <= role.designableByMaxProfile
 
-/**
- * Libellé d'un rôle (DES-12) dans la langue de l'interface : celui des nationales ou des autres sections ; niveau
- * inconnu (en-têtes communs à tous les niveaux) = les deux, « Représentant CNA / Officiel principal ».
- */
-export const roleLabel = (role: RoleDefinition | undefined, locale: string, national?: boolean, fallback = ''): string => {
-  if (!role) return fallback
-  if (!role.labels) return role.label
-  const lang: keyof RoleLabels = locale === 'en' ? 'en' : 'fr'
-  const nationalLabel = role.labels.national[lang]
-  const otherLabel = role.labels.other[lang]
-  if (national === undefined) {
-    return nationalLabel === otherLabel ? nationalLabel : `${nationalLabel} / ${otherLabel}`
-  }
-  return national ? nationalLabel : otherLabel
-}
-
-/** Club étranger : code pays sur trois lettres suivi d'un numéro (ITA01) ; les clubs et comités français n'en ont pas. */
-const FOREIGN_CLUB = /^([A-Z]{3})\d+$/
-
-/** Club d'un officiel tel qu'affiché : le pays seul pour un club étranger (ITA01 → ITA), le code sinon. */
-export const clubLabel = (club: string): string => FOREIGN_CLUB.exec(club)?.[1] ?? club
-
-export const holderLabel = (holder: CoverageHolder): string => (holder.club ? `${holder.name} (${clubLabel(holder.club)})` : holder.name)
+export const holderLabel = (holder: CoverageHolder): string => (holder.club ? `${holder.name} (${holder.club})` : holder.name)
 
 /** Nombre de cases rouges et orange de la matrice, pour l'en-tête. */
 export const countStatuses = (matrix: CoverageMatrix): Record<'red' | 'orange', number> => {
@@ -237,8 +207,6 @@ export const designationIdsOf = (holder: CoverageHolder): number[] => holder.des
 export interface DesignationTarget {
   role: string
   label: string
-  /** Niveau de la compétition, pour le libellé du rôle (DES-12) ; absent = inconnu. */
-  national?: boolean
   kind?: RowKind
   ids?: (string | number)[]
   scopeType?: ScopeType

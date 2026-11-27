@@ -5,7 +5,6 @@ import { mockNuxtImport, mountSuspended } from '@nuxt/test-utils/runtime'
 import CompetitionChecklist from '../../components/admin/CompetitionChecklist.vue'
 import CompetitionSectionPicker from '../../components/admin/CompetitionSectionPicker.vue'
 import type { ChecklistCompetition } from '../../types'
-import { t } from './helpers'
 
 const get = vi.fn()
 mockNuxtImport('useApi', () => () => ({ get }))
@@ -66,8 +65,8 @@ describe('CompetitionSectionPicker', () => {
     localStorage.clear()
     get.mockResolvedValue({
       groups: [
-        { section: 1, sectionLabel: 'Competitions_Internationales', competitions: [{ code: 'N1H', libelle: 'National 1 Hommes' }, { code: 'N1D', libelle: 'National 1 Dames' }] },
-        { section: 2, sectionLabel: 'Competitions_Nationales', competitions: [{ code: 'R1', libelle: 'Régional 1' }] },
+        { section: 1, sectionLabel: 'Nationales', competitions: [{ code: 'N1H', libelle: 'National 1 Hommes' }, { code: 'N1D', libelle: 'National 1 Dames' }] },
+        { section: 2, sectionLabel: 'Régionales', competitions: [{ code: 'R1', libelle: 'Régional 1' }] },
       ],
     })
   })
@@ -87,19 +86,7 @@ describe('CompetitionSectionPicker', () => {
   it('loads the competitions of the season and lists their sections', async () => {
     const wrapper = await mountPicker({})
     expect(get).toHaveBeenCalledWith('/admin/filters/competitions', { seasons: '2026' })
-    expect(wrapper.findAll('select option').map(o => o.text())).toEqual(expect.arrayContaining([t('groups.sections.1'), t('groups.sections.2')]))
-  })
-
-  it('names the sections with their translation, the one of the Competitions page, not the code sent by the API', async () => {
-    const wrapper = await mountPicker({})
-    expect(wrapper.text()).not.toContain('Competitions_Internationales')
-    expect(wrapper.find('details').text()).toContain(t('groups.sections.1'))
-  })
-
-  it('keeps the label sent by the API for a section without translation', async () => {
-    get.mockResolvedValue({ groups: [{ section: 42, sectionLabel: 'Autre', competitions: [{ code: 'X1', libelle: 'X' }] }] })
-    const wrapper = await mountPicker({})
-    expect(wrapper.findAll('select option').map(o => o.text())).toContain('Autre')
+    expect(wrapper.findAll('select option').map(o => o.text())).toEqual(expect.arrayContaining(['Nationales', 'Régionales']))
   })
 
   it('does not load without a season', async () => {

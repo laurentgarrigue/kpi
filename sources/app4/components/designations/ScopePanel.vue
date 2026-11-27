@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { canAddHolder, holderLabel, roleLabel, rowKindOf, scopeCells, statusClasses, type CoverageCell, type CoverageHolder, type DesignationTarget, type RoleDefinition, type ScopeType } from '~/utils/designations'
+import { canAddHolder, holderLabel, rowKindOf, scopeCells, statusClasses, type CoverageCell, type CoverageHolder, type DesignationTarget, type RoleDefinition, type ScopeType } from '~/utils/designations'
 
 /**
  * Bloc « Désignations » d'un périmètre (FEATURE_DESIGNATIONS.md § 8.4, ticket designations/08) : compétition,
@@ -9,7 +9,7 @@ import { canAddHolder, holderLabel, roleLabel, rowKindOf, scopeCells, statusClas
  */
 const props = defineProps<{ season: string, scopeType: ScopeType, scopeId: string | number, label: string }>()
 const emit = defineEmits<{ changed: [] }>()
-const { t, locale } = useI18n()
+const { t } = useI18n()
 const api = useApi()
 const toast = useToast()
 const authStore = useAuthStore()
@@ -18,8 +18,6 @@ const roles = ref<Record<string, RoleDefinition>>({})
 const cells = ref<Record<string, CoverageCell>>({})
 const loading = ref(false)
 const target = ref<DesignationTarget | null>(null)
-/** Niveau de la compétition de la journée (libellés DES-12) ; inconnu pour un événement, qui peut en mêler plusieurs. */
-const national = ref<boolean | undefined>(undefined)
 const removing = ref<CoverageHolder | null>(null)
 const kind = computed(() => rowKindOf(props.scopeType)!)
 const canWrite = computed(() => authStore.profile <= 5)
@@ -31,9 +29,7 @@ const load = async () => {
       roles.value = await api.get<Record<string, RoleDefinition>>('/admin/designations/roles')
     }
     if (props.scopeType === 'JOURNEE') {
-      const effective = await api.get<{ gameday?: { national: boolean }, roles: Record<string, CoverageCell> }>('/admin/designations/effective', { gameday: String(props.scopeId) })
-      cells.value = effective.roles
-      national.value = effective.gameday?.national
+      cells.value = (await api.get<{ roles: Record<string, CoverageCell> }>('/admin/designations/effective', { gameday: String(props.scopeId) })).roles
     } else {
       const list = await api.get<{ items: Parameters<typeof scopeCells>[2] }>('/admin/designations', { season: props.season, scopeType: props.scopeType, scopeId: String(props.scopeId) })
       cells.value = scopeCells(props.scopeType, Object.values(roles.value), list.items)
@@ -44,7 +40,7 @@ const load = async () => {
 }
 
 const openAdd = (role: string) => {
-  target.value = { role, label: props.label, scopeType: props.scopeType, scopeIds: [String(props.scopeId)], national: national.value }
+  target.value = { role, label: props.label, scopeType: props.scopeType, scopeIds: [String(props.scopeId)] }
 }
 
 const saved = async () => {
@@ -77,7 +73,7 @@ watch(() => [props.scopeType, props.scopeId, props.season], load, { immediate: t
       <caption class="sr-only">{{ t('designations.block.caption', { line: label }) }}</caption>
       <tbody>
         <tr v-for="(cell, role) in cells" :key="role">
-          <th scope="row" class="px-2 py-1 text-left font-medium w-1/3">{{ roleLabel(roles[role], locale, national, String(role)) }}</th>
+          <th scope="row" class="px-2 py-1 text-left font-medium w-1/3">{{ roles[role]?.label ?? role }}</th>
           <td class="px-2 py-1" :class="statusClasses(cell.status)">
             <DesignationsCellHolders
               :cell="cell"

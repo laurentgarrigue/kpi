@@ -44,28 +44,6 @@ final class ScoringConsoleHelpersTest extends ApiTestCase
         self::assertNull($res['id']);
     }
 
-    /** Terrain non renseigné (NULL ou vide) : les matchs sans terrain s'enchaînent entre eux, sans erreur. */
-    public function testNextMatchWhenThePitchIsBlank(): void
-    {
-        $db = $this->beginWrites();
-        $db->executeStatement('UPDATE kp_match SET Terrain = NULL WHERE Id = 9404');
-        $db->executeStatement("UPDATE kp_match SET Terrain = '' WHERE Id = 9411");
-
-        $res = $this->requestAs(self::ADMIN, 'GET', '/admin/scoring/next/9404');
-
-        self::assertSame(9411, $res['id']);
-    }
-
-    /** Terrain vide : jamais enchaîné avec un match qui, lui, a un terrain. */
-    public function testBlankPitchDoesNotChainWithANamedPitch(): void
-    {
-        $this->beginWrites()->executeStatement("UPDATE kp_match SET Terrain = NULL WHERE Id = 9404");
-
-        $res = $this->requestAs(self::ADMIN, 'GET', '/admin/scoring/next/9404');
-
-        self::assertNull($res['id']);
-    }
-
     // ------------------------------------------------------------ officiels
 
     private function designate(string $principal, string $secondaire): void

@@ -17,7 +17,7 @@ final class CoverageService
     public const LEVEL_OTHER = 'other';
 
     /** Colonnes des journées, dans l'ordre d'affichage. */
-    public const GAMEDAY_ROLES = ['R1', 'DELEGUE_CNA', 'JUGE_ARBITRE', 'CHEF_CONTROLE', 'RESP_TABLES', 'ARBITRE_NJ', 'REP_EQUIPES', 'JURY_APPEL'];
+    public const GAMEDAY_ROLES = ['R1', 'DELEGUE_CNA', 'JUGE_ARBITRE', 'ARBITRE_NJ', 'REP_EQUIPES', 'JURY_APPEL'];
     private const COMPETITION_ROLE = 'RC';
     private const TEAM_ROLE = 'RESP_EQUIPE';
 
