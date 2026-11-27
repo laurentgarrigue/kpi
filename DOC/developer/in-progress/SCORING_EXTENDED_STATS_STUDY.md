@@ -4,7 +4,11 @@
 > - v1 (2026-11-27) : contraintes, sources de données possibles, solutions graduées, questions Q1–Q8 ;
 > - **v2 (2026-11-27)** : réponses Q1–Q8 (§2.2), **possession reconstruite sans touche nouvelle** (§3.3),
 >   raccourci de correction (§3.4), **squelette pré-rempli par le chronomètre de tir et complété par les
->   bancs** (§4.1), recommandation révisée (§6), questions Q9–Q13.
+>   bancs** (§4.1), recommandation révisée (§6), questions Q9–Q13 ;
+> - **v3 (2026-11-27)** : réponses Q10–Q13 (§2.2) — le chronométreur de tir **ne regarde pas l'écran** :
+>   `/` devient une commande **à sens fixe** « 60 s, même équipe » (§3.4) ; accès des bancs par le
+>   **responsable d'équipe** (mandat profil 7), fenêtre de **24 h**, seuil de publication **80 %**
+>   paramétrable, stats sous le seuil **masquées** ; `kp_stats` supprimé. Q9 en attente.
 >
 > **Contexte** : console Scoring d'app4 ([PAGE_SCORING.md](../../specs/PAGE_SCORING.md), notamment
 > §0.4 « fait de match extensible », §0.13 touches du chronomètre de tir, §6.5 chronomètre de tir),
@@ -60,6 +64,11 @@ officielle, pour :
 | Q6 | KPI Stats 2022 | Une fois (Mondiaux 2022), bénévoles dédiés, **qualité trop faible et inégale**. | C7. Statisticien volontaire (S2) **déclassé**. `kp_stats` : rien à conserver (à confirmer, Q13). |
 | Q7 | Direct ou après | **Après le match seulement.** | C8 : place pour une **consolidation** et une **relecture**. |
 | Q8 | Publication | **Publiques tout de suite.** | C8 : **contrôle qualité automatique** avant publication. |
+| Q9 | 60 s sans changement de possession | **En cours de renseignement.** | Dimensionne l'usage de `/` (§3.4). |
+| **Q10** | Regard du chronométreur de tir | **Concentré sur le match.** Il peut regarder son **pavé numérique déporté** (ou équivalent), **pas l'écran** de la console. | Aucune commande ne peut dépendre d'un état affiché à l'écran : `/` prend un **sens fixe** (§3.4) ; pas de pastille à surveiller. |
+| **Q11** | Accès des bancs | **Rattaché au responsable d'équipe**, fenêtre de **24 h**. | §4.1 : mandat **profil 7** issu des désignations (FEATURE_DESIGNATIONS D8, MAN-09) ; délégation possible à un membre du banc (Q14). |
+| **Q12** | Seuil de couverture | **80 %, paramétrable.** En dessous : **masquée**. | §4.1 : paramètre unique, à côté des seuils des médailles (`match_medals.yaml`). |
+| **Q13** | `kp_stats` / KPI Stats 2022 | **On ne garde rien.** | Suppression de la table, de la page `app_wsm_dev` et de `PUT /admin/scoring/stats` (§7). |
 
 ### 2.3 Ce qui existe déjà
 
@@ -72,7 +81,7 @@ officielle, pour :
   chrono principal, lettres des faits de jeu. Les touches sont comparées sur **`event.key`** : les
   chiffres du pavé numérique tapent donc aussi le **numéro du joueur**, et `Entrée` valide un fait.
 - **Précédent legacy « KPI Stats » (2022)** : `sources/app_wsm_dev/src/views/Stats.vue`, table
-  `kp_stats`, `PUT /api2/admin/scoring/stats` — cf. C7.
+  `kp_stats`, `PUT /api2/admin/scoring/stats` — cf. C7 ; **à supprimer** (Q13).
 - **Médailles de match** : notion d'**éligibilité / fiabilité** d'un match (FEATURE_MATCH_MEDALS §5.1),
   réutilisable pour ne publier que des stats fiables.
 
@@ -125,35 +134,44 @@ connue ; la possession suivante est ancrée **par le but suivant**, en remontant
 sans but (ou la fin de période après le dernier but) reste **non ancrée** : sa possession n'est pas
 publiable sans correction (§3.4) ou sans saisie du banc (§4.1).
 
-### 3.4 Raccourci de correction : `/`
+### 3.4 Raccourci `/` : « 60 s, même équipe »
 
-Pour lever les cas non ancrés et corriger un 60 s qui n'était pas un changement de possession, **une
-seule touche** facultative, à la main du chronométreur de tir :
+**Q10** : le chronométreur de tir ne regarde **pas l'écran**. Une touche de *correction* (« basculer
+l'équipe présumée ») serait donc **aveugle** : il ne sait pas ce que la machine a présumé. La touche doit
+avoir un **sens fixe**, qui ne dépend que de ce qu'il voit sur le terrain.
 
-| Touche | Action | Pourquoi celle-ci |
+| Touche | Action | Sens pour l'opérateur |
 |---|---|---|
-| **`/`** (pavé numérique) | **« Possession à l'autre équipe »** : bascule l'équipe attribuée à la possession **en cours**, **sans toucher au décompte** | voisine immédiate de `*` (arrêt), sur la rangée haute du pavé, avec `-` (40 s) et `+` (60 s) à portée : les quatre commandes du chronomètre de tir tiennent dans **une seule zone de la main** ; ce n'est **ni un chiffre** (numéro du joueur), **ni `Entrée`** (valide un fait), **ni une lettre** (faits de jeu) ; touche non liée aujourd'hui |
+| `+` (inchangé) | départ/reset **60 s**, possession à **l'autre équipe** | « nouvelle possession » — le cas général |
+| **`/`** (nouveau) | départ/reset **60 s**, possession à **la même équipe** | « on repart à 60 s, mais c'est toujours eux » — les cas de Q9 |
+| `-` (inchangé) | départ/reset **40 s**, même équipe (rebond offensif) | inchangé |
+| `*` (inchangé) | arrêt (`--`) | inchangé |
 
-- **Affichage** : la console montre, à côté du chronomètre de tir, une **pastille aux couleurs de
-  l'équipe** présumée en possession (« ? » si non ancrée). Un **clic** sur la pastille fait la même
-  chose que `/`. Le chronométreur de tir n'a **rien à faire** quand la pastille est juste.
-- **Effet nul sur le match** : `/` ne change ni le décompte, ni les afficheurs, ni le score. Une
-  erreur ne fausse que la statistique, et la reconstruction §3.3 la signale.
+- **Effet sur le match : aucun.** `/` et `+` lancent exactement le même décompte de 60 s ; afficheurs,
+  score et chrono principal ne voient pas la différence. Seule la reconstruction (§3.3) les distingue.
+- **Pas d'état à vérifier** : l'opérateur décide d'après le terrain, comme aujourd'hui entre 60 s et
+  40 s. S'il tape `+` au lieu de `/`, la reconstruction le signale (incohérence entre deux ancres) et
+  le segment n'est pas publié.
+- **Pourquoi `/`** : voisine de `*`, sur la rangée haute du pavé avec `-` ; `+` est juste en dessous.
+  Les quatre commandes tiennent sous une main, **repérables au toucher** sur un pavé déporté. Ce n'est
+  ni un chiffre (numéro du joueur, la console compare `event.key`), ni `Entrée` (valide un fait), ni une
+  lettre (faits de jeu). Touche non liée aujourd'hui. Configurable comme les autres (préférence par
+  poste).
+- **Sur un boîtier** (étude afficheurs, R9) : un quatrième bouton, ou un appui long sur « 60 s ».
+- **Usage facultatif** : sans `/`, la règle « 60 s = l'autre équipe » s'applique et les exceptions
+  deviennent des incohérences signalées. La réponse à **Q9** dira si `/` vaut la peine d'être appris
+  (exceptions fréquentes) ou s'il reste une option.
 - **Alternatives écartées** :
-  - deux touches « 60 s A » / « 60 s B » à la place de `+` : double la décision à chaque engagement
-    (geste nouveau à chaque possession), alors que la règle « 60 s = l'autre équipe » est juste dans la
-    grande majorité des cas ;
-  - `4` / `6` du pavé (gauche / droite comme les équipes à l'écran) : ce sont des chiffres, ils
-    tapent un numéro de joueur (comparaison sur `event.key`) ; les distinguer par `event.code`
-    (`Numpad4`) priverait le secrétaire des chiffres du pavé pour taper les numéros, et une erreur
-    de touche (chiffre au lieu de commande) deviendrait silencieuse ;
-  - `.` : dernière touche libre du pavé, mais séparée des trois autres commandes et proche de `0` /
-    `Entrée` ; gardée en réserve.
-- **Configurable** comme les autres (modale Raccourcis clavier, préférence par poste).
+  - touche de **bascule** + pastille de possession à l'écran : demande de regarder l'écran (Q10) ;
+  - deux touches « 60 s A » / « 60 s B » : une décision de plus à **chaque** possession, et il faut
+    savoir quelle équipe est A ;
+  - `4` / `6` du pavé : ce sont des chiffres, ils tapent un numéro de joueur ; les distinguer par
+    `event.code` (`Numpad4`) priverait le secrétaire des chiffres du pavé ;
+  - `.` : dernière touche libre du pavé, mais isolée près de `0` / `Entrée` ; gardée en réserve.
 
-> **Q10** : en pratique, le chronométreur de tir regarde-t-il assez la console pour voir la pastille ?
-> S'il ne regarde que le terrain et ses afficheurs, `/` ne servira que rarement, et la reconstruction
-> par ancres (§3.3) + les bancs (§4.1) porteront l'essentiel.
+**L'engagement reste non ancré** : qui gagne le sprint n'est connu ni du chronométreur de tir (il tape
+`+` sans dire pour qui) ni du secrétaire. C'est le **banc** qui le fixe (§4.1, ligne « Engagement ») ; à
+défaut, le but suivant l'ancre en remontant la chaîne.
 
 ## 4. Solutions avec une saisie humaine, hors table de marque
 
@@ -170,6 +188,7 @@ blanche, donne une qualité trop faible. Ici, la personne du banc **ne crée pre
 | « Tir cadré de A, arrêté (gardien ou cadre) — 1re, 6:42 » | chaque **40 s** | côté **A** : le **tireur** (n°) ; côté **B** : **qui a arrêté** (n°) ou **cadre** |
 | « But de A — n° 7 — 1re, 4:15 » | chaque **but** | côté **B** : **qui était dans le but** (n°), pour le % d'arrêts |
 | « Possession de A, perdue — 1re, 3:02 » | chaque **60 s** qui change d'équipe | **facultatif** : « tir arrêté, ballon récupéré par la défense » → transforme la perte en **tir + arrêt** (le minorant de §3.3 devient exact) |
+| « Engagement — 2e, 10:00 » | chaque **premier 60 s** d'une période ou après un but | **« gagné par nous / par eux »** : ancre la possession (§3.4) |
 
 **Qui, quand, comment** :
 
@@ -177,14 +196,17 @@ blanche, donne une qualité trop faible. Ici, la personne du banc **ne crée pre
   équipe seulement** : ses tireurs, et **ses** arrêts. Motivée : ce sont les stats de son équipe,
   publiées (Q8). Le rôle de gardien (C1) est connu du banc.
 - **Quand** : **pendant** le match, chaque ligne apparaît en direct (Mercure) et se complète en un
-  toucher (numéro du joueur) ; **ou après** le match (Q7), pendant une **fenêtre de relecture** (ex.
-  jusqu'au match suivant de l'équipe ou 24 h), de mémoire ou avec une vidéo d'équipe.
+  toucher (numéro du joueur) ; **ou après** le match (Q7), pendant une **fenêtre de relecture de 24 h**
+  après la fin du match (Q11), de mémoire ou avec une vidéo d'équipe. À la fermeture de la fenêtre, les
+  contrôles tournent et la publication suit.
 - **Comment** : une page mobile, **un seul geste par ligne** : la ligne en haut, les numéros des
   joueurs de la composition en gros boutons, « Cadre » / « Je ne sais pas ». Aucune saisie de temps
   (déjà donné par le squelette), aucun type de fait à choisir.
-- **Accès** : lien ou QR code par match et par équipe, émis depuis la console ou la liste des matchs,
-  à durée limitée ; droit d'écriture sur les **seules stats de son équipe** pour ce match, rien d'autre
-  (Q11).
+- **Accès (Q11)** : rattaché au **responsable d'équipe** désigné (mandat **profil 7**,
+  `limitation_equipe_club`, FEATURE_DESIGNATIONS D8 / MAN-09). Il voit les matchs de son équipe et
+  n'écrit que **les stats de son équipe**, pendant la fenêtre de 24 h, rien d'autre (ni feuille de
+  match, ni composition). Le responsable n'est pas toujours sur le banc : **délégation** possible à une
+  personne du banc (Q14). Une équipe sans responsable désigné n'a pas de stats par joueur.
 
 **Contrôles de cohérence** (automatiques, à la fin de la fenêtre) :
 
@@ -196,11 +218,13 @@ blanche, donne une qualité trop faible. Ici, la personne du banc **ne crée pre
   est signalé (pas refusé, C1) ;
 - **couverture** par match et par équipe : part des lignes complétées.
 
-**Publication (Q8)** : les **comptes d'équipe** (tirs cadrés, arrêts + cadre, possession ancrée) sont
-publiés dès la fin du match, ils ne dépendent que de la console. Les stats **par joueur** (tireurs,
-arrêts, % d'arrêts) sont publiées pour une équipe quand sa **couverture** atteint un seuil (ex. 90 %),
-sinon marquées « incomplètes ». Les médailles fondées sur ces stats n'utilisent que les matchs au-dessus
-du seuil (même logique que FEATURE_MATCH_MEDALS §5.1).
+**Publication (Q8, Q12)** : les **comptes d'équipe** (tirs cadrés, arrêts + cadre, possession ancrée)
+sont publiés à la fin du match, ils ne dépendent que de la console. Les stats **par joueur** (tireurs,
+arrêts, % d'arrêts) sont publiées pour une équipe à la fermeture de la fenêtre si sa **couverture**
+atteint **80 %** (paramètre unique, à côté des seuils des médailles) ; **en dessous, elles sont
+masquées**. Les médailles fondées sur ces stats n'utilisent que les matchs au-dessus du seuil (même
+logique que FEATURE_MATCH_MEDALS §5.1). La possession d'un segment non ancré ou incohérent est masquée
+de la même façon.
 
 **Risques** : partialité (un banc gonfle ses arrêts) — limitée car **le nombre** de lignes vient de la
 console, le banc ne fait qu'**attribuer** ; une seule équipe saisit — ses stats sont publiées, pas
@@ -237,7 +261,7 @@ Hors de portée à court terme ; même dépendance aux vidéos que S3.
 | Solution | Arrêts | Tirs | Possession | Personne en plus | Impact match | Couverture attendue |
 |---|---|---|---|---|---|---|
 | §3.3 Reconstruction (chrono de tir + buts) | par équipe (arrêts + cadre) | cadrés par équipe (minorant) | par équipe, **hors segments non ancrés** | non | aucun | tous les matchs scorés |
-| §3.4 Touche `/` | — | — | **segments non ancrés levés** | non | nul | selon l'usage (Q10) |
+| §3.4 Touche `/` (60 s même équipe) | — | — | **exceptions de Q9 levées** | non | nul | selon Q9 |
 | §4.1 Bancs sur squelette | ✅ par joueur | ✅ par joueur | (corrige les pertes) | **oui, motivée** | aucun | variable, croissante |
 | §4.2 Statisticien | ✅ | ✅ | — | oui | aucun | complément |
 | §4.3 Vidéo | ✅ | ✅ | ✅ | oui, différé | aucun | faible (Q4) |
@@ -248,10 +272,10 @@ Hors de portée à court terme ; même dépendance aux vidéos que S3.
    (départs 60 / 40 / arrêt), des buts et du chrono principal. Comptes d'équipe publics : possession
    (quand ancrée), tirs cadrés, arrêts + cadre, violations. **Aucun changement à la table de marque.**
    C'est aussi le **socle** du squelette du lot 3.
-2. **Lot 2 — Pastille de possession + touche `/`** (§3.4) dans la console : une ligne d'interface et un
-   raccourci configurable. Lève les segments non ancrés.
-3. **Lot 3 — Page « Stats de mon équipe »** (§4.1) : squelette pré-rempli, un geste par ligne, fenêtre
-   de relecture, contrôles de cohérence, seuil de couverture avant publication par joueur. Démarrer par
+2. **Lot 2 — Touche `/` « 60 s, même équipe »** (§3.4) : un raccourci configurable, aucun affichage
+   nouveau. À trancher après Q9.
+3. **Lot 3 — Page « Stats de mon équipe »** (§4.1) : squelette pré-rempli (dont les engagements), un
+   geste par ligne, responsable d'équipe, fenêtre de 24 h, contrôles de cohérence, seuil de 80 %. Démarrer par
    un **tournoi pilote** (Moreuil, terrain pilote du scoring) avec deux ou trois clubs volontaires.
 4. **Médailles** (après une saison de données) : « Mur » (% d'arrêts, couverture ≥ seuil), « Efficacité »
    (buts / tirs cadrés), « Maîtrise » (temps de possession).
@@ -275,16 +299,17 @@ Colonnes indicatives : `uid`, `id_match`, `kind` (`SHOT` / `SAVE` / `POSSESSION`
   que renseigner `player` (et `outcome` pour une perte).
 - **Possession** : calculée, pas saisie — une vue ou une table de résultats recalculable, comme les
   médailles (recalcul saison par saison).
-- **Touche `/`** : un fait `POSSESSION_SWAP` horodaté dans `scoring_live_*` (c'est une saisie de la
-  console), lu par la reconstruction.
-- `kp_stats` (2022) : à archiver (Q13).
+- **Touche `/`** : la commande du chronomètre de tir porte un attribut `sameTeam` (`start60` +
+  `sameTeam = true`), persisté avec le départ dans `scoring_live_*` et le journal ; la machine à états
+  du chronomètre de tir (`ScoringRules::shotclockTransition`) ne change pas.
+- **`kp_stats` (2022) : supprimé (Q13)** — migration de suppression de la table, retrait de
+  `sources/app_wsm_dev/src/views/Stats.vue` et de `PUT /admin/scoring/stats`
+  (`ScoringController::putStats`). Indépendant des lots ci-dessus : peut se faire à tout moment.
 
-## 8. Questions ouvertes (v2)
+## 8. Questions ouvertes (v3)
 
 | # | Question |
 |---|---|
-| **Q9** | **60 s sans changement de possession** : dans quels cas le chronomètre de tir repart-il à 60 s pour **la même équipe** (faute de la défense sanctionnée par un coup franc à l'attaque, sortie concédée par la défense, temps mort, carton…) ? Leur fréquence dit si la règle « 60 s = l'autre équipe » tient sans correction. |
-| **Q10** | Le chronométreur de tir regarde-t-il assez la console pour voir une **pastille de possession** et corriger avec `/` ? |
-| **Q11** | **Accès des bancs** : lien / QR code par match et par équipe émis à la table, ou rattaché au **responsable d'équipe** déjà connu dans KPI (désignations, FEATURE_DESIGNATIONS) ? Durée de la fenêtre de relecture ? |
-| **Q12** | **Seuil de couverture** pour publier les stats par joueur (90 % ?) et affichage d'une stat incomplète : masquée, ou affichée avec la mention « incomplète » ? |
-| **Q13** | `kp_stats` et la page « KPI Stats » (2022) : on archive (tag + suppression) ou on garde les données des Mondiaux 2022 ? |
+| **Q9** | *(en cours de renseignement)* **60 s sans changement de possession** : dans quels cas le chronomètre de tir repart-il à 60 s pour **la même équipe** (faute de la défense sanctionnée par un coup franc à l'attaque, sortie concédée par la défense, temps mort, carton…) et à quelle fréquence ? |
+| **Q14** | **Délégation** : le responsable d'équipe peut-il confier la saisie à une personne du banc (lien nominatif limité au match), ou doit-il saisir lui-même ? |
+| **Q15** | **Suppression de `kp_stats`** : la faire tout de suite (petit ménage indépendant), ou avec le lot 1 ? |
