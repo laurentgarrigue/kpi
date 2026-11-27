@@ -8,7 +8,10 @@
 > - **v3 (2026-11-27)** : réponses Q10–Q13 (§2.2) — le chronométreur de tir **ne regarde pas l'écran** :
 >   `/` devient une commande **à sens fixe** « 60 s, même équipe » (§3.4) ; accès des bancs par le
 >   **responsable d'équipe** (mandat profil 7), fenêtre de **24 h**, seuil de publication **80 %**
->   paramétrable, stats sous le seuil **masquées** ; `kp_stats` supprimé. Q9 en attente.
+>   paramétrable, stats sous le seuil **masquées** ; `kp_stats` supprimé. Q9 en attente ;
+> - **v4 (2026-11-27)** : réponses Q9, Q14, Q15 ; **inversion des côtés** (« switch ») de la console et du
+>   panneau à chaque période (§3.5) et **touches spatiales** « 60 s gauche / 60 s droite » qui
+>   s'en déduisent ; risque d'oubli du switch traité (§3.5.3) ; questions Q16–Q19.
 >
 > **Contexte** : console Scoring d'app4 ([PAGE_SCORING.md](../../specs/PAGE_SCORING.md), notamment
 > §0.4 « fait de match extensible », §0.13 touches du chronomètre de tir, §6.5 chronomètre de tir),
@@ -64,11 +67,13 @@ officielle, pour :
 | Q6 | KPI Stats 2022 | Une fois (Mondiaux 2022), bénévoles dédiés, **qualité trop faible et inégale**. | C7. Statisticien volontaire (S2) **déclassé**. `kp_stats` : rien à conserver (à confirmer, Q13). |
 | Q7 | Direct ou après | **Après le match seulement.** | C8 : place pour une **consolidation** et une **relecture**. |
 | Q8 | Publication | **Publiques tout de suite.** | C8 : **contrôle qualité automatique** avant publication. |
-| Q9 | 60 s sans changement de possession | **En cours de renseignement.** | Dimensionne l'usage de `/` (§3.4). |
+| **Q9** | 60 s sans changement de possession | **Coup franc** (à l'équipe en possession) **ou avantage**. | Cas **fréquents** (les fautes le sont) : la commande « même équipe » serait d'usage courant, pas une exception. Renforce les touches spatiales (§3.5). |
 | **Q10** | Regard du chronométreur de tir | **Concentré sur le match.** Il peut regarder son **pavé numérique déporté** (ou équivalent), **pas l'écran** de la console. | Aucune commande ne peut dépendre d'un état affiché à l'écran : `/` prend un **sens fixe** (§3.4) ; pas de pastille à surveiller. |
 | **Q11** | Accès des bancs | **Rattaché au responsable d'équipe**, fenêtre de **24 h**. | §4.1 : mandat **profil 7** issu des désignations (FEATURE_DESIGNATIONS D8, MAN-09) ; délégation possible à un membre du banc (Q14). |
 | **Q12** | Seuil de couverture | **80 %, paramétrable.** En dessous : **masquée**. | §4.1 : paramètre unique, à côté des seuils des médailles (`match_medals.yaml`). |
 | **Q13** | `kp_stats` / KPI Stats 2022 | **On ne garde rien.** | Suppression de la table, de la page `app_wsm_dev` et de `PUT /admin/scoring/stats` (§7). |
+| **Q14** | Délégation par le responsable d'équipe | **Oui.** | §4.1 : lien nominatif limité au match et à la fenêtre de 24 h. |
+| **Q15** | Quand supprimer `kp_stats` | **Avec le premier lot.** | §6, lot 1. |
 
 ### 2.3 Ce qui existe déjà
 
@@ -173,6 +178,86 @@ avoir un **sens fixe**, qui ne dépend que de ce qu'il voit sur le terrain.
 `+` sans dire pour qui) ni du secrétaire. C'est le **banc** qui le fixe (§4.1, ligne « Engagement ») ; à
 défaut, le but suivant l'ancre en remontant la chaîne.
 
+### 3.5 Inversion des côtés (« switch ») et touches spatiales
+
+> Sujet **plus large que les stats** : il touche la console et le panneau de score. S'il est retenu, il
+> passe dans [PAGE_SCORING.md](../../specs/PAGE_SCORING.md) (spec first) ; il est étudié ici parce
+> qu'il change le choix des touches du chronomètre de tir.
+
+#### 3.5.1 La fonction
+
+Un **switch** de la console inverse **gauche / droite** des équipes A et B **sur la console et sur le
+panneau** (scoreboard, et les afficheurs qui montrent les deux équipes), pour coller à la position
+réelle des équipes sur leur demi-terrain après chaque changement de côté.
+
+- **Avant le coup d'envoi** : le côté de départ de A (gauche ou droite, vu de la table) se règle dans
+  **Paramètres**, avec les contrôles d'avant-match (PAGE_SCORING §0.11).
+- **À chaque nouvelle période** : l'inversion est **proposée par défaut** dans le passage à la période
+  suivante (bouton « » », pause inter-périodes, PAGE_SCORING §0.13 / §7.5), **sans geste en plus** :
+  la console bascule, l'opérateur peut annuler. Le switch reste disponible à tout moment (bouton
+  dans l'en-tête, pas de raccourci : il ne doit pas partir par erreur).
+- **Ce qui ne change pas** : l'identité A / B (feuille de match, couleurs, données, `team` dans
+  `scoring_live_*`). Seul l'**affichage** est miroir. Le côté courant est un état de match
+  (`sides = A_LEFT | A_RIGHT`) persisté et diffusé (Mercure, `BroadcastChannel`) pour que le panneau
+  suive.
+- **Bénéfice hors stats** : le secrétaire saisit un but « à gauche » quand le but est marqué à gauche ;
+  le public lit le panneau dans le sens du jeu.
+
+#### 3.5.2 Ce que ça permet : des touches « 60 s gauche » / « 60 s droite »
+
+Avec des côtés connus, le chronométreur de tir n'a plus à décider « même équipe / autre équipe » : il
+indique **de quel côté part l'attaque**, ce que **l'arbitre lui montre déjà du bras** (direction du coup
+franc, de l'avantage, de la remise en jeu). La console traduit le côté en A / B grâce au switch.
+
+| | Relatif (§3.4) | **Spatial (switch)** |
+|---|---|---|
+| Ce que décide l'opérateur | « encore eux ? » (`+` ou `/`) | « vers où ? » (gauche / droite) |
+| Repère sur le terrain | doit se souvenir de qui avait le ballon | **le bras de l'arbitre**, la direction du jeu |
+| Coups francs, avantages (Q9, fréquents) | piège : `+` par réflexe ⇒ erreur | naturel : même geste que les autres 60 s |
+| Engagement | **inconnu** (personne ne sait qui gagne le sprint) | **connu** : il tape le côté de l'équipe qui a gagné |
+| Dépend du switch | non | **oui** (§3.5.3) |
+| Erreur typique | ponctuelle, dispersée, difficile à localiser | **une période entière** inversée, **détectable et corrigeable** |
+
+**Touches proposées** (pavé numérique, rangée haute, gauche et droite comme sur le terrain) :
+
+| Touche | Spatial | Aujourd'hui |
+|---|---|---|
+| **`/`** | **60 s, attaque vers la gauche** (équipe affichée à gauche… qui attaque vers la droite — voir Q16) | libre |
+| **`*`** | **60 s, attaque vers la droite** | arrêt |
+| **`-`** | 40 s (même équipe) | 40 s |
+| **`+`** | **arrêt** (`--`) | 60 s |
+
+- `/` et `*` sont **côte à côte** : gauche / droite **sous les doigts**, sans regarder l'écran (Q10).
+- `-` (40 s) ne bouge pas. L'arrêt passe sur `+`, la grande touche : c'est la commande la moins
+  fréquente (le chronomètre de tir suit déjà le chrono principal), sans risque pour le match.
+- **Coût du changement faible maintenant** : les touches actuelles n'ont été essayées qu'en dev, aucun
+  match réel n'a été tenu à la console (SCORING_ROLLOUT_CHECKLIST). Après le pilote, ce sera plus cher.
+- Sur un **boîtier** (étude afficheurs, R9) : deux boutons physiquement à gauche et à droite.
+- Le mode **relatif** (§3.4) reste disponible par préférence de poste, pour qui le préfère.
+
+#### 3.5.3 Le risque d'oubli du switch, et pourquoi il est maîtrisable
+
+**Risque** : switch oublié à un changement de période ⇒ toutes les touches spatiales de la période sont
+**inversées** ⇒ possession attribuée à la mauvaise équipe pendant toute la période.
+
+**Ce qui le rend maîtrisable** : l'erreur est **un seul bit par période** (« côtés inversés ou non »),
+pas une suite d'erreurs dispersées.
+
+1. **Prévention** : l'inversion est **proposée par défaut** au passage de période (§3.5.1) ; l'oubli
+   n'est possible que si l'opérateur l'**annule** (ou si la période change hors du parcours normal :
+   correction manuelle de la période → la console redemande le côté).
+2. **Détection en direct** : chaque **but** saisi par le secrétaire dit quelle équipe avait le ballon. Si
+   la dernière touche spatiale disait l'autre équipe, la console **signale une inversion probable**
+   (bandeau discret pour le **secrétaire**, qui lui regarde l'écran ; proposition « inverser les côtés
+   »). Le panneau public est alors corrigé en cours de période.
+3. **Correction après le match** (Q7) : la reconstruction (§3.3) teste les deux valeurs du bit pour
+   chaque période et garde celle qui s'accorde avec les ancres (buts, engagements saisis par le banc).
+   Une période **sans aucun but** ni engagement renseigné ne peut pas être tranchée : sa possession est
+   **masquée** (comme sous le seuil de couverture, Q12).
+
+Résultat : l'oubli du switch coûte au pire **une période non publiée** quand elle n'a aucun but ; il ne
+publie **jamais** une possession inversée.
+
 ## 4. Solutions avec une saisie humaine, hors table de marque
 
 ### 4.1 S1 — Les bancs complètent un squelette déjà pré-rempli (solution retenue pour arrêts et tirs)
@@ -188,7 +273,7 @@ blanche, donne une qualité trop faible. Ici, la personne du banc **ne crée pre
 | « Tir cadré de A, arrêté (gardien ou cadre) — 1re, 6:42 » | chaque **40 s** | côté **A** : le **tireur** (n°) ; côté **B** : **qui a arrêté** (n°) ou **cadre** |
 | « But de A — n° 7 — 1re, 4:15 » | chaque **but** | côté **B** : **qui était dans le but** (n°), pour le % d'arrêts |
 | « Possession de A, perdue — 1re, 3:02 » | chaque **60 s** qui change d'équipe | **facultatif** : « tir arrêté, ballon récupéré par la défense » → transforme la perte en **tir + arrêt** (le minorant de §3.3 devient exact) |
-| « Engagement — 2e, 10:00 » | chaque **premier 60 s** d'une période ou après un but | **« gagné par nous / par eux »** : ancre la possession (§3.4) |
+| « Engagement — 2e, 10:00 » | chaque **premier 60 s** d'une période ou après un but | **« gagné par nous / par eux »** : ancre la possession — **inutile avec les touches spatiales** (§3.5), qui le donnent déjà |
 
 **Qui, quand, comment** :
 
@@ -206,7 +291,8 @@ blanche, donne une qualité trop faible. Ici, la personne du banc **ne crée pre
   `limitation_equipe_club`, FEATURE_DESIGNATIONS D8 / MAN-09). Il voit les matchs de son équipe et
   n'écrit que **les stats de son équipe**, pendant la fenêtre de 24 h, rien d'autre (ni feuille de
   match, ni composition). Le responsable n'est pas toujours sur le banc : **délégation** possible à une
-  personne du banc (Q14). Une équipe sans responsable désigné n'a pas de stats par joueur.
+  personne du banc : **délégation autorisée (Q14)** par un lien nominatif limité au match et à la
+  fenêtre de 24 h, révocable. Une équipe sans responsable désigné n'a pas de stats par joueur.
 
 **Contrôles de cohérence** (automatiques, à la fin de la fenêtre) :
 
@@ -261,19 +347,23 @@ Hors de portée à court terme ; même dépendance aux vidéos que S3.
 | Solution | Arrêts | Tirs | Possession | Personne en plus | Impact match | Couverture attendue |
 |---|---|---|---|---|---|---|
 | §3.3 Reconstruction (chrono de tir + buts) | par équipe (arrêts + cadre) | cadrés par équipe (minorant) | par équipe, **hors segments non ancrés** | non | aucun | tous les matchs scorés |
-| §3.4 Touche `/` (60 s même équipe) | — | — | **exceptions de Q9 levées** | non | nul | selon Q9 |
+| §3.4 Touche `/` (60 s même équipe) | — | — | coups francs / avantages (Q9) | non | nul | tous les matchs scorés |
+| §3.5 Switch + touches spatiales | — | — | **toutes les possessions, engagements compris** | non | nul (panneau dans le sens du jeu) | tous les matchs scorés ; période sans but non tranchable si switch oublié |
 | §4.1 Bancs sur squelette | ✅ par joueur | ✅ par joueur | (corrige les pertes) | **oui, motivée** | aucun | variable, croissante |
 | §4.2 Statisticien | ✅ | ✅ | — | oui | aucun | complément |
 | §4.3 Vidéo | ✅ | ✅ | ✅ | oui, différé | aucun | faible (Q4) |
 
 ## 6. Recommandation (v2)
 
-1. **Lot 1 — Reconstruction** (§3.3) : calcul serveur après le match, à partir de `scoring_live_clock`
-   (départs 60 / 40 / arrêt), des buts et du chrono principal. Comptes d'équipe publics : possession
-   (quand ancrée), tirs cadrés, arrêts + cadre, violations. **Aucun changement à la table de marque.**
-   C'est aussi le **socle** du squelette du lot 3.
-2. **Lot 2 — Touche `/` « 60 s, même équipe »** (§3.4) : un raccourci configurable, aucun affichage
-   nouveau. À trancher après Q9.
+0. **Spec du switch des côtés** (§3.5) dans PAGE_SCORING : côté de départ, inversion proposée au
+   passage de période, panneau miroir, alerte d'inversion probable sur but. Utile **sans** les stats.
+1. **Lot 1 — Reconstruction** (§3.3, §3.5.3) : calcul serveur après le match, à partir de
+   `scoring_live_clock` (départs 60 / 40 / arrêt), des buts, des côtés et du chrono principal. Comptes
+   d'équipe publics : possession (quand tranchée), tirs cadrés, arrêts + cadre, violations. Socle du
+   squelette du lot 3. **Suppression de `kp_stats`** dans ce lot (Q15).
+2. **Lot 2 — Touches du chronomètre de tir** : **spatiales** `/` gauche, `*` droite, `-` 40 s, `+` arrêt
+   (§3.5.2) si le switch est retenu ; sinon **relatives** `+` / `/` (§3.4). À décider **avant** le
+   pilote (Q17).
 3. **Lot 3 — Page « Stats de mon équipe »** (§4.1) : squelette pré-rempli (dont les engagements), un
    geste par ligne, responsable d'équipe, fenêtre de 24 h, contrôles de cohérence, seuil de 80 %. Démarrer par
    un **tournoi pilote** (Moreuil, terrain pilote du scoring) avec deux ou trois clubs volontaires.
@@ -299,17 +389,21 @@ Colonnes indicatives : `uid`, `id_match`, `kind` (`SHOT` / `SAVE` / `POSSESSION`
   que renseigner `player` (et `outcome` pour une perte).
 - **Possession** : calculée, pas saisie — une vue ou une table de résultats recalculable, comme les
   médailles (recalcul saison par saison).
-- **Touche `/`** : la commande du chronomètre de tir porte un attribut `sameTeam` (`start60` +
-  `sameTeam = true`), persisté avec le départ dans `scoring_live_*` et le journal ; la machine à états
-  du chronomètre de tir (`ScoringRules::shotclockTransition`) ne change pas.
+- **Touches du chronomètre de tir** : la commande `start60` porte la **possession déclarée** (`team =
+  A | B` en mode spatial, traduite du côté par la console ; `sameTeam = true | false` en mode relatif),
+  persistée avec le départ dans `scoring_live_*` et le journal ; la machine à états du chronomètre de
+  tir (`ScoringRules::shotclockTransition`) ne change pas.
+- **Côtés** : `sides` (`A_LEFT` / `A_RIGHT`) dans `scoring_live_state`, chaque changement horodaté
+  (période, temps) pour que la reconstruction sache quel côté valait à chaque départ.
 - **`kp_stats` (2022) : supprimé (Q13)** — migration de suppression de la table, retrait de
   `sources/app_wsm_dev/src/views/Stats.vue` et de `PUT /admin/scoring/stats`
   (`ScoringController::putStats`). Indépendant des lots ci-dessus : peut se faire à tout moment.
 
-## 8. Questions ouvertes (v3)
+## 8. Questions ouvertes (v4)
 
 | # | Question |
 |---|---|
-| **Q9** | *(en cours de renseignement)* **60 s sans changement de possession** : dans quels cas le chronomètre de tir repart-il à 60 s pour **la même équipe** (faute de la défense sanctionnée par un coup franc à l'attaque, sortie concédée par la défense, temps mort, carton…) et à quelle fréquence ? |
-| **Q14** | **Délégation** : le responsable d'équipe peut-il confier la saisie à une personne du banc (lien nominatif limité au match), ou doit-il saisir lui-même ? |
-| **Q15** | **Suppression de `kp_stats`** : la faire tout de suite (petit ménage indépendant), ou avec le lot 1 ? |
+| **Q16** | **Convention des touches spatiales** : « gauche » désigne-t-il **l'équipe affichée à gauche** (celle dont le but est à gauche) ou **la direction de l'attaque** (vers la gauche) ? Le bras de l'arbitre montre la direction de l'attaque ; la console affiche une équipe de chaque côté. Il faut **une seule** convention, la plus naturelle pour un chronométreur de tir. |
+| **Q17** | **Mode des touches** pour le pilote : **spatial** (`/` gauche, `*` droite, `+` arrêt, avec switch) ou **relatif** (`+` autre équipe, `/` même équipe, `*` arrêt) ? |
+| **Q18** | **Changements de côté** : à chaque période, prolongations comprises (but en or) ? Y a-t-il des compétitions où les équipes ne changent pas de côté ? |
+| **Q19** | **Panneau public** : inverser aussi le panneau (sens du jeu) ou le garder fixe (A toujours à gauche) pour le public et la vidéo ? Les incrustations vidéo suivent-elles le switch ? |
