@@ -128,6 +128,16 @@ describe('ScopePanel', () => {
     expect(wrapper.text()).toContain('Rôle R1')
   })
 
+  it('DES-12 : names the roles of a gameday after the level of its competition', async () => {
+    // libellés distincts dans les deux langues : le test vaut quelle que soit la langue de l'environnement
+    const delegate = role('DELEGUE_CNA', { label: 'Représentant CNA', labels: { national: { fr: 'Représentant CNA', en: 'National official' }, other: { fr: 'Officiel principal', en: 'Other official' } } })
+    const cells = { DELEGUE_CNA: { requirement: 'optional', status: 'empty', holders: [] } }
+    api.get.mockImplementation(async (url: string) => (url.endsWith('/roles') ? { DELEGUE_CNA: delegate } : { gameday: { national: false }, roles: cells }))
+    const wrapper = await mountPanel({ scopeType: 'JOURNEE', scopeId: 9803 })
+    expect(wrapper.text()).toMatch(/Officiel principal|Other official/)
+    expect(wrapper.text()).not.toMatch(/Représentant CNA|National official/)
+  })
+
   it('opens the designation window from a cell, and reloads once saved', async () => {
     api.get.mockImplementation(async (url: string) => (url.endsWith('/roles') ? roles : { items: [] }))
     const wrapper = await mountPanel({})

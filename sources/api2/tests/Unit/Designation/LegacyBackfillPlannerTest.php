@@ -32,6 +32,15 @@ final class LegacyBackfillPlannerTest extends TestCase
         self::assertSame([], $plan->unresolved);
     }
 
+    public function testRep06TheCnaDelegateOfAnInternationalCompetitionBecomesItsChiefOfficial(): void
+    {
+        $international = new GamedayScope(self::GAMEDAY, '2026', 'ECA', []);
+
+        $plan = LegacyBackfillPlanner::forGameday($international, ['Delegue' => 'BERTHELEMY Thomas (17225)'], EffectiveDesignations::of($international, []));
+
+        self::assertSame([['role' => 'DELEGUE_CNA', 'matric' => 17225, 'order' => 1]], $plan->create);
+    }
+
     public function testNonPlayingRefereesKeepTheirOrder(): void
     {
         $plan = LegacyBackfillPlanner::forGameday(self::gameday(), ['Arb_nj1' => 'A (101)', 'Arb_nj2' => '', 'Arb_nj3' => 'C (103)'], self::effective([]));

@@ -2,6 +2,7 @@
 
 namespace App\Report;
 
+use App\Competition\CompetitionLevel;
 use App\Designation\DesignationRepository;
 use App\Designation\EffectiveDesignations;
 use App\Designation\GamedayScope;
@@ -55,7 +56,7 @@ final class ReportKpiData
             $effective = EffectiveDesignations::of(new GamedayScope($gamedayId, $perimeter->season, $competition, $perimeter->gamedayEvents[$gamedayId] ?? []), $designations);
             foreach ($roles as $role) {
                 foreach ($effective->holders($role) as $holder) {
-                    $holders["$role|{$holder->matric}"] = ['role' => $role, 'matric' => $holder->matric];
+                    $holders["$role|{$holder->matric}"] ??= ['role' => $role, 'matric' => $holder->matric, 'national' => CompetitionLevel::isNational($competition)];
                 }
             }
         }
@@ -63,10 +64,18 @@ final class ReportKpiData
         $names = $this->names(array_values(array_unique(array_column($holders, 'matric'))));
 
         return array_values(array_map(static fn (array $h): array => [
-            'role' => $h['role'] === 'DELEGUE_CNA' && $roles === self::JURY_ROLES ? 'Président (délégué CNA)' : RoleCatalog::get($h['role'])->label,
+            'role' => self::roleLabel($h['role'], $h['national'], $roles === self::JURY_ROLES),
             'name' => $names[$h['matric']] ?? '',
             'matric' => $h['matric'],
         ], $holders));
+    }
+
+    /** Libellé selon le niveau (DES-12) ; au jury d'appel, le représentant CNA en est le président (D27). */
+    private static function roleLabel(string $role, bool $national, bool $jury): string
+    {
+        $label = RoleCatalog::get($role)->labelFor($national);
+
+        return $jury && $role === 'DELEGUE_CNA' ? "Président ($label)" : $label;
     }
 
     /**
