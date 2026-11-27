@@ -222,8 +222,8 @@ franc, de l'avantage, de la remise en jeu). La console traduit le côté en A / 
 
 | Touche | Spatial | Aujourd'hui |
 |---|---|---|
-| **`/`** | **60 s, attaque vers la gauche** (équipe affichée à gauche… qui attaque vers la droite — voir Q16) | libre |
-| **`*`** | **60 s, attaque vers la droite** | arrêt |
+| **`/`** | **60 s, côté gauche** (sens exact de « gauche » : Q16) | libre |
+| **`*`** | **60 s, côté droit** | arrêt |
 | **`-`** | 40 s (même équipe) | 40 s |
 | **`+`** | **arrêt** (`--`) | 60 s |
 
