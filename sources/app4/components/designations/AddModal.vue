@@ -67,7 +67,7 @@ const save = async () => {
 </script>
 
 <template>
-  <AdminModal :open="target !== null" :title="target ? t('designations.add.title', { role: roleLabel(target.role), line: target.label }) : ''" @close="emit('close')">
+  <AdminModal :open="target !== null" focus-first-field :title="target ? t('designations.add.title', { role: roleLabel(target.role), line: target.label }) : ''" @close="emit('close')">
     <form v-if="target" class="space-y-4" @submit.prevent="save">
       <div>
         <label class="block text-sm font-medium mb-1">{{ t('designations.add.person') }} *</label>

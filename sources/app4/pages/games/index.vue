@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { continuationOf, DEFAULT_GAME_INTERVAL_MINUTES } from '~/utils/gameFormDefaults'
 import { gameDisplayStatus, periodLabel, type GameDisplayStatus } from '~/utils/gameStatus'
 import { DEFAULT_PITCH_MIN_INTERVAL, pitchConflictIds } from '~/utils/pitchGrid'
 import type { Game, GamesListResponse, GameFormData, GameJournee, GameTeam } from '~/types/games'
@@ -193,7 +194,7 @@ function getDefaultFormData(): GameFormData {
     numeroOrdre: null,
     terrain: '',
     type: 'C',
-    intervalle: 40,
+    intervalle: DEFAULT_GAME_INTERVAL_MINUTES,
     libelle: '',
     idEquipeA: null,
     idEquipeB: null,
@@ -1230,12 +1231,15 @@ const openAddModal = async () => {
   formData.value = getDefaultFormData()
   formError.value = ''
 
-  // Pre-select journee if one is selected in filter
-  if (selectedJournee.value && selectedJournee.value !== '*') {
+  // Continue the last game of the listing (same day, pitch, next number and slot);
+  // otherwise fall back on the journee selected in the filter.
+  const lastGame = filteredGames.value.at(-1)
+  if (lastGame) {
+    Object.assign(formData.value, continuationOf(lastGame))
+    formTeams.value = await loadTeamsForJournee(lastGame.idJournee)
+  } else if (selectedJournee.value && selectedJournee.value !== '*') {
     formData.value.idJournee = parseInt(selectedJournee.value)
-    // Load teams for this journee
     formTeams.value = await loadTeamsForJournee(formData.value.idJournee)
-    // Set type from journee
     const j = journees.value.find(jn => jn.id === formData.value.idJournee)
     if (j) formData.value.type = j.type || 'C'
   }
@@ -1358,31 +1362,63 @@ const submitFormAndAdd = async () => {
   if (!ok) return
   await loadGames()
 
-  // Compute next hour = saved hour + intervalle minutes
-  let nextHeure = ''
-  if (snapshot.heureMatch) {
-    const [h, m] = snapshot.heureMatch.split(':').map(Number)
-    const totalMinutes = h * 60 + m + (snapshot.intervalle || 0)
-    const nextH = Math.floor(totalMinutes / 60) % 24
-    const nextM = totalMinutes % 60
-    nextHeure = `${String(nextH).padStart(2, '0')}:${String(nextM).padStart(2, '0')}`
-  }
-
-  formData.value = {
-    ...getDefaultFormData(),
-    idJournee: snapshot.idJournee,
-    dateMatch: snapshot.dateMatch,
-    terrain: snapshot.terrain,
-    intervalle: snapshot.intervalle,
-    type: snapshot.type,
-    heureMatch: nextHeure,
-    numeroOrdre: snapshot.numeroOrdre != null ? snapshot.numeroOrdre + 1 : null,
-  }
+  formData.value = { ...getDefaultFormData(), ...continuationOf(snapshot, snapshot.intervalle) }
   // Reload teams for the kept journee
   if (formData.value.idJournee) {
     formTeams.value = await loadTeamsForJournee(formData.value.idJournee)
   }
   formError.value = ''
+}
+
+// ─── Init titulaires (copy the team compositions into the score sheets of a scope) ───
+type StartersScope = 'team' | 'journee' | 'competition'
+const startersModalOpen = ref(false)
+const startersScope = ref<StartersScope>('team')
+const startersValue = ref('')
+const startersLoading = ref(false)
+
+// Scope choices come from the games displayed in the table.
+const startersOptions = computed<Record<StartersScope, { value: string, label: string }[]>>(() => {
+  const teams = new Map<string, string>()
+  const journeesById = new Map<string, string>()
+  const competitions = new Map<string, string>()
+  for (const g of games.value) {
+    if (g.idEquipeA && g.equipeA) teams.set(String(g.idEquipeA), g.equipeA)
+    if (g.idEquipeB && g.equipeB) teams.set(String(g.idEquipeB), g.equipeB)
+    const journee = journees.value.find(j => j.id === g.idJournee)
+    journeesById.set(String(g.idJournee), journee ? journeeLabel(journee) : [g.codeCompetition, g.libelleJournee].filter(Boolean).join(' – '))
+    competitions.set(g.codeCompetition, g.codeCompetition)
+  }
+  const toOptions = (m: Map<string, string>) => [...m].map(([value, label]) => ({ value, label })).sort((a, b) => a.label.localeCompare(b.label))
+  return { team: toOptions(teams), journee: toOptions(journeesById), competition: toOptions(competitions) }
+})
+const startersChoices = computed(() => startersOptions.value[startersScope.value])
+
+watch(startersScope, () => { startersValue.value = startersChoices.value[0]?.value ?? '' })
+
+const openStartersModal = () => {
+  startersScope.value = 'team'
+  startersValue.value = startersOptions.value.team[0]?.value ?? ''
+  startersModalOpen.value = true
+}
+
+const confirmInitStarters = async () => {
+  if (!startersValue.value) return
+  startersLoading.value = true
+  try {
+    const result = await api.post<{ matchCount: number }>('/admin/games/bulk/init-starters', {
+      season: workContext.season,
+      scope: startersScope.value,
+      value: startersValue.value,
+    })
+    toast.add({ title: t('common.success'), description: t('games.init_starters.success', { count: result.matchCount }), color: 'success' })
+    startersModalOpen.value = false
+    await loadGames(true)
+  } catch {
+    // Error already shown
+  } finally {
+    startersLoading.value = false
+  }
 }
 
 // ─── Delete ───
@@ -2005,6 +2041,16 @@ const openScoring = (gameId: number) => {
             {{ t('games.total', { count: total }) }}
           </template>
         </span>
+
+        <button
+          v-if="canEdit && selectedIds.length === 0 && games.length > 0 && !isAllCompetitionsEnded"
+          type="button"
+          class="px-3 py-2 border border-header-300 dark:border-header-700 text-header-900 dark:text-header-50 rounded-lg hover:bg-header-50 dark:hover:bg-header-800 transition-colors text-sm flex items-center gap-1"
+          @click="openStartersModal"
+        >
+          <UIcon name="heroicons:user-group" class="w-5 h-5" />
+          {{ t('games.init_starters.button') }}
+        </button>
 
         <!-- Bulk actions dropdown -->
         <div v-if="canSelect && selectedIds.length > 0" ref="bulkActionsRef" class="relative">
@@ -3348,9 +3394,9 @@ const openScoring = (gameId: number) => {
           <AdminActionButton v-if="canEdit && !isLocked(g) && g.authorized" icon="heroicons:pencil" @click="openEditModal(g)">
             {{ t('common.edit') }}
           </AdminActionButton>
-          <button v-if="canEdit && g.authorized" type="button" class="inline-flex items-center gap-1.5 px-3 py-2 min-h-10 text-sm font-medium text-danger-600 hover:text-danger-800" @click="openScoresheets([g.id])">
-            <UIcon name="heroicons:document-text" class="w-5 h-5" />
-            {{ t('games.scoresheet_pdf') }}
+          <button v-if="canEdit && g.authorized" type="button" class="inline-flex items-center gap-1.5 px-3 py-2 min-h-10 text-sm font-medium text-danger-600 hover:text-danger-800" :title="t('games.scoresheet_pdf')" :aria-label="t('games.scoresheet_pdf')" @click="openScoresheets([g.id])">
+            <UIcon name="heroicons:document-text" class="w-7 h-7" />
+            PDF
           </button>
           <button v-if="canEdit && authStore.profile <= 6 && g.authorized" class="inline-flex items-center gap-1.5 px-3 py-2 min-h-10 text-sm font-medium text-emerald-700 hover:text-emerald-800" @click="openScoresheet(g.id, 2)">
             <UIcon name="heroicons:device-tablet" class="w-5 h-5" />
@@ -3852,6 +3898,28 @@ const openScoring = (gameId: number) => {
     </AdminModal>
 
     <!-- ═══════ BULK AUTO-ASSIGN CONFIRM ═══════ -->
+    <!-- Init titulaires: scope choice -->
+    <AdminModal :open="startersModalOpen" :title="t('games.init_starters.title')" @close="startersModalOpen = false">
+      <form class="space-y-4" @submit.prevent="confirmInitStarters">
+        <p class="text-sm">{{ t('games.init_starters.description') }}</p>
+        <p class="text-sm font-medium text-warning-700 dark:text-warning-300">{{ t('games.init_starters.limit') }}</p>
+        <fieldset class="space-y-1">
+          <legend class="block text-sm font-medium mb-1">{{ t('games.init_starters.scope') }}</legend>
+          <label v-for="scope in (['team', 'journee', 'competition'] as const)" :key="scope" class="flex items-center gap-2 text-sm">
+            <input v-model="startersScope" type="radio" name="starters-scope" :value="scope">
+            {{ t(`games.init_starters.scope_${scope}`) }}
+          </label>
+        </fieldset>
+        <select v-model="startersValue" class="w-full rounded border border-header-300 dark:border-header-700 bg-white dark:bg-header-900 text-header-900 dark:text-header-50 px-2 py-1.5 text-sm" :aria-label="t('games.init_starters.scope')">
+          <option v-for="o in startersChoices" :key="o.value" :value="o.value">{{ o.label }}</option>
+        </select>
+        <div class="flex justify-end gap-2">
+          <button type="button" class="px-3 py-1.5 rounded border border-header-300 dark:border-header-700 text-sm" @click="startersModalOpen = false">{{ t('common.cancel') }}</button>
+          <button type="submit" class="px-3 py-1.5 rounded bg-primary-600 text-white text-sm disabled:opacity-50" :disabled="!startersValue || startersLoading">{{ t('common.confirm') }}</button>
+        </div>
+      </form>
+    </AdminModal>
+
     <AdminConfirmModal
       :open="bulkAutoAssignConfirmOpen"
       :title="t('games.bulk.auto_assign')"

@@ -1582,6 +1582,17 @@
     "officials_by_designations": "Officials (competition manager, R1, delegate, chief referee, teams representative, non-playing referees) are designated with the gameday « Officials » button or in Referentials › Designations."
   },
   "games": {
+    "init_starters": {
+      "button": "Init starters",
+      "title": "Initialize starters",
+      "description": "Replaces the game rosters with the team compositions (active players, numbers, captains).",
+      "limit": "Only unlocked games are updated.",
+      "scope": "Scope",
+      "scope_team": "One team",
+      "scope_journee": "One gameday",
+      "scope_competition": "One competition",
+      "success": "{count} game(s) updated"
+    },
     "title": "Game Management",
     "add": "Add a game",
     "edit": "Edit game",

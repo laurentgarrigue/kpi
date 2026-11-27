@@ -1594,6 +1594,17 @@
     "officials_by_designations": "Les officiels (RC, R1, délégué, juge arbitre, représentant des équipes, arbitres non-joueurs) se désignent avec le bouton « Officiels » de la journée ou dans Référentiels › Désignations."
   },
   "games": {
+    "init_starters": {
+      "button": "Init. titulaires",
+      "title": "Initialiser les titulaires",
+      "description": "Remplace la composition des feuilles de match par celle des équipes (joueurs actifs, numéros, capitaines).",
+      "limit": "Seuls les matchs non verrouillés sont mis à jour.",
+      "scope": "Périmètre",
+      "scope_team": "Une équipe",
+      "scope_journee": "Une journée",
+      "scope_competition": "Une compétition",
+      "success": "{count} match(s) mis à jour"
+    },
     "title": "Gestion des Matchs",
     "add": "Ajouter un match",
     "edit": "Modifier le match",

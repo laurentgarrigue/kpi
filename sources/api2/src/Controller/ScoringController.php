@@ -720,14 +720,15 @@ class ScoringController extends AbstractController
         if ($err = $this->assertMatchAuthorized($matchId)) return $err;
 
         // Same date + pitch, after the current one by (time, number). Scope: the KPI event
-        // when the gameday belongs to one, else the gameday itself.
+        // when the gameday belongs to one, else the gameday itself. A pitch left blank (NULL or
+        // '') is one pitch like another: the games without pitch chain together, never with a named one.
         $id = $this->connection->fetchOne(
             "SELECT m1.Id
              FROM kp_match m2
              LEFT JOIN kp_evenement_journee ej2 ON ej2.Id_journee = m2.Id_journee
-             JOIN kp_match m1 ON m1.Date_match = m2.Date_match AND m1.Terrain = m2.Terrain
+             JOIN kp_match m1 ON m1.Date_match = m2.Date_match AND COALESCE(m1.Terrain, '') = COALESCE(m2.Terrain, '')
              LEFT JOIN kp_evenement_journee ej1 ON ej1.Id_journee = m1.Id_journee
-             WHERE m2.Id = ? AND m1.Id <> m2.Id AND m2.Terrain <> ''
+             WHERE m2.Id = ? AND m1.Id <> m2.Id
                AND (ej2.Id_evenement IS NOT NULL AND ej1.Id_evenement = ej2.Id_evenement
                     OR ej2.Id_evenement IS NULL AND m1.Id_journee = m2.Id_journee)
                AND (m1.Heure_match > m2.Heure_match

@@ -495,7 +495,7 @@ onMounted(async () => {
     </AdminModal>
 
     <!-- Club organisateur : recherche dans une fenêtre, le tableau ne doit pas rogner la liste de résultats -->
-    <AdminModal :open="editingOrganiser !== null" :title="t('designations.organiser_edit')" @close="editingOrganiser = null">
+    <AdminModal :open="editingOrganiser !== null" focus-first-field :title="t('designations.organiser_edit')" @close="editingOrganiser = null">
       <div v-if="editingOrganiser" class="space-y-3 min-h-72">
         <p class="text-sm text-header-600 dark:text-header-300">{{ organiserModalTitle }}</p>
         <AdminTextAutocomplete
@@ -510,7 +510,7 @@ onMounted(async () => {
     </AdminModal>
 
     <!-- Lieu et département : commune en autocomplete (elle renseigne le département), modifiables à la main -->
-    <AdminModal :open="editingPlace !== null" :title="t('designations.place_edit')" @close="editingPlace = null">
+    <AdminModal :open="editingPlace !== null" focus-first-field :title="t('designations.place_edit')" @close="editingPlace = null">
       <form v-if="editingPlace" class="space-y-3 min-h-72" @submit.prevent="savePlace">
         <p class="text-sm text-header-600 dark:text-header-300">{{ editingPlace.label }}</p>
         <div>
