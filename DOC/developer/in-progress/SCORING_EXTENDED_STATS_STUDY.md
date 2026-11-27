@@ -11,7 +11,10 @@
 >   paramétrable, stats sous le seuil **masquées** ; `kp_stats` supprimé. Q9 en attente ;
 > - **v4 (2026-11-27)** : réponses Q9, Q14, Q15 ; **inversion des côtés** (« switch ») de la console et du
 >   panneau à chaque période (§3.5) et **touches spatiales** « 60 s gauche / 60 s droite » qui
->   s'en déduisent ; risque d'oubli du switch traité (§3.5.3) ; questions Q16–Q19.
+>   s'en déduisent ; risque d'oubli du switch traité (§3.5.3) ; questions Q16–Q19 ;
+> - **v5 (2026-11-27)** : réponses Q16–Q19 ; **changement de côté automatique** à chaque période ;
+>   panneau inversé, incrustations fixes ; **recommandation : touches spatiales** et critère de
+>   validation au pilote (§3.5.4).
 >
 > **Contexte** : console Scoring d'app4 ([PAGE_SCORING.md](../../specs/PAGE_SCORING.md), notamment
 > §0.4 « fait de match extensible », §0.13 touches du chronomètre de tir, §6.5 chronomètre de tir),
@@ -74,6 +77,10 @@ officielle, pour :
 | **Q13** | `kp_stats` / KPI Stats 2022 | **On ne garde rien.** | Suppression de la table, de la page `app_wsm_dev` et de `PUT /admin/scoring/stats` (§7). |
 | **Q14** | Délégation par le responsable d'équipe | **Oui.** | §4.1 : lien nominatif limité au match et à la fenêtre de 24 h. |
 | **Q15** | Quand supprimer `kp_stats` | **Avec le premier lot.** | §6, lot 1. |
+| **Q16** | Sens de « gauche » | **L'équipe située sur la moitié gauche du terrain**, vue de l'**arbitre principal et de la table de marque** (même côté, R11 de l'étude afficheurs). | `/` = « possession à l'équipe de gauche », `*` = « à l'équipe de droite ». La touche désigne une **équipe** (par sa moitié de terrain), pas une direction d'attaque (§3.5.2). |
+| **Q17** | Mode des touches | **Pas d'avis arrêté.** | §3.5.4 : recommandation argumentée + critère mesuré au pilote. |
+| **Q18** | Changements de côté | **Systématiques** à chaque nouvelle période et prolongation. | Le switch est **automatique** au passage de période (plus seulement « proposé ») ; annulable pour une correction. |
+| **Q19** | Panneau / incrustations | **Le panneau change, pas les incrustations.** | Le côté est diffusé au panneau (scoreboard) ; les incrustations gardent **A à gauche** (identité TV stable). |
 
 ### 2.3 Ce qui existe déjà
 
@@ -192,27 +199,36 @@ réelle des équipes sur leur demi-terrain après chaque changement de côté.
 
 - **Avant le coup d'envoi** : le côté de départ de A (gauche ou droite, vu de la table) se règle dans
   **Paramètres**, avec les contrôles d'avant-match (PAGE_SCORING §0.11).
-- **À chaque nouvelle période** : l'inversion est **proposée par défaut** dans le passage à la période
-  suivante (bouton « » », pause inter-périodes, PAGE_SCORING §0.13 / §7.5), **sans geste en plus** :
-  la console bascule, l'opérateur peut annuler. Le switch reste disponible à tout moment (bouton
+- **À chaque nouvelle période** (prolongations comprises, Q18) : l'inversion est **automatique** au
+  passage à la période suivante (bouton « » », pause inter-périodes, PAGE_SCORING §0.13 / §7.5),
+  **sans geste en plus** ; le secrétaire peut l'annuler (correction). Le switch reste disponible à tout moment (bouton
   dans l'en-tête, pas de raccourci : il ne doit pas partir par erreur).
 - **Ce qui ne change pas** : l'identité A / B (feuille de match, couleurs, données, `team` dans
   `scoring_live_*`). Seul l'**affichage** est miroir. Le côté courant est un état de match
-  (`sides = A_LEFT | A_RIGHT`) persisté et diffusé (Mercure, `BroadcastChannel`) pour que le panneau
-  suive.
+  (`sides = A_LEFT | A_RIGHT`) persisté et diffusé (Mercure, `BroadcastChannel`).
+- **Qui suit le switch (Q19)** : la **console** et le **panneau** (scoreboard plein écran). Les
+  **incrustations** vidéo ne le suivent **pas** : A reste à gauche, comme le téléspectateur l'a vu dès
+  le début. Les afficheurs du chronomètre de tir ne montrent pas d'équipe : non concernés.
+- **Repère** (Q16) : gauche / droite s'entendent **vus de l'arbitre principal et de la table**, qui sont
+  du même côté du terrain.
 - **Bénéfice hors stats** : le secrétaire saisit un but « à gauche » quand le but est marqué à gauche ;
   le public lit le panneau dans le sens du jeu.
 
 #### 3.5.2 Ce que ça permet : des touches « 60 s gauche » / « 60 s droite »
 
 Avec des côtés connus, le chronométreur de tir n'a plus à décider « même équipe / autre équipe » : il
-indique **de quel côté part l'attaque**, ce que **l'arbitre lui montre déjà du bras** (direction du coup
-franc, de l'avantage, de la remise en jeu). La console traduit le côté en A / B grâce au switch.
+désigne **l'équipe qui a le ballon par sa moitié de terrain** (Q16 : l'équipe de gauche ou de droite,
+vue de la table). La console traduit le côté en A / B grâce au switch.
+
+> **Point de vigilance** : la touche désigne une **équipe**, pas une **direction**. L'équipe de gauche
+> attaque vers la **droite** ; si l'arbitre signale un coup franc **en montrant la direction de
+> l'attaque**, son bras pointe à l'opposé de la touche. À vérifier au pilote : si ça trouble les
+> opérateurs, la convention peut s'inverser par préférence de poste, sans rien changer aux données.
 
 | | Relatif (§3.4) | **Spatial (switch)** |
 |---|---|---|
 | Ce que décide l'opérateur | « encore eux ? » (`+` ou `/`) | « vers où ? » (gauche / droite) |
-| Repère sur le terrain | doit se souvenir de qui avait le ballon | **le bras de l'arbitre**, la direction du jeu |
+| Repère sur le terrain | doit se souvenir de qui avait le ballon | **l'équipe qui a le ballon**, par sa moitié de terrain |
 | Coups francs, avantages (Q9, fréquents) | piège : `+` par réflexe ⇒ erreur | naturel : même geste que les autres 60 s |
 | Engagement | **inconnu** (personne ne sait qui gagne le sprint) | **connu** : il tape le côté de l'équipe qui a gagné |
 | Dépend du switch | non | **oui** (§3.5.3) |
@@ -222,8 +238,8 @@ franc, de l'avantage, de la remise en jeu). La console traduit le côté en A / 
 
 | Touche | Spatial | Aujourd'hui |
 |---|---|---|
-| **`/`** | **60 s, côté gauche** (sens exact de « gauche » : Q16) | libre |
-| **`*`** | **60 s, côté droit** | arrêt |
+| **`/`** | **60 s, possession à l'équipe de gauche** | libre |
+| **`*`** | **60 s, possession à l'équipe de droite** | arrêt |
 | **`-`** | 40 s (même équipe) | 40 s |
 | **`+`** | **arrêt** (`--`) | 60 s |
 
@@ -243,9 +259,10 @@ franc, de l'avantage, de la remise en jeu). La console traduit le côté en A / 
 **Ce qui le rend maîtrisable** : l'erreur est **un seul bit par période** (« côtés inversés ou non »),
 pas une suite d'erreurs dispersées.
 
-1. **Prévention** : l'inversion est **proposée par défaut** au passage de période (§3.5.1) ; l'oubli
-   n'est possible que si l'opérateur l'**annule** (ou si la période change hors du parcours normal :
-   correction manuelle de la période → la console redemande le côté).
+1. **Prévention** : l'inversion est **automatique** au passage de période (§3.5.1, Q18) ; l'oubli
+   n'est possible qu'en cas d'**annulation** erronée, ou de période changée hors du parcours normal
+   (correction manuelle de la période → la console redemande le côté). Le risque réel n'est plus
+   l'oubli mais une **erreur de côté de départ** dans Paramètres : même bit, même correction.
 2. **Détection en direct** : chaque **but** saisi par le secrétaire dit quelle équipe avait le ballon. Si
    la dernière touche spatiale disait l'autre équipe, la console **signale une inversion probable**
    (bandeau discret pour le **secrétaire**, qui lui regarde l'écran ; proposition « inverser les côtés
@@ -257,6 +274,31 @@ pas une suite d'erreurs dispersées.
 
 Résultat : l'oubli du switch coûte au pire **une période non publiée** quand elle n'a aucun but ; il ne
 publie **jamais** une possession inversée.
+
+#### 3.5.4 Spatial ou relatif ? Recommandation (Q17)
+
+**Recommandation : touches spatiales** (`/` équipe de gauche, `*` équipe de droite, `-` 40 s, `+` arrêt),
+le mode relatif restant une **préférence de poste**.
+
+| Argument | Pourquoi il penche vers le spatial |
+|---|---|
+| Q9 : coups francs et avantages fréquents | en relatif, chaque 60 s demande « encore eux ? » et le réflexe `+` se trompe ; en spatial, **tous les 60 s se tapent pareil** |
+| Q10 : pas de regard sur l'écran | le spatial n'exige aucun état mémorisé : l'opérateur **voit** qui a le ballon |
+| Engagement | connu en spatial (côté de l'équipe qui gagne le sprint) ; **inconnu** en relatif, à demander au banc |
+| Q18 : changement de côté systématique | le switch est **automatique** : la dépendance au switch, seul défaut du spatial, devient faible |
+| Nature des erreurs | spatial : au pire **une période entière**, détectée par les buts et corrigée (§3.5.3) ; relatif : erreurs **dispersées**, une par coup franc mal tapé, que les ancres situent mal |
+| Coût de changement | nul maintenant (touches jamais utilisées en match réel), réel après le pilote |
+
+**Ce que le relatif garde pour lui** : il ne dépend d'aucun réglage (côté de départ) et la grande touche
+`+` reste le 60 s, geste le plus fréquent. C'est la seule vraie objection : en spatial, le 60 s se
+répartit sur deux touches plus petites (`/`, `*`).
+
+**Validation au pilote** (mesurable, sans ressenti) : la reconstruction compte les **conflits** (but
+dont la possession précédente est attribuée à l'autre équipe, hors période inversée en bloc).
+- critère : **≤ 1 conflit par période** en moyenne sur le tournoi pilote, et retour des chronométreurs
+  de tir (gêne, hésitation) ;
+- si le critère n'est pas tenu, essayer le mode relatif sur un tournoi suivant et comparer le même
+  indicateur.
 
 ## 4. Solutions avec une saisie humaine, hors table de marque
 
@@ -361,9 +403,9 @@ Hors de portée à court terme ; même dépendance aux vidéos que S3.
    `scoring_live_clock` (départs 60 / 40 / arrêt), des buts, des côtés et du chrono principal. Comptes
    d'équipe publics : possession (quand tranchée), tirs cadrés, arrêts + cadre, violations. Socle du
    squelette du lot 3. **Suppression de `kp_stats`** dans ce lot (Q15).
-2. **Lot 2 — Touches du chronomètre de tir** : **spatiales** `/` gauche, `*` droite, `-` 40 s, `+` arrêt
-   (§3.5.2) si le switch est retenu ; sinon **relatives** `+` / `/` (§3.4). À décider **avant** le
-   pilote (Q17).
+2. **Lot 2 — Touches du chronomètre de tir** : **spatiales** par défaut (`/` équipe de gauche, `*` équipe
+   de droite, `-` 40 s, `+` arrêt, §3.5.4), relatives en préférence de poste. Livré avec le switch,
+   **avant** le pilote ; validé au pilote par le taux de conflits.
 3. **Lot 3 — Page « Stats de mon équipe »** (§4.1) : squelette pré-rempli (dont les engagements), un
    geste par ligne, responsable d'équipe, fenêtre de 24 h, contrôles de cohérence, seuil de 80 %. Démarrer par
    un **tournoi pilote** (Moreuil, terrain pilote du scoring) avec deux ou trois clubs volontaires.
@@ -399,11 +441,14 @@ Colonnes indicatives : `uid`, `id_match`, `kind` (`SHOT` / `SAVE` / `POSSESSION`
   `sources/app_wsm_dev/src/views/Stats.vue` et de `PUT /admin/scoring/stats`
   (`ScoringController::putStats`). Indépendant des lots ci-dessus : peut se faire à tout moment.
 
-## 8. Questions ouvertes (v4)
+## 8. Questions ouvertes (v5)
+
+Plus de question bloquante pour l'étude. Restent à trancher **au pilote** :
 
 | # | Question |
 |---|---|
-| **Q16** | **Convention des touches spatiales** : « gauche » désigne-t-il **l'équipe affichée à gauche** (celle dont le but est à gauche) ou **la direction de l'attaque** (vers la gauche) ? Le bras de l'arbitre montre la direction de l'attaque ; la console affiche une équipe de chaque côté. Il faut **une seule** convention, la plus naturelle pour un chronométreur de tir. |
-| **Q17** | **Mode des touches** pour le pilote : **spatial** (`/` gauche, `*` droite, `+` arrêt, avec switch) ou **relatif** (`+` autre équipe, `/` même équipe, `*` arrêt) ? |
-| **Q18** | **Changements de côté** : à chaque période, prolongations comprises (but en or) ? Y a-t-il des compétitions où les équipes ne changent pas de côté ? |
-| **Q19** | **Panneau public** : inverser aussi le panneau (sens du jeu) ou le garder fixe (A toujours à gauche) pour le public et la vidéo ? Les incrustations vidéo suivent-elles le switch ? |
+| **Q20** | Le bras de l'arbitre (direction de l'attaque) trouble-t-il les opérateurs avec une touche qui désigne une équipe (§3.5.2, point de vigilance) ? |
+| **Q21** | Le taux de conflits tient-il le critère (≤ 1 par période, §3.5.4) ? Sinon, essai du mode relatif. |
+
+Prochaine étape proposée : **spec du switch des côtés et des touches spatiales** dans PAGE_SCORING
+(critères d'acceptation testables), puis spec des lots 1 et 3 (`FEATURE_EXTENDED_STATS.md`).
