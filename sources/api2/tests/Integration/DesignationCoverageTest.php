@@ -16,13 +16,17 @@ final class DesignationCoverageTest extends ApiTestCase
         $this->beginWrites();
     }
 
-    public function testSui01ARequiredRoleIsRedAndARoleWithoutMeaningIsNotApplicable(): void
+    public function testSui01ARequiredRoleIsRedAndAnOptionalRoleIsEmpty(): void
     {
         $matrix = $this->matrix();
 
         self::assertSame('red', $this->gamedayCell($matrix, 'NDES', 9801, 'R1')['status']);
         self::assertSame('empty', $this->gamedayCell($matrix, 'NDES', 9801, 'ARBITRE_NJ')['status']);
-        self::assertSame('not_applicable', $this->gamedayCell($matrix, 'REGDES', 9803, 'DELEGUE_CNA')['status']);
+        // hors nationale, le représentant CNA s'appelle « officiel principal » : facultatif, jamais « sans objet »
+        self::assertSame('empty', $this->gamedayCell($matrix, 'REGDES', 9803, 'DELEGUE_CNA')['status']);
+        self::assertSame('empty', $this->gamedayCell($matrix, 'REGDES', 9803, 'JURY_APPEL')['status']);
+        self::assertSame('empty', $this->gamedayCell($matrix, 'NDES', 9801, 'CHEF_CONTROLE')['status']);
+        self::assertSame('empty', $this->gamedayCell($matrix, 'NDES', 9801, 'RESP_TABLES')['status']);
         self::assertSame('empty', $this->gamedayCell($matrix, 'REGDES', 9803, 'R1')['status']);
         self::assertSame('red', $this->competition($matrix, 'NDES')['cells']['RC']['status']);
         self::assertArrayHasKey('statut', $this->competition($matrix, 'NDES')); // ATT / ON / END : une compétition terminée est en lecture seule

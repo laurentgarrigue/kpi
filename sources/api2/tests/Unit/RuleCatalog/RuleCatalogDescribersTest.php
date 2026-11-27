@@ -25,6 +25,8 @@ use PHPUnit\Framework\TestCase;
 final class RuleCatalogDescribersTest extends TestCase
 {
     private const REPOSITORY_ROOT = __DIR__ . '/../../../../..';
+    private const API2_ROOT = __DIR__ . '/../../..';
+    private const API2_PREFIX = 'sources/api2/';
 
     /** @return iterable<string, array{RuleCatalogDescriber, string}> */
     public static function describers(): iterable
@@ -47,9 +49,15 @@ final class RuleCatalogDescribersTest extends TestCase
         self::assertNotEmpty($description->sources);
         $files = array_filter($description->sources, static fn (string $source): bool => str_starts_with($source, 'sources/') || str_starts_with($source, 'DOC/'));
         self::assertNotEmpty($files, 'at least one file of the repository');
+        $checked = 0;
         foreach ($files as $file) {
-            self::assertFileExists(self::REPOSITORY_ROOT . '/' . explode(' ', $file)[0]);
+            $path = self::pathOf(explode(' ', $file)[0]);
+            if ($path !== null) {
+                self::assertFileExists($path);
+                ++$checked;
+            }
         }
+        self::assertGreaterThan(0, $checked, 'at least one cited file checked');
         self::assertNotEmpty($description->sections);
         foreach ($description->sections as $section) {
             self::assertNotSame('', $section['title']);
@@ -165,5 +173,18 @@ final class RuleCatalogDescribersTest extends TestCase
             }
         }
         self::fail(sprintf('No section "%s" in %s', $title, $description->title));
+    }
+
+    /**
+     * Where a file cited by a catalogue can be read. The whole repository on the host and in CI; only api2 in the
+     * api2 container (`make api2_test`, /app = sources/api2), where DOC/ and the other apps are not mounted: null.
+     */
+    private static function pathOf(string $file): ?string
+    {
+        if (is_dir(self::REPOSITORY_ROOT . '/' . self::API2_PREFIX)) {
+            return self::REPOSITORY_ROOT . '/' . $file;
+        }
+
+        return str_starts_with($file, self::API2_PREFIX) ? self::API2_ROOT . '/' . substr($file, strlen(self::API2_PREFIX)) : null;
     }
 }

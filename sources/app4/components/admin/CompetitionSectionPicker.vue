@@ -8,7 +8,7 @@ import type { ChecklistCompetition } from '~/types'
  */
 const props = defineProps<{ modelValue: string[], season: string, storageKey?: string }>()
 const emit = defineEmits<{ 'update:modelValue': [value: string[]] }>()
-const { t } = useI18n()
+const { t, te } = useI18n()
 const api = useApi()
 
 const competitions = ref<ChecklistCompetition[]>([])
@@ -28,12 +28,18 @@ const sections = computed(() => [...new Map(competitions.value.map(c => [c.secti
 const inSection = computed(() => competitions.value.filter(c => section.value === '' || c.section === section.value))
 const summary = computed(() => (props.modelValue.length === 0 ? t('competition_picker.all') : t('competition_picker.count', { n: props.modelValue.length })))
 
+/** Libellé traduit de la section, celui de la page Compétitions ; l'API n'envoie qu'un code (« Competitions_Internationales »). */
+const sectionName = (group: { section: number, sectionLabel: string }) => {
+  const key = `groups.sections.${group.section}`
+  return te(key) ? t(key) : group.sectionLabel
+}
+
 const load = async () => {
   if (!props.season) return
   loading.value = true
   try {
     const data = await api.get<{ groups: { section: number, sectionLabel: string, competitions: { code: string, libelle: string }[] }[] }>('/admin/filters/competitions', { seasons: props.season })
-    competitions.value = (data.groups ?? []).flatMap(group => group.competitions.map(c => ({ ...c, section: group.section, sectionLabel: group.sectionLabel })))
+    competitions.value = (data.groups ?? []).flatMap(group => group.competitions.map(c => ({ ...c, section: group.section, sectionLabel: sectionName(group) })))
     if (section.value !== '' && !sections.value.some(([id]) => id === section.value)) section.value = ''
     const valid = new Set(competitions.value.map(c => c.code))
     if (props.modelValue.some(code => !valid.has(code))) {

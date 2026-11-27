@@ -1,10 +1,35 @@
 // Suivi des Désignations (FEATURE_DESIGNATIONS.md § 4, SUI-01 à SUI-06) : règles d'affichage pures.
 import { describe, expect, it } from 'vitest'
-import { canAddHolder, canEditRole, countStatuses, gamedayDates, gamedayRows, holderLabel, isCompetitionEnded, isInherited, rowKindOf, scopeCells, scopeOfRow, statusClasses, visibleRoles, type CoverageCell, type CoverageHolder, type CoverageMatrix, type RoleDefinition } from '../../utils/designations'
+import { canAddHolder, canEditRole, countStatuses, gamedayDates, gamedayRows, holderLabel, isCompetitionEnded, isInherited, roleLabel, rowKindOf, scopeCells, scopeOfRow, statusClasses, visibleRoles, type CoverageCell, type CoverageHolder, type CoverageMatrix, type RoleDefinition } from '../../utils/designations'
 
 const holder = (origin: CoverageHolder['origin'], club: string | null = 'C001'): CoverageHolder => ({ designationId: 1, matric: 1001, name: 'DUPONT Jean', club, origin, warnings: [] })
 const cell = (status: CoverageCell['status'], holders: CoverageHolder[] = []): CoverageCell => ({ requirement: 'required', status, holders })
 const role = (maxPerScope: number | null): RoleDefinition => ({ code: 'R1', label: 'R1', scopes: ['JOURNEE'], mandateProfile: 6, authorities: ['CNA'], maxPerScope, designableByMaxProfile: 3 })
+
+describe('libellés des rôles (DES-12)', () => {
+  const delegate: RoleDefinition = {
+    ...role(1),
+    code: 'DELEGUE_CNA',
+    label: 'Représentant CNA',
+    labels: { national: { fr: 'Représentant CNA', en: 'Chief Official' }, other: { fr: 'Officiel principal', en: 'Chief Official' } },
+  }
+
+  it('suit le niveau de la compétition et la langue', () => {
+    expect(roleLabel(delegate, 'fr', true)).toBe('Représentant CNA')
+    expect(roleLabel(delegate, 'fr', false)).toBe('Officiel principal')
+    expect(roleLabel(delegate, 'en', false)).toBe('Chief Official')
+  })
+
+  it('niveau inconnu : les deux libellés quand ils diffèrent, un seul sinon', () => {
+    expect(roleLabel(delegate, 'fr')).toBe('Représentant CNA / Officiel principal')
+    expect(roleLabel(delegate, 'en')).toBe('Chief Official')
+  })
+
+  it('rôle inconnu ou sans libellés traduits : code, puis libellé de l\'API', () => {
+    expect(roleLabel(undefined, 'fr', true, 'R1')).toBe('R1')
+    expect(roleLabel({ ...role(1), label: 'R1' }, 'en', true)).toBe('R1')
+  })
+})
 
 describe('suivi des désignations', () => {
   it('SUI-01, SUI-04 : chaque état a sa couleur', () => {
@@ -35,6 +60,12 @@ describe('suivi des désignations', () => {
   it('affiche le club du titulaire', () => {
     expect(holderLabel(holder('JOURNEE'))).toBe('DUPONT Jean (C001)')
     expect(holderLabel(holder('JOURNEE', null))).toBe('DUPONT Jean')
+    // club étranger (code pays + numéro) : le pays seul
+    expect(holderLabel(holder('JOURNEE', 'ITA01'))).toBe('DUPONT Jean (ITA)')
+    expect(holderLabel(holder('JOURNEE', 'BEL00'))).toBe('DUPONT Jean (BEL)')
+    // clubs et comités français inchangés
+    expect(holderLabel(holder('JOURNEE', '4401'))).toBe('DUPONT Jean (4401)')
+    expect(holderLabel(holder('JOURNEE', 'CD081'))).toBe('DUPONT Jean (CD081)')
   })
 
   it('compte les cases rouges et orange', () => {

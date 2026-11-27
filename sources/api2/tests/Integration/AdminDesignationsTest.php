@@ -27,8 +27,10 @@ final class AdminDesignationsTest extends ApiTestCase
         $delegate = $roles['DELEGUE_CNA'];
         self::assertSame(['EVENEMENT', 'COMPETITION', 'JOURNEE'], $delegate['scopes']);
         self::assertSame(5, $delegate['mandateProfile']);
-        self::assertSame(['national' => 'required', 'other' => 'not_applicable'], $delegate['requirement']);
-        self::assertCount(10, $roles);
+        self::assertSame(['national' => 'required', 'other' => 'optional'], $delegate['requirement']);
+        self::assertSame('Représentant CNA', $delegate['label']);
+        self::assertSame(['national' => ['fr' => 'Représentant CNA', 'en' => 'Chief Official'], 'other' => ['fr' => 'Officiel principal', 'en' => 'Chief Official']], $delegate['labels']);
+        self::assertCount(12, $roles);
     }
 
     public function testDes04TheClubIsFrozenFromTheLicenceAtCreation(): void

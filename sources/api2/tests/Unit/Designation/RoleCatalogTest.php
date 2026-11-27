@@ -14,9 +14,33 @@ final class RoleCatalogTest extends TestCase
     public function testEveryRoleOfTheSpecIsInTheCatalogue(): void
     {
         self::assertSame(
-            ['RC', 'RESP_EQUIPE', 'DELEGUE_CNA', 'R1', 'JUGE_ARBITRE', 'ARBITRE_NJ', 'REP_EQUIPES', 'JURY_APPEL', 'BUREAU_CNA', 'MEMBRE_CNA'],
+            ['RC', 'RESP_EQUIPE', 'DELEGUE_CNA', 'R1', 'JUGE_ARBITRE', 'CHEF_CONTROLE', 'RESP_TABLES', 'ARBITRE_NJ', 'REP_EQUIPES', 'JURY_APPEL', 'BUREAU_CNA', 'MEMBRE_CNA'],
             RoleCatalog::codes(),
         );
+    }
+
+    public function testDes12LabelsDependOnTheLevelOfTheCompetitionAndAreTranslated(): void
+    {
+        $expected = [
+            // code => [national fr, autre fr, en]
+            'DELEGUE_CNA' => ['Représentant CNA', 'Officiel principal', 'Chief Official'],
+            'RC' => ['Responsable de compétition (RC)', 'Responsable de compétition (RC)', 'Competition Organiser'],
+            'R1' => ['Responsable organisation (R1)', 'Responsable organisation (R1)', 'Technical Organiser'],
+            'JUGE_ARBITRE' => ['Juge arbitre', 'Chef arbitre', 'Referee Manager'],
+            'CHEF_CONTROLE' => ['Resp. contrôle matériel', 'Resp. contrôle matériel', 'Chief Scrutineer'],
+            'RESP_TABLES' => ['Resp. tables de marque', 'Resp. tables de marque', 'Chief Table Official'],
+            'JURY_APPEL' => ["Membre du jury d'appel", 'Membre du jury', 'Jury of Appeal member'],
+        ];
+        foreach ($expected as $code => [$national, $other, $en]) {
+            $role = RoleCatalog::get($code);
+            self::assertSame($national, $role->labelFor(true), "$code national");
+            self::assertSame($other, $role->labelFor(false), "$code autre");
+            self::assertSame($en, $role->labelFor(true, 'en'), "$code en");
+            self::assertSame($national, $role->label, "$code libellé par défaut");
+        }
+        foreach (RoleCatalog::all() as $role) {
+            self::assertNotSame('', $role->labelFor(false, 'en'), $role->code);
+        }
     }
 
     public function testDes01ADelegateCannotBeDesignatedOnATeam(): void
@@ -26,7 +50,7 @@ final class RoleCatalogTest extends TestCase
 
     public function testGamedayOfficialsCanBeDesignatedOnEventCompetitionOrGameday(): void
     {
-        foreach (['DELEGUE_CNA', 'R1', 'JUGE_ARBITRE', 'ARBITRE_NJ', 'REP_EQUIPES', 'JURY_APPEL'] as $code) {
+        foreach (['DELEGUE_CNA', 'R1', 'JUGE_ARBITRE', 'CHEF_CONTROLE', 'RESP_TABLES', 'ARBITRE_NJ', 'REP_EQUIPES', 'JURY_APPEL'] as $code) {
             $role = RoleCatalog::get($code);
             foreach ([ScopeType::Evenement, ScopeType::Competition, ScopeType::Journee] as $scope) {
                 self::assertTrue($role->allowsScope($scope), "$code sur {$scope->value}");
@@ -48,6 +72,7 @@ final class RoleCatalogTest extends TestCase
         $expected = [
             'RC' => 4, 'RESP_EQUIPE' => 7, 'DELEGUE_CNA' => 5, 'R1' => 6, 'JUGE_ARBITRE' => 6, 'BUREAU_CNA' => 2,
             'ARBITRE_NJ' => null, 'REP_EQUIPES' => null, 'JURY_APPEL' => null, 'MEMBRE_CNA' => null,
+            'CHEF_CONTROLE' => null, 'RESP_TABLES' => null,
         ];
         foreach ($expected as $code => $profile) {
             self::assertSame($profile, RoleCatalog::get($code)->mandateProfile, $code);
@@ -88,12 +113,15 @@ final class RoleCatalogTest extends TestCase
         $expected = [
             'RC' => [Requirement::Required, Requirement::Required],
             'RESP_EQUIPE' => [Requirement::Required, Requirement::Optional],
-            'DELEGUE_CNA' => [Requirement::Required, Requirement::NotApplicable],
+            // international, régional, tournoi : représentant CNA / officiel principal et jury applicables, facultatifs
+            'DELEGUE_CNA' => [Requirement::Required, Requirement::Optional],
             'R1' => [Requirement::Required, Requirement::Optional],
             'JUGE_ARBITRE' => [Requirement::Required, Requirement::Optional],
+            'CHEF_CONTROLE' => [Requirement::Optional, Requirement::Optional],
+            'RESP_TABLES' => [Requirement::Optional, Requirement::Optional],
             'ARBITRE_NJ' => [Requirement::Optional, Requirement::Optional],
             'REP_EQUIPES' => [Requirement::Optional, Requirement::Optional],
-            'JURY_APPEL' => [Requirement::Optional, Requirement::NotApplicable],
+            'JURY_APPEL' => [Requirement::Optional, Requirement::Optional],
         ];
         foreach ($expected as $code => [$national, $other]) {
             self::assertSame($national, RoleCatalog::get($code)->requirement(true), "$code national");
@@ -122,11 +150,13 @@ final class RoleCatalogTest extends TestCase
         self::assertSame(['Arb_nj1', 'Arb_nj2', 'Arb_nj3', 'Arb_nj4', 'Arb_nj5'], RoleCatalog::get('ARBITRE_NJ')->legacyColumns);
         self::assertSame(['Responsable_insc'], RoleCatalog::get('RC')->legacyColumns);
         self::assertSame([], RoleCatalog::get('JURY_APPEL')->legacyColumns);
+        self::assertSame([], RoleCatalog::get('CHEF_CONTROLE')->legacyColumns);
+        self::assertSame([], RoleCatalog::get('RESP_TABLES')->legacyColumns);
     }
 
     public function testSingleHolderRoles(): void
     {
-        foreach (['DELEGUE_CNA', 'R1', 'JUGE_ARBITRE', 'REP_EQUIPES'] as $code) {
+        foreach (['DELEGUE_CNA', 'R1', 'JUGE_ARBITRE', 'CHEF_CONTROLE', 'RESP_TABLES', 'REP_EQUIPES'] as $code) {
             self::assertSame(1, RoleCatalog::get($code)->maxPerScope, $code);
         }
         self::assertSame(5, RoleCatalog::get('ARBITRE_NJ')->maxPerScope);

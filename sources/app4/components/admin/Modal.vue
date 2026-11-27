@@ -3,10 +3,13 @@ interface Props {
   open?: boolean
   title?: string
   maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl'
+  /** À l'ouverture, place le focus sur le premier champ texte de la fenêtre. */
+  focusFirstField?: boolean
 }
 
-withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<Props>(), {
   open: false,
+  focusFirstField: false,
   title: '',
   maxWidth: 'md'
 })
@@ -14,6 +17,16 @@ withDefaults(defineProps<Props>(), {
 const emit = defineEmits<{
   close: []
 }>()
+
+const contentRef = ref<HTMLElement | null>(null)
+
+watch(() => props.open, async (isOpen) => {
+  if (!isOpen || !props.focusFirstField) return
+  await nextTick()
+  contentRef.value
+    ?.querySelector<HTMLElement>('input:not([type=hidden]):not([type=checkbox]):not([type=radio]):not([disabled]), textarea:not([disabled])')
+    ?.focus()
+})
 
 const maxWidthClasses = {
   sm: 'max-w-sm',
@@ -37,6 +50,7 @@ const maxWidthClasses = {
 
       <!-- Modal content -->
       <div
+        ref="contentRef"
         class="relative bg-white dark:bg-header-900 rounded-lg shadow-xl w-full max-h-[90vh] overflow-y-auto"
         :class="maxWidthClasses[maxWidth]"
       >

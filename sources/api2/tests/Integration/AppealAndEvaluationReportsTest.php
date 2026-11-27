@@ -28,7 +28,7 @@ final class AppealAndEvaluationReportsTest extends ApiTestCase
         $report = $this->create('9811', 'JURY_APPEL', 'EVENEMENT', '9801');
 
         self::assertSame([9811, 9812, 9814], array_column($report['answers']['jury'], 'matric'));
-        self::assertSame('Président (délégué CNA)', $report['answers']['jury'][0]['role']);
+        self::assertSame('Président (Représentant CNA)', $report['answers']['jury'][0]['role']);
         $designations = (int) $this->connection->fetchOne("SELECT COUNT(*) FROM kp_designation WHERE saison = '2998'");
         $jury = $report['answers']['jury'];
         $jury[2] += ['presence' => 'recused', 'replaced_by' => 'DUPONT Jean'];

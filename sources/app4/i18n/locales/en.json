@@ -1558,7 +1558,7 @@
       "toggle_section": "Publication",
       "edit_section": "Edit"
     },
-    "officials_title": "Gameday officials",
+    "officials_title": "Officials and organising club",
     "officials_comite": "Competition committee",
     "officials_jury": "Appeal jury",
     "officials_print": "Print instances sheet",
@@ -1579,9 +1579,20 @@
       "11": "November",
       "12": "December"
     },
-    "officials_by_designations": "Officials (competition manager, R1, delegate, chief referee, teams representative, non-playing referees) are designated with the gameday « Officials » button or in Referentials › Designations."
+    "officials_by_designations": "Officials (Competition Organiser, Technical Organiser, Chief Official, Referee Manager, Chief Scrutineer, Chief Table Official, teams' representative, non-playing referees) are designated with the gameday « Officials » button or in Referentials › Designations."
   },
   "games": {
+    "init_starters": {
+      "button": "Init starters",
+      "title": "Initialize starters",
+      "description": "Replaces the game rosters with the presence sheets (active players, numbers, captains, staff).",
+      "limit": "Only unlocked games are updated.",
+      "scope": "Scope",
+      "scope_team": "One team",
+      "scope_journee": "One gameday / phase",
+      "scope_competition": "One competition",
+      "success": "{count} game(s) updated"
+    },
     "title": "Game Management",
     "add": "Add a game",
     "edit": "Edit game",
@@ -3771,8 +3782,8 @@
         "infraction": "Offence"
       },
       "qualifier": {
-        "DELEGUE_CNA": "CNA delegate",
-        "JUGE_ARBITRE": "Chief referee",
+        "DELEGUE_CNA": "Chief Official",
+        "JUGE_ARBITRE": "Referee Manager",
         "ARBITRE_NJ": "Non-playing referee (host club)",
         "yellow": "Yellow",
         "red": "Red",

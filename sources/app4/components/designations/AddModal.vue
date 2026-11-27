@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { PlayerAutocomplete } from '~/types'
-import { scopeOfRow, type DesignationTarget, type RoleDefinition } from '~/utils/designations'
+import { roleLabel, scopeOfRow, type DesignationTarget, type RoleDefinition } from '~/utils/designations'
 
 /**
  * Désigner un licencié (FEATURE_DESIGNATIONS.md § 8.4) : depuis une case du suivi ou depuis un bloc « Désignations ».
@@ -9,7 +9,7 @@ import { scopeOfRow, type DesignationTarget, type RoleDefinition } from '~/utils
 
 const props = defineProps<{ target: DesignationTarget | null, season: string, roles: Record<string, RoleDefinition> }>()
 const emit = defineEmits<{ close: [], saved: [] }>()
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const api = useApi()
 const toast = useToast()
 
@@ -19,7 +19,6 @@ const saving = ref(false)
 /** null = pas encore vérifié ; l'email n'est demandé que si le licencié n'a pas de compte KPI (D5). */
 const hasAccount = ref<boolean | null>(null)
 const role = computed(() => (props.target ? props.roles[props.target.role] : undefined))
-const roleLabel = (code: string) => props.roles[code]?.label ?? code
 
 const scopes = (target: DesignationTarget) => (target.kind
   ? (target.ids ?? []).map(id => scopeOfRow(target.kind!, id))
@@ -67,7 +66,7 @@ const save = async () => {
 </script>
 
 <template>
-  <AdminModal :open="target !== null" :title="target ? t('designations.add.title', { role: roleLabel(target.role), line: target.label }) : ''" @close="emit('close')">
+  <AdminModal :open="target !== null" focus-first-field :title="target ? t('designations.add.title', { role: roleLabel(roles[target.role], locale, target.national, target.role), line: target.label }) : ''" @close="emit('close')">
     <form v-if="target" class="space-y-4" @submit.prevent="save">
       <div>
         <label class="block text-sm font-medium mb-1">{{ t('designations.add.person') }} *</label>

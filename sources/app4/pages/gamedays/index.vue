@@ -648,6 +648,14 @@ const openOfficialsModal = (g: Gameday) => {
   officialsModalOpen.value = true
 }
 
+// Club organisateur modifié depuis la fenêtre Officiels (ORG-04) : la fenêtre reste ouverte, la liste se recharge
+const onOrganiserSaved = async (organiser: { code: string, label: string }) => {
+  if (officialsGameday.value) {
+    officialsGameday.value = { ...officialsGameday.value, organisateur: organiser.label, codeOrganisateur: organiser.code, clubOrganisateur: organiser }
+  }
+  await loadGamedays()
+}
+
 // Officials of the gameday: api2 `instances` (PDF_GOTENBERG.md § 7.2)
 const { openDocument } = usePdf()
 const printJurySheet = (gameday: Gameday | null) => {
@@ -1119,7 +1127,15 @@ const printJurySheet = (gameday: Gameday | null) => {
                 <span v-else class="text-header-600 dark:text-header-300">0</span>
               </td>
               <!-- Organising club -->
-              <td v-if="showClub" class="px-2 py-2 text-sm text-header-900 dark:text-header-50 max-w-48 truncate" :title="g.clubOrganisateur?.code">{{ g.clubOrganisateur?.label || '-' }}</td>
+              <td v-if="showClub" class="px-2 py-2 text-sm text-header-900 dark:text-header-50 max-w-48" @click.stop>
+                <button
+                  class="text-left hover:text-primary-600 dark:hover:text-primary-300 truncate max-w-full"
+                  :title="g.clubOrganisateur?.code || t('gamedays.officials_title')"
+                  @click="openOfficialsModal(g)"
+                >
+                  {{ g.clubOrganisateur?.label || '-' }}
+                </button>
+              </td>
               <!-- Officials -->
               <td v-if="showOfficials" class="px-2 py-2 text-sm text-header-900 dark:text-header-50 max-w-48" @click.stop>
                 <button
@@ -1550,6 +1566,13 @@ const printJurySheet = (gameday: Gameday | null) => {
           <span v-if="officialsGameday.lieu" class="ml-2">| {{ officialsGameday.lieu }}</span>
         </div>
 
+        <GamedaysOrganiserEditor
+          :gameday-id="officialsGameday.id"
+          :organiser="officialsGameday.clubOrganisateur ?? { code: '', label: '' }"
+          :readonly="!canEditGameday(officialsGameday)"
+          @saved="onOrganiserSaved"
+        />
+
         <DesignationsScopePanel
           v-if="authStore.profile <= 5"
           :season="officialsGameday.codeSaison"
@@ -1564,7 +1587,7 @@ const printJurySheet = (gameday: Gameday | null) => {
         <div class="flex justify-between pt-4 border-t">
           <button
             type="button"
-            class="px-4 py-2 text-sm font-medium text-danger-700 bg-white dark:bg-header-900 border border-danger-300 rounded-lg hover:bg-danger-50 dark:hover:bg-danger-950"
+            class="px-4 py-2 text-sm font-medium text-danger-700 dark:text-danger-200 bg-white dark:bg-header-900 border border-danger-300 dark:border-danger-400 rounded-lg hover:bg-danger-50 dark:hover:bg-danger-950"
             @click="printJurySheet(officialsGameday)"
           >
             <UIcon name="heroicons:document-text" class="w-5 h-5 inline mr-1" />

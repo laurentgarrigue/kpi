@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\AgeCategory\CompositionAgeCategories;
 use App\Eligibility\PlayerEligibilityChecker;
 use App\Entity\User;
+use App\Service\MatchStartersService;
 use App\Trait\AdminLoggableTrait;
 use App\Trait\CompetitionLockTrait;
 use Doctrine\DBAL\Connection;
@@ -40,6 +41,7 @@ class AdminTeamsController extends AbstractController
         private readonly Connection $connection,
         private readonly PlayerEligibilityChecker $eligibility,
         private readonly CompositionAgeCategories $compositionAgeCategories,
+        private readonly MatchStartersService $matchStarters,
     ) {
     }
 
@@ -1162,22 +1164,7 @@ class AdminTeamsController extends AbstractController
                     $isTeamA = (int) $match['Id_equipeA'] === $teamId;
                     $prefix = $isTeamA ? 'A' : 'B';
 
-                    // Clear existing players for this team then re-insert from team composition
-                    $this->connection->executeStatement(
-                        "DELETE FROM kp_match_joueur WHERE Id_match = ? AND Equipe = ?",
-                        [$match['Id'], $prefix]
-                    );
-
-                    // Copy active players only (exclude inactive X and referees A, matching legacy behaviour)
-                    // Only include players whose Matric exists in kp_licence (FK constraint on kp_match_joueur)
-                    $sql = "INSERT INTO kp_match_joueur (Id_match, Equipe, Matric, Numero, Capitaine)
-                            SELECT ?, ?, cej.Matric, cej.Numero, cej.Capitaine
-                            FROM kp_competition_equipe_joueur cej
-                            INNER JOIN kp_licence l ON l.Matric = cej.Matric
-                            WHERE cej.Id_equipe = ?
-                            AND cej.Capitaine NOT IN ('X', 'A')";
-                    $stmt = $this->connection->prepare($sql);
-                    $stmt->executeStatement([$match['Id'], $prefix, $teamId]);
+                    $this->matchStarters->copyRoster((int) $match['Id'], $prefix, $teamId);
                     $matchesInitialized++;
                 }
 

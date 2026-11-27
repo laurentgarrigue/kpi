@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { COMPETITION_STATUS_CLASSES, canAddHolder, canEditRole, isCompetitionEnded, countStatuses, designationIdsOf, gamedayDates, gamedayRows, holderLabel, statusClasses, visibleRoles, type CoverageCell, type CoverageHolder, type CoverageMatrix, type DesignationTarget, type RoleDefinition, type RowKind } from '~/utils/designations'
+import { COMPETITION_STATUS_CLASSES, canAddHolder, canEditRole, isCompetitionEnded, countStatuses, designationIdsOf, gamedayDates, gamedayRows, holderLabel, roleLabel as roleLabelOf, statusClasses, visibleRoles, type CoverageCell, type CoverageHolder, type CoverageMatrix, type DesignationTarget, type RoleDefinition, type RowKind } from '~/utils/designations'
 
 /**
  * Suivi des Désignations, profils 1 et 2 (DOC/specs/FEATURE_DESIGNATIONS.md § 4, ticket designations/07) : matrice de
@@ -15,7 +15,7 @@ type Tab = 'matrix' | 'summary' | 'facts'
 interface SummaryPerson { matric: number, name: string, club: string | null, clubLabel: string, designations: Record<string, number>, gamedays: Record<string, number> }
 interface SummaryClub { club: string | null, clubLabel: string, people: number, designations: Record<string, number>, gamedays: Record<string, number> }
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const api = useApi()
 const toast = useToast()
 const authStore = useAuthStore()
@@ -85,7 +85,8 @@ const season = computed(() => workContext.season)
 const counts = computed(() => (matrix.value ? countStatuses(matrix.value) : { red: 0, orange: 0 }))
 /** Verrou d'une ligne : compétition terminée, ou rôle que le profil connecté ne peut pas désigner (consultation seule). */
 const isReadonly = (competition: { statut: string }, role: string) => isCompetitionEnded(competition) || !canEditRole(roles.value[role], authStore.profile)
-const roleLabel = (code: string) => roles.value[code]?.label ?? code
+/** Libellé du rôle dans la langue de l'interface ; sans niveau (menus, récapitulatif), ceux des deux niveaux (DES-12). */
+const roleLabel = (code: string, national?: boolean) => roleLabelOf(roles.value[code], locale.value, national, code)
 const summaryRoles = computed(() => Object.keys(roles.value))
 /** Colonne « Club organisateur » du tableau des journées, choisie dans le menu Rôles comme un rôle. */
 const ORGANISER_COLUMN = 'ORGANISER'
@@ -137,8 +138,8 @@ const loadSummary = async () => {
 const reload = () => (tab.value === 'matrix' ? loadMatrix() : tab.value === 'summary' ? loadSummary() : undefined)
 
 /** Une ligne de phases regroupées (tournoi) désigne sur chacune de ses phases. */
-const openAdd = (kind: RowKind, ids: (string | number)[], role: string, label: string) => {
-  target.value = { kind, ids, role, label }
+const openAdd = (kind: RowKind, ids: (string | number)[], role: string, label: string, national?: boolean) => {
+  target.value = { kind, ids, role, label, national }
 }
 
 // Copie des RC d'une autre saison (reprise de l'ancienne page RC, retirée : ticket designations/08)
@@ -339,14 +340,14 @@ onMounted(async () => {
               </thead>
               <tbody>
                 <tr v-if="showsManager('RC')">
-                  <th scope="row" class="px-2 py-1 text-left font-medium">{{ roleLabel('RC') }}</th>
+                  <th scope="row" class="px-2 py-1 text-left font-medium">{{ roleLabel('RC', competition.national) }}</th>
                   <td class="px-2 py-1" :class="statusClasses(competition.cells.RC.status)" :title="cellTitle(competition.cells.RC)">
                     <DesignationsCellHolders
                       :cell="competition.cells.RC"
                       kind="competition"
                       :can-add="!isReadonly(competition, 'RC') && canAddHolder(competition.cells.RC, 'competition', roles.RC)"
                       :readonly="isReadonly(competition, 'RC')"
-                      @add="openAdd('competition', [competition.code], 'RC', competition.label)"
+                      @add="openAdd('competition', [competition.code], 'RC', competition.label, competition.national)"
                       @remove="removing = $event"
                     />
                   </td>
@@ -360,7 +361,7 @@ onMounted(async () => {
                         kind="team"
                         :can-add="!isReadonly(competition, 'RESP_EQUIPE') && canAddHolder(team.cells.RESP_EQUIPE, 'team', roles.RESP_EQUIPE)"
                         :readonly="isReadonly(competition, 'RESP_EQUIPE')"
-                        @add="openAdd('team', [team.id], 'RESP_EQUIPE', team.label)"
+                        @add="openAdd('team', [team.id], 'RESP_EQUIPE', team.label, competition.national)"
                         @remove="removing = $event"
                       />
                     </td>
@@ -378,7 +379,7 @@ onMounted(async () => {
                 <tr class="bg-header-50 dark:bg-header-800">
                   <th scope="col" class="px-2 py-1 text-left">{{ t('designations.column.gameday') }}</th>
                   <th v-if="showsOrganiser" scope="col" class="px-2 py-1 text-left">{{ t('designations.column.organiser') }}</th>
-                  <th v-for="role in shownGamedayRoles" :key="role" scope="col" class="px-2 py-1 text-left">{{ roleLabel(role) }}</th>
+                  <th v-for="role in shownGamedayRoles" :key="role" scope="col" class="px-2 py-1 text-left">{{ roleLabel(role, competition.national) }}</th>
                 </tr>
               </thead>
               <tbody>
@@ -410,7 +411,7 @@ onMounted(async () => {
                       kind="gameday"
                       :can-add="!isReadonly(competition, role) && canAddHolder(row.cells[role], 'gameday', roles[role])"
                       :readonly="isReadonly(competition, role)"
-                      @add="openAdd('gameday', row.ids, role, `${competition.code} · ${row.labels.length > 1 ? t('designations.phases', { n: row.labels.length }) : row.labels[0]}`)"
+                      @add="openAdd('gameday', row.ids, role, `${competition.code} · ${row.labels.length > 1 ? t('designations.phases', { n: row.labels.length }) : row.labels[0]}`, competition.national)"
                       @remove="removing = $event"
                     />
                   </td>
@@ -495,7 +496,7 @@ onMounted(async () => {
     </AdminModal>
 
     <!-- Club organisateur : recherche dans une fenêtre, le tableau ne doit pas rogner la liste de résultats -->
-    <AdminModal :open="editingOrganiser !== null" :title="t('designations.organiser_edit')" @close="editingOrganiser = null">
+    <AdminModal :open="editingOrganiser !== null" focus-first-field :title="t('designations.organiser_edit')" @close="editingOrganiser = null">
       <div v-if="editingOrganiser" class="space-y-3 min-h-72">
         <p class="text-sm text-header-600 dark:text-header-300">{{ organiserModalTitle }}</p>
         <AdminTextAutocomplete
@@ -510,7 +511,7 @@ onMounted(async () => {
     </AdminModal>
 
     <!-- Lieu et département : commune en autocomplete (elle renseigne le département), modifiables à la main -->
-    <AdminModal :open="editingPlace !== null" :title="t('designations.place_edit')" @close="editingPlace = null">
+    <AdminModal :open="editingPlace !== null" focus-first-field :title="t('designations.place_edit')" @close="editingPlace = null">
       <form v-if="editingPlace" class="space-y-3 min-h-72" @submit.prevent="savePlace">
         <p class="text-sm text-header-600 dark:text-header-300">{{ editingPlace.label }}</p>
         <div>
