@@ -713,7 +713,7 @@ parallèle dès que les lots 1 et 2 fournissent leurs contrats (routes + topics)
 | 0.2 | ~~Hub Mercure~~ | ✅ **Fait** en dev — hub embarqué FrankenPHP (§4.6) |
 | 0.3 | Valider FrankenPHP + hub Mercure en **preprod puis prod** | environnement prêt pour le lot 2 en réel (`MERCURE_JWT_SECRET`, `api2_restart`, checklist de l'audit FrankenPHP) |
 | 0.4 | Mettre à jour [PAGE_SCORING.md](../../specs/PAGE_SCORING.md) avec les décisions §4.7–§4.12 | spec alignée (fait en même temps que ce document) |
-| 0.5 | **Enregistrer de vraies sessions matériel** au prochain événement équipé : messages STOMP entrants bruts + écritures produites par le relais actuel | fichiers de référence du lot 1/5 — **la seule protection réaliste sur un format fermé** ; à planifier dès maintenant (dépend du calendrier des événements) |
+| 0.5 | **Enregistrer de vraies sessions matériel** au prochain événement équipé : messages STOMP entrants bruts + écritures produites par le relais actuel | fichiers de référence du lot 1/5 — **la seule protection réaliste sur un format fermé** ; à planifier dès maintenant (dépend du calendrier des événements). Relever aussi le codage des **départs du chronomètre de tir** (60 / 40 / arrêt distincts ?) et toute notion d'équipe ou de côté (stats étendues, [SCORING_EXTENDED_STATS_STUDY.md §3.6](SCORING_EXTENDED_STATS_STUDY.md)) |
 | 0.6 | Fixer le **garde-fou chiffré** du ménage (§6) | critère écrit et daté |
 
 **Critère de sortie.** Fichiers de référence en cours de collecte, preprod/prod validés FrankenPHP,

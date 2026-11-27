@@ -14,7 +14,11 @@
 >   s'en déduisent ; risque d'oubli du switch traité (§3.5.3) ; questions Q16–Q19 ;
 > - **v5 (2026-11-27)** : réponses Q16–Q19 ; **changement de côté automatique** à chaque période ;
 >   panneau inversé, incrustations fixes ; **recommandation : touches spatiales** et critère de
->   validation au pilote (§3.5.4).
+>   validation au pilote (§3.5.4) ;
+> - **v6 (2026-11-27)** : spec du switch écrite ([PAGE_SCORING §0.18](../../specs/PAGE_SCORING.md),
+>   SIDE-01 à 18) ; **correction** : `app_wsm_dev` est le relais de la console propriétaire (onglet WSM)
+>   et reste jusqu'au lot 5 — seule sa page Stats est supprimée (§7) ; saisie sur console propriétaire
+>   (§3.6).
 >
 > **Contexte** : console Scoring d'app4 ([PAGE_SCORING.md](../../specs/PAGE_SCORING.md), notamment
 > §0.4 « fait de match extensible », §0.13 touches du chronomètre de tir, §6.5 chronomètre de tir),
@@ -74,7 +78,7 @@ officielle, pour :
 | **Q10** | Regard du chronométreur de tir | **Concentré sur le match.** Il peut regarder son **pavé numérique déporté** (ou équivalent), **pas l'écran** de la console. | Aucune commande ne peut dépendre d'un état affiché à l'écran : `/` prend un **sens fixe** (§3.4) ; pas de pastille à surveiller. |
 | **Q11** | Accès des bancs | **Rattaché au responsable d'équipe**, fenêtre de **24 h**. | §4.1 : mandat **profil 7** issu des désignations (FEATURE_DESIGNATIONS D8, MAN-09) ; délégation possible à un membre du banc (Q14). |
 | **Q12** | Seuil de couverture | **80 %, paramétrable.** En dessous : **masquée**. | §4.1 : paramètre unique, à côté des seuils des médailles (`match_medals.yaml`). |
-| **Q13** | `kp_stats` / KPI Stats 2022 | **On ne garde rien.** | Suppression de la table, de la page `app_wsm_dev` et de `PUT /admin/scoring/stats` (§7). |
+| **Q13** | `kp_stats` / KPI Stats 2022 | **On ne garde rien.** | Suppression de la table et de la **seule page Stats** d'`app_wsm_dev` — l'app reste, c'est le relais de la console propriétaire (§7). |
 | **Q14** | Délégation par le responsable d'équipe | **Oui.** | §4.1 : lien nominatif limité au match et à la fenêtre de 24 h. |
 | **Q15** | Quand supprimer `kp_stats` | **Avec le premier lot.** | §6, lot 1. |
 | **Q16** | Sens de « gauche » | **L'équipe située sur la moitié gauche du terrain**, vue de l'**arbitre principal et de la table de marque** (même côté, R11 de l'étude afficheurs). | `/` = « possession à l'équipe de gauche », `*` = « à l'équipe de droite ». La touche désigne une **équipe** (par sa moitié de terrain), pas une direction d'attaque (§3.5.2). |
@@ -93,7 +97,10 @@ officielle, pour :
   chrono principal, lettres des faits de jeu. Les touches sont comparées sur **`event.key`** : les
   chiffres du pavé numérique tapent donc aussi le **numéro du joueur**, et `Entrée` valide un fait.
 - **Précédent legacy « KPI Stats » (2022)** : `sources/app_wsm_dev/src/views/Stats.vue`, table
-  `kp_stats`, `PUT /api2/admin/scoring/stats` — cf. C7 ; **à supprimer** (Q13).
+  `kp_stats`, `PUT /api/wsm/stats/` (legacy) et son double `PUT /api2/admin/scoring/stats` — cf. C7 ;
+  **à supprimer** (Q13). ⚠️ `app_wsm_dev` n'est **pas** qu'un outil de stats : c'est l'**onglet WSM**
+  (`Manager.vue`) qui relaie la console propriétaire vers KPI ; il ne disparaîtra qu'avec le lot 5
+  du plan de refonte (§3.6).
 - **Médailles de match** : notion d'**éligibilité / fiabilité** d'un match (FEATURE_MATCH_MEDALS §5.1),
   réutilisable pour ne publier que des stats fiables.
 
@@ -179,7 +186,8 @@ avoir un **sens fixe**, qui ne dépend que de ce qu'il voit sur le terrain.
     savoir quelle équipe est A ;
   - `4` / `6` du pavé : ce sont des chiffres, ils tapent un numéro de joueur ; les distinguer par
     `event.code` (`Numpad4`) priverait le secrétaire des chiffres du pavé ;
-  - `.` : dernière touche libre du pavé, mais isolée près de `0` / `Entrée` ; gardée en réserve.
+  - `.` : exclue des touches du chronomètre de tir depuis le 2026-11-08, comme `Entrée` et les
+    chiffres (`utils/scoringShortcuts.ts`).
 
 **L'engagement reste non ancré** : qui gagne le sprint n'est connu ni du chronométreur de tir (il tape
 `+` sans dire pour qui) ni du secrétaire. C'est le **banc** qui le fixe (§4.1, ligne « Engagement ») ; à
@@ -300,6 +308,31 @@ dont la possession précédente est attribuée à l'autre équipe, hors période
 - si le critère n'est pas tenu, essayer le mode relatif sur un tournoi suivant et comparer le même
   indicateur.
 
+### 3.6 Terrains équipés d'une console propriétaire
+
+Sur les terrains équipés d'un **panneau du commerce**, la table de marque (chrono, score, chronomètre de
+tir) saisit sur **la console du constructeur**, pas sur la console KPI (plan de refonte §1.1).
+
+**Où en est le chantier** (plan [§0.1](LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md), lot 5) :
+
+| Élément | État |
+|---|---|
+| Aujourd'hui | l'**onglet WSM** (`sources/app_wsm_dev`, `Manager.vue`) capte le flux STOMP de la passerelle et le relaie vers KPI ; il doit rester ouvert tout l'événement |
+| Cible (lot 5) | un **relais** (serveur KPI ou boîtier local) → endpoint d'ingestion api2 → **traduction serveur** du protocole vers les commandes internes → `scoring_live_*` ; la console KPI passe en **supervision** |
+| État | 🔴 **non commencé**, bloqué par l'**action 0.5** : enregistrer de vraies sessions STOMP au prochain événement équipé (format fermé : sans captures, on code à l'aveugle) |
+
+**Conséquences pour les stats étendues** :
+
+- tant que le lot 5 n'est pas livré, **aucune stat étendue** sur ces terrains : rien n'arrive dans
+  `scoring_live_*` ;
+- après le lot 5, la reconstruction (§3.3) dépend de ce que transporte le flux du constructeur : les
+  départs **60 s / 40 s distincts** sont nécessaires (à vérifier sur les captures 0.5) ; **aucun côté**
+  n'est déclaré (pas de touches spatiales, réponse Q1) : la règle relative « 60 s = l'autre équipe »
+  s'applique, avec les coups francs et avantages (Q9) comme incohérences ; le squelette du banc (§4.1)
+  y gagne en importance ;
+- **à ajouter à l'action 0.5** : relever dans les captures comment le constructeur code les départs du
+  chronomètre de tir (60 / 40 / arrêt) et s'il transporte une notion d'équipe ou de côté.
+
 ## 4. Solutions avec une saisie humaine, hors table de marque
 
 ### 4.1 S1 — Les bancs complètent un squelette déjà pré-rempli (solution retenue pour arrêts et tirs)
@@ -397,8 +430,9 @@ Hors de portée à court terme ; même dépendance aux vidéos que S3.
 
 ## 6. Recommandation (v2)
 
-0. **Spec du switch des côtés** (§3.5) dans PAGE_SCORING : côté de départ, inversion proposée au
-   passage de période, panneau miroir, alerte d'inversion probable sur but. Utile **sans** les stats.
+0. **Switch des côtés** : ✅ **spec écrite** ([PAGE_SCORING §0.18](../../specs/PAGE_SCORING.md), SIDE-01
+   à 18) — côté de départ, inversion automatique à chaque période, panneau miroir, alerte d'inversion
+   probable sur but. Utile **sans** les stats.
 1. **Lot 1 — Reconstruction** (§3.3, §3.5.3) : calcul serveur après le match, à partir de
    `scoring_live_clock` (départs 60 / 40 / arrêt), des buts, des côtés et du chrono principal. Comptes
    d'équipe publics : possession (quand tranchée), tirs cadrés, arrêts + cadre, violations. Socle du
@@ -437,9 +471,10 @@ Colonnes indicatives : `uid`, `id_match`, `kind` (`SHOT` / `SAVE` / `POSSESSION`
   tir (`ScoringRules::shotclockTransition`) ne change pas.
 - **Côtés** : `sides` (`A_LEFT` / `A_RIGHT`) dans `scoring_live_state`, chaque changement horodaté
   (période, temps) pour que la reconstruction sache quel côté valait à chaque départ.
-- **`kp_stats` (2022) : supprimé (Q13)** — migration de suppression de la table, retrait de
-  `sources/app_wsm_dev/src/views/Stats.vue` et de `PUT /admin/scoring/stats`
-  (`ScoringController::putStats`). Indépendant des lots ci-dessus : peut se faire à tout moment.
+- **`kp_stats` (2022) : supprimé (Q13), avec le lot 1 (Q15)** — migration de suppression de la
+  table ; retrait de la page `Stats.vue`, de sa route et de son entrée de menu dans `app_wsm_dev`
+  (**le reste de l'app, relais WSM, est conservé jusqu'au lot 5**), de `PUT /api/wsm/stats/` (legacy,
+  `wsmControllers.php`) et de `PUT /api2/admin/scoring/stats` (`ScoringController::putStats`).
 
 ## 8. Questions ouvertes (v5)
 

@@ -10,7 +10,8 @@
 > **Décisions complémentaires du 2026-07-23 en §0.8** (PWA, pauses inter-périodes, shotclock,
 > raccourcis paramétrables, relais matériel), **du 2026-07-27 en §0.9**, **correctif
 > réglementaire pénalités du 2026-07-29 en §0.10**, **revue UX du 2026-11-05 en §0.11** et
-> **révision de la saisie du 2026-11-06 en §0.12** (§0.12 prime sur §0.11).
+> **révision de la saisie du 2026-11-06 en §0.12** (§0.12 prime sur §0.11), **côtés du terrain et touches
+> spatiales du chronomètre de tir du 2026-11-27 en §0.18** (prime sur §6.5 pour ces touches).
 > Cible : intégration dans **app4** (Nuxt 4, api2 Symfony)
 > Remplace : `sources/admin/FeuilleMarque2.php`, `sources/admin/FeuilleMarque3.php`
 >            (legacy jQuery) et l'ancien prototype standalone app3 (feuille de marque Nuxt)
@@ -463,6 +464,82 @@ le lui retire sans que rien ne le montre : l'opérateur appuie sur `+`, rien ne 
 | La table de marque **n'est jamais déconnectée** pendant un match. Règles et critères : [AUTH_HARDENING.md § 3ter](../developer/in-progress/AUTH_HARDENING.md) (AUTH-SC-01 à 08 pour app4, AUTH-SC-10 à 14 pour api2, AUTH-SC-21 pour la console) | des déconnexions ont été constatées en dev en cours de saisie ; un fait de jeu refusé était annulé et la console quittée |
 | ~~À chaque chargement d'un match, la session est renouvelée s'il lui reste moins de 2 h (AUTH-SC-20)~~ — **retiré le 2026-11-18** | avec un JWT de 24 h, le renouvellement préventif garde toujours plus de 4 h 48 de validité ; et le chargement du match appelle déjà api2, qui renouvelle et rejoue en cas de besoin, avant le coup d'envoi |
 | La file locale des faits de jeu refusés (ex-AUTH-SC-22) rejoint la **Phase 4 — Offline** (§ 8) | même mécanisme (écritures gardées puis rejouées par `uid`) ; les coupures réseau sont bien plus fréquentes que les refus d'authentification |
+
+### 0.18 Côtés du terrain (switch) et touches spatiales du chronomètre de tir (2026-11-27)
+
+> **Origine** : étude [SCORING_EXTENDED_STATS_STUDY.md §3.5](../developer/in-progress/SCORING_EXTENDED_STATS_STUDY.md)
+> (réponses Q9–Q19). Utile **sans** les statistiques étendues : la console et le panneau collent à la
+> position réelle des équipes. Prime sur §6.5 pour les touches du chronomètre de tir.
+
+#### 0.18.1 Règles
+
+| # | Décision | Pourquoi |
+|---|---|---|
+| D1 | **Repère** : « gauche » et « droite » s'entendent **vus de l'arbitre principal et de la table de marque**, qui sont du même côté du terrain. L'**équipe de gauche** est celle qui occupe la moitié gauche du terrain | réponse Q16 ; un seul repère pour la console, le panneau et les touches |
+| D2 | **Côté de départ** réglé dans **Paramètres** avant le coup d'envoi : « Équipe A à gauche / à droite ». Défaut : **A à gauche**. Il figure dans les **contrôles avant coup d'envoi** (§0.11), sans bloquer le coup d'envoi | l'arbitre tire au sort les côtés ; la table le reporte |
+| D3 | **Changement de côté automatique** à **chaque nouvelle période**, prolongations comprises : `côtés(période) = côté de départ inversé une fois par période écoulée` (M1 = départ, M2 = inversé, P1 = départ, P2 = inversé…), **fonction pure de la période**. Revenir à une période précédente (menu de la période, correction) rend les côtés de cette période | réponse Q18 (changement systématique) ; aucun geste à ne pas oublier ; une correction de période reste cohérente |
+| D4 | **Inversion manuelle** : bouton **« ⇄ Inverser les côtés »** dans l'en-tête de la console, **avec confirmation** (« Inverser les côtés pour la période M2 ? »), **sans raccourci clavier**. Elle vaut **pour la période en cours seulement** (dérogation mémorisée par période) et s'annule par un second clic | corriger une erreur de côté de départ ou un oubli ; ne doit jamais partir par erreur en plein jeu |
+| D5 | **Ce qui suit les côtés** : la **console** (colonnes d'équipe : noms, scores, effectifs, pénalités ; en-têtes de la chronologie sur PC) et le **tableau de score** plein écran (`games/[id]/scoreboard`). **Ce qui ne les suit pas** : les **incrustations** (A reste à gauche, réponse Q19), l'écran du chronomètre de tir (aucune équipe), le PDF, les données | le public lit le panneau dans le sens du jeu ; le téléspectateur garde le même repère tout le match |
+| D6 | **L'identité A / B ne change jamais** : feuille de match, couleurs, `team` dans `scoring_live_*`, consolidation `kp_*`. Seul l'**affichage** est mis en miroir | aucune donnée ne dépend de l'affichage |
+| D7 | **Touches spatiales du chronomètre de tir** (défaut) : **`/` = départ 60 s, possession à l'équipe de gauche** ; **`*` = départ 60 s, possession à l'équipe de droite** ; **`-` = départ 40 s** (inchangé) ; **`+` = arrêt** (retour à `--`). Les boutons à l'écran suivent : **60 s ◀** à gauche, **60 s ▶** à droite, aux couleurs de l'équipe du côté | `/` et `*` côte à côte sous les doigts, sans regarder l'écran (Q10) ; les coups francs et avantages (Q9) se tapent comme les autres 60 s ; l'engagement est connu |
+| D8 | **Les deux touches 60 s ont exactement le même effet sur le match** : même décompte de 60 s, mêmes affichages. Elles ne diffèrent que par le **côté déclaré**, enregistré avec la commande | une erreur de touche ne gêne jamais le match (seule une statistique est fausse) |
+| D9 | **Mode relatif** en **préférence de poste** (modale Raccourcis clavier) : `+` = 60 s possession à l'autre équipe, `/` = 60 s même équipe, `-` = 40 s, `*` = arrêt | pour l'opérateur qui préfère ; validation comparée au pilote (étude §3.5.4) |
+| D10 | **La commande enregistre le côté, pas l'équipe** : `start60` porte `side = L \| R` (mode spatial) ou `sameTeam = true \| false` (mode relatif) ; l'équipe se déduit des côtés de la période. Une inversion manuelle (D4) **réattribue donc toute la période**, y compris les commandes déjà tapées | une période entière inversée se corrige d'un seul geste |
+| D11 | **Inversion probable détectée** (mode spatial) : quand un **but** de X est saisi alors que la dernière commande 60 s / 40 s de la période attribuait le ballon à l'autre équipe, un **bandeau** s'affiche pour le **secrétaire** : « Ballon attribué à <Y> avant le but de <X> : côtés inversés ? » — **[Inverser les côtés]** (D4, sans seconde confirmation) / **[Ignorer]** (plus de bandeau pour cette période). Jamais bloquant, jamais de son | le secrétaire regarde l'écran, le chronométreur de tir non (Q10) ; une erreur de touche isolée ne doit pas imposer d'inversion |
+| D12 | **Source matériel** (`HARDWARE`) : les côtés et D3 s'appliquent à la console en supervision et au tableau de score KPI (les changements de période reçus du relais déclenchent D3). Le panneau du constructeur garde son propre affichage. Aucune touche spatiale (la saisie est sur la console du constructeur) : les départs reçus n'ont pas de côté. **Score seul** (`SCORE_ONLY`) : côtés d'affichage seulement | la saisie propriétaire passe par le relais (plan lot 5), dont le format n'est pas encore connu (action 0.5) |
+| D13 | **Legacy** : FeuilleMarque V2 / V3 et l'onglet WSM ne changent pas | [ADR-0002](../developer/reference/adr/0002-plus-d-evolution-du-legacy.md) |
+
+#### 0.18.2 Données et diffusion
+
+- **`scoring_live_state`** : `sides_start` (`A_LEFT` / `A_RIGHT`, D2) et `sides_overrides` (liste des
+  périodes inversées à la main, D4). Les côtés courants ne sont **pas stockés** : ils se calculent
+  (`sidesFor(sidesStart, période, overrides)`, D3), côté app4 (`utils/scoringSides.ts`) et côté api2
+  (`ScoringRules::sidesFor`), même table de vérité testée des deux côtés.
+- **Commandes du chronomètre de tir** : `start60` + `side` ou `sameTeam` (D10), persistés avec le départ
+  (`scoring_live_clock` ou fait associé, à fixer à l'implémentation) et journalisés (« Scoring chrono » :
+  `SHOTCLOCK run 60 L 1:00`). La machine à états (`ScoringRules::shotclockTransition`) **ne change
+  pas**.
+- **Journal** (`kp_journal`, « Scoring côtés ») : réglage du côté de départ, inversion manuelle et son
+  annulation, avec période et temps de jeu.
+- **Diffusion** : les côtés courants rejoignent l'état diffusé (Mercure `…/teams` et l'état complet) et le
+  canal local (`teams` porte `sides`). Le tableau de score s'y conforme ; les incrustations l'ignorent
+  (D5).
+- **Préférences** : nouvelles actions `shotclockStart60Left`, `shotclockStart60Right`,
+  `shotclockStart60Other`, `shotclockStart60Same` ; le mode (spatial / relatif) est une préférence de
+  poste. Clé `kpi.scoring.shortcuts.v3` : les préférences v2 sont **abandonnées** (le sens de `+` et de
+  `*` change), comme lors du passage à v2 (§0.13).
+
+#### 0.18.3 Critères d'acceptation
+
+| # | Étant donné | Quand | Alors |
+|---|---|---|---|
+| **SIDE-01** | un match en attente | j'ouvre Paramètres | le côté de départ est proposé, **A à gauche** par défaut, et figure dans les contrôles avant coup d'envoi |
+| **SIDE-02** | côté de départ « A à droite » enregistré | j'ouvre la console et le tableau de score | B est à gauche et A à droite **sur les deux**, noms, scores et pénalités compris |
+| **SIDE-03** | M1 en cours, A à gauche | je passe à M2 (bouton » ou menu) | A passe à droite sur la console et le tableau de score, **sans autre geste** |
+| **SIDE-04** | un match éliminatoire à égalité en fin de M2 | je passe en P1, puis en P2 | les côtés s'inversent à chaque passage (P1 = côtés de M1, P2 = côtés de M2) |
+| **SIDE-05** | M2 en cours | je reviens à M1 par le menu de la période | les côtés de M1 reviennent |
+| **SIDE-06** | M2 en cours | je clique « ⇄ Inverser les côtés » | une confirmation nomme la période ; « Annuler » ne change rien ; « Confirmer » inverse la console et le tableau de score, pour M2 seulement (passer en P1 applique la règle D3 sans la dérogation) |
+| **SIDE-07** | un match en cours | une incrustation est affichée | A reste à gauche quelles que soient la période et les inversions |
+| **SIDE-08** | mode spatial, A à gauche, chronomètre de tir à `--` | je tape `/` | le chronomètre de tir part à 60 s, la commande est enregistrée avec `side = L` (équipe A) |
+| **SIDE-09** | mode spatial, A à gauche | je tape `*` | même décompte de 60 s qu'avec `/`, mêmes affichages ; commande enregistrée avec `side = R` (équipe B) |
+| **SIDE-10** | mode spatial | je tape `-`, puis `+` | `-` lance 40 s ; `+` ramène à `--` |
+| **SIDE-11** | M2 en cours avec des départs 60 s déjà tapés | j'inverse les côtés (SIDE-06) | les départs déjà tapés de M2 sont réattribués à l'autre équipe ; ceux de M1 ne bougent pas |
+| **SIDE-12** | mode spatial, dernier départ attribuant le ballon à B | le secrétaire saisit un but de A | le bandeau « côtés inversés ? » s'affiche ; « Inverser les côtés » applique SIDE-06 sans seconde confirmation ; « Ignorer » le masque jusqu'à la fin de la période |
+| **SIDE-13** | mode spatial, dernier départ attribuant le ballon à A | le secrétaire saisit un but de A | aucun bandeau |
+| **SIDE-14** | modale Raccourcis clavier | je choisis le mode relatif | `+` = 60 s autre équipe, `/` = 60 s même équipe, `-` = 40 s, `*` = arrêt ; aucun bandeau D11 dans ce mode |
+| **SIDE-15** | des préférences de touches enregistrées en v2 | j'ouvre la console | les touches par défaut du mode spatial s'appliquent (préférences v2 abandonnées) |
+| **SIDE-16** | une inversion, un réglage du côté de départ | je consulte le journal | une ligne « Scoring côtés » par action, avec période et temps de jeu |
+| **SIDE-17** | source active `HARDWARE` | le relais annonce le passage en M2 | la console en supervision et le tableau de score KPI inversent les côtés |
+| **SIDE-18** | `sidesFor` app4 et `ScoringRules::sidesFor` api2 | on les teste sur la même table (côté de départ × période M1, M2, P1…P4 × dérogations) | ils rendent les mêmes côtés |
+
+**Tests** : `utils/scoringSides.ts` et `utils/scoringShortcuts.ts` (Vitest, SIDE-03 à 05, 14, 15, 18),
+`ScoringRules::sidesFor` (PHPUnit `unit`, SIDE-18), rendu des composants console / tableau de score /
+incrustation (SIDE-02, 06, 07, 12), route de commande du chronomètre de tir (PHPUnit `integration`,
+SIDE-08, 09, 11). Tests fonctionnels à ajouter à
+[SCORING_ROLLOUT_CHECKLIST.md](../developer/in-progress/SCORING_ROLLOUT_CHECKLIST.md) avec le lot.
+
+**Hors périmètre** : reconstruction de la possession et statistiques (étude, lots 1 et 3) ; inversion
+des incrustations ; changement de côté en cours de période (inexistant au règlement).
 
 ## 1. Contexte et objectif
 
@@ -921,6 +998,10 @@ porté par la compétition, en **hydratant `store.config`**).
   | Shotclock : **départ/reset 60 s** (engagement) | `+` |
   | Shotclock : **départ/reset 40 s** (rebond offensif) | `-` |
   | Shotclock : **arrêt** (retour à `--`, état initial) | `*` |
+
+  > **Revu le 2026-11-27** (§0.18) : touches **spatiales** par défaut — `/` 60 s équipe de gauche,
+  > `*` 60 s équipe de droite, `-` 40 s, `+` arrêt ; l'ancien jeu (`+` / `-` / `*`) devient le mode
+  > relatif, enrichi de `/` = 60 s même équipe.
   | Faits de jeu (but, cartons V/J/R/noir) | FR `B V J R N`, EN `O G Y R B` |
 
   > **Revu le 2026-11-08** (§0.13) : `Entrée` / `.` / `0` abandonnés (`Entrée` valide un fait,
