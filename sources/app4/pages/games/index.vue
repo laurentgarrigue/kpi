@@ -174,13 +174,9 @@ const legacyBase = computed(() => useRuntimeConfig().public.legacyBaseUrl || 'ht
 const canEdit = computed(() => authStore.profile <= 6)
 const canEditScores = computed(() => authStore.profile <= 6 || authStore.profile === 9)
 const canEditStatut = computed(() => authStore.profile <= 6 || authStore.profile === 9)
-// Scoring console (new in-app match console).
-// DEV-ONLY restriction: during development the Scoring button is visible to a single
-// user (login 42054). Remove SCORING_DEV_USER and revert to `authStore.profile <= 2`
-// once the feature opens to the bureau. See DOC/specs/PAGE_SCORING.md.
-// V2/V3 links are kept alongside until the Scoring feature is validated.
-const SCORING_DEV_USER = '42054'
-const canScoring = computed(() => authStore.user?.id === SCORING_DEV_USER && authStore.profile <= 2)
+// Scoring console (new in-app match console): profiles 1 to 6 and 9 (Table de marque).
+// See DOC/specs/PAGE_SCORING.md §6.3.
+const canScoring = computed(() => canEditScores.value)
 const canLock = computed(() => authStore.profile <= 6)
 const canSelect = computed(() => authStore.profile <= 6)
 const showPublicationColumn = computed(() => authStore.profile !== 7)
@@ -1890,15 +1886,6 @@ const STATUS_CLASSES: Record<GameDisplayStatus, string> = {
 }
 const statusBtnClass = (game: Game) => STATUS_CLASSES[gameDisplayStatus(game.statut, game.validation)]
 
-// ─── Scoresheet windows (FMV2/FMV3) ───
-// Réutilise la fenêtre existante si elle est déjà ouverte pour ce match
-const openScoresheet = (gameId: number, version: 2 | 3) => {
-  const url = version === 2
-    ? `${legacyBase.value}/admin/FeuilleMarque2.php?idMatch=${gameId}`
-    : `${legacyBase.value}/admin/FeuilleMarque3.php?idMatch=${gameId}`
-  window.open(url, `fmv${version}`)
-}
-
 // ─── Scoring console (new in-app match console) ───
 // Open in a tab. router.resolve() prepends the app base path (/admin2), so the tab targets
 // the correct URL.
@@ -2682,16 +2669,6 @@ const openScoring = (gameId: number) => {
                     <br>
                     <span class="text-sm text-header-900 dark:text-header-50">PDF</span>
                   </button>
-                  <button v-if="canEditScores && g.authorized" :title="t('games.scoresheet_online_v2')" class="p-1.5 text-primary-500 hover:text-primary-600" @click.stop="openScoresheet(g.id, 2)">
-                    <UIcon name="heroicons:device-tablet" class="w-6 h-6" />
-                    <br>
-                    <span class="text-sm text-header-900 dark:text-header-50">V2</span>
-                  </button>
-                  <button v-if="canEditScores && g.authorized" :title="t('games.scoresheet_online_v3')" class="p-1.5 text-primary-500 hover:text-primary-700" @click.stop="openScoresheet(g.id, 3)">
-                    <UIcon name="heroicons:device-tablet" class="w-6 h-6" />
-                    <br>
-                    <span class="text-sm text-header-900 dark:text-header-50">V3</span>
-                  </button>
                   <button v-if="canScoring && g.authorized" :title="t('scoring.link_title')" class="p-1.5 text-emerald-700 hover:text-emerald-700" @click.stop="openScoring(g.id)">
                     <UIcon name="heroicons:bolt" class="w-6 h-6" />
                     <br>
@@ -3397,14 +3374,6 @@ const openScoring = (gameId: number) => {
           <button v-if="canEdit && g.authorized" type="button" class="inline-flex items-center gap-1.5 px-3 py-2 min-h-10 text-sm font-medium text-danger-600 hover:text-danger-800" :title="t('games.scoresheet_pdf')" :aria-label="t('games.scoresheet_pdf')" @click="openScoresheets([g.id])">
             <UIcon name="heroicons:document-text" class="w-7 h-7" />
             PDF
-          </button>
-          <button v-if="canEdit && authStore.profile <= 6 && g.authorized" class="inline-flex items-center gap-1.5 px-3 py-2 min-h-10 text-sm font-medium text-emerald-700 hover:text-emerald-800" @click="openScoresheet(g.id, 2)">
-            <UIcon name="heroicons:device-tablet" class="w-5 h-5" />
-            v2
-          </button>
-          <button v-if="canEdit && authStore.profile <= 2 && g.authorized" class="inline-flex items-center gap-1.5 px-3 py-2 min-h-10 text-sm font-medium text-purple-600 hover:text-purple-800" @click="openScoresheet(g.id, 3)">
-            <UIcon name="heroicons:device-tablet" class="w-5 h-5" />
-            v3
           </button>
           <button v-if="canScoring && g.authorized" class="inline-flex items-center gap-1.5 px-3 py-2 min-h-10 text-sm font-medium text-emerald-700 hover:text-emerald-800" @click="openScoring(g.id)">
             <UIcon name="heroicons:bolt" class="w-5 h-5" />

@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\User;
 use App\Scoring\ScoringRules;
 use App\Service\ScoringDisplayAccessService;
+use App\Security\ScoringVoter;
 use App\Service\ScoringLiveService;
 use App\Service\ScoringProgramService;
 use App\Trait\AdminLoggableTrait;
@@ -32,11 +33,11 @@ use Symfony\Component\Routing\Attribute\Route;
  * end-of-match consolidation (Statut → END). Endpoints and payloads are unchanged, so the
  * console UI did not move. See LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md.
  *
- * ⚠️ Experimentation phase: access restricted to ROLE_ADMIN (profile <= 2). Open up to
- * ROLE_SCORER (profile 9 "Table de marque") once validated — see spec §6.3.
+ * Access: profiles 1 to 6 and profile 9 "Table de marque" (ScoringVoter). Profiles 7-8 inherit
+ * ROLE_SCORER through the hierarchy, hence a voter rather than a role.
  */
 #[Route('/admin/scoring', name: 'scoring_')]
-#[IsGranted('ROLE_ADMIN')]
+#[IsGranted(ScoringVoter::ACCESS)]
 class ScoringController extends AbstractController
 {
     use AdminLoggableTrait;
