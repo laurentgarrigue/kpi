@@ -113,21 +113,21 @@
         },
         {
             "name": "endroid/qr-code",
-            "version": "6.1.3",
+            "version": "6.2.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/endroid/qr-code.git",
-                "reference": "5fa534856ed95649d67c0eab0cabc03ab1d8e0e2"
+                "reference": "b2be4d6111c3da2ca37aa8583f7b3f5ce1f0b7c0"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/endroid/qr-code/zipball/5fa534856ed95649d67c0eab0cabc03ab1d8e0e2",
-                "reference": "5fa534856ed95649d67c0eab0cabc03ab1d8e0e2",
+                "url": "https://api.github.com/repos/endroid/qr-code/zipball/b2be4d6111c3da2ca37aa8583f7b3f5ce1f0b7c0",
+                "reference": "b2be4d6111c3da2ca37aa8583f7b3f5ce1f0b7c0",
                 "shasum": ""
             },
             "require": {
                 "bacon/bacon-qr-code": "^3.0",
-                "php": "^8.4"
+                "php": "^8.5"
             },
             "require-dev": {
                 "endroid/quality": "dev-main",
@@ -173,7 +173,7 @@
             ],
             "support": {
                 "issues": "https://github.com/endroid/qr-code/issues",
-                "source": "https://github.com/endroid/qr-code/tree/6.1.3"
+                "source": "https://github.com/endroid/qr-code/tree/6.2.0"
             },
             "funding": [
                 {
@@ -181,7 +181,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2026-02-05T07:01:58+00:00"
+            "time": "2026-11-03T10:30:23+00:00"
         },
         {
             "name": "erusev/parsedown",
@@ -235,16 +235,16 @@
         },
         {
             "name": "ezyang/htmlpurifier",
-            "version": "v4.19.0",
+            "version": "v4.19.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/ezyang/htmlpurifier.git",
-                "reference": "b287d2a16aceffbf6e0295559b39662612b77fcf"
+                "reference": "5e0539132d934f936fbae2c88b55d58f9438623f"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/ezyang/htmlpurifier/zipball/b287d2a16aceffbf6e0295559b39662612b77fcf",
-                "reference": "b287d2a16aceffbf6e0295559b39662612b77fcf",
+                "url": "https://api.github.com/repos/ezyang/htmlpurifier/zipball/5e0539132d934f936fbae2c88b55d58f9438623f",
+                "reference": "5e0539132d934f936fbae2c88b55d58f9438623f",
                 "shasum": ""
             },
             "require": {
@@ -290,22 +290,22 @@
             ],
             "support": {
                 "issues": "https://github.com/ezyang/htmlpurifier/issues",
-                "source": "https://github.com/ezyang/htmlpurifier/tree/v4.19.0"
+                "source": "https://github.com/ezyang/htmlpurifier/tree/v4.19.1"
             },
-            "time": "2025-10-17T16:34:55+00:00"
+            "time": "2026-09-15T15:42:51+00:00"
         },
         {
             "name": "mpdf/mpdf",
-            "version": "v8.2.7",
+            "version": "v8.3.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/mpdf/mpdf.git",
-                "reference": "b59670a09498689c33ce639bac8f5ba26721dab3"
+                "reference": "2a454ec334109911fdb323a284c19dbf3f049810"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/mpdf/mpdf/zipball/b59670a09498689c33ce639bac8f5ba26721dab3",
-                "reference": "b59670a09498689c33ce639bac8f5ba26721dab3",
+                "url": "https://api.github.com/repos/mpdf/mpdf/zipball/2a454ec334109911fdb323a284c19dbf3f049810",
+                "reference": "2a454ec334109911fdb323a284c19dbf3f049810",
                 "shasum": ""
             },
             "require": {
@@ -329,6 +329,7 @@
             },
             "suggest": {
                 "ext-bcmath": "Needed for generation of some types of barcodes",
+                "ext-imagick": "Needed if developing the Mpdf library",
                 "ext-xml": "Needed mainly for SVG manipulation",
                 "ext-zlib": "Needed for compression of embedded resources, such as fonts"
             },
@@ -373,7 +374,7 @@
                     "type": "custom"
                 }
             ],
-            "time": "2025-12-01T10:18:02+00:00"
+            "time": "2026-03-11T10:58:44+00:00"
         },
         {
             "name": "mpdf/psr-http-message-shim",
@@ -469,20 +470,20 @@
         },
         {
             "name": "myclabs/deep-copy",
-            "version": "1.13.4",
+            "version": "1.14.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/myclabs/DeepCopy.git",
-                "reference": "07d290f0c47959fd5eed98c95ee5602db07e0b6a"
+                "reference": "8680aa248f8e07bc8fb43f56f0f5fc77a0c96aae"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/myclabs/DeepCopy/zipball/07d290f0c47959fd5eed98c95ee5602db07e0b6a",
-                "reference": "07d290f0c47959fd5eed98c95ee5602db07e0b6a",
+                "url": "https://api.github.com/repos/myclabs/DeepCopy/zipball/8680aa248f8e07bc8fb43f56f0f5fc77a0c96aae",
+                "reference": "8680aa248f8e07bc8fb43f56f0f5fc77a0c96aae",
                 "shasum": ""
             },
             "require": {
-                "php": "^7.1 || ^8.0"
+                "php": "^8.0"
             },
             "conflict": {
                 "doctrine/collections": "<1.6.8",
@@ -517,28 +518,28 @@
             ],
             "support": {
                 "issues": "https://github.com/myclabs/DeepCopy/issues",
-                "source": "https://github.com/myclabs/DeepCopy/tree/1.13.4"
+                "source": "https://github.com/myclabs/DeepCopy/tree/1.14.0"
             },
             "funding": [
                 {
-                    "url": "https://tidelift.com/funding/github/packagist/myclabs/deep-copy",
-                    "type": "tidelift"
+                    "url": "https://github.com/mnapoli",
+                    "type": "github"
                 }
             ],
-            "time": "2025-08-01T08:46:24+00:00"
+            "time": "2026-08-11T10:17:44+00:00"
         },
         {
             "name": "openspout/openspout",
-            "version": "v4.32.0",
+            "version": "v4.33.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/openspout/openspout.git",
-                "reference": "41f045c1f632e1474e15d4c7bc3abcb4a153563d"
+                "reference": "8ddddbb3ece300a84bb13205e40686b78c39fde7"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/openspout/openspout/zipball/41f045c1f632e1474e15d4c7bc3abcb4a153563d",
-                "reference": "41f045c1f632e1474e15d4c7bc3abcb4a153563d",
+                "url": "https://api.github.com/repos/openspout/openspout/zipball/8ddddbb3ece300a84bb13205e40686b78c39fde7",
+                "reference": "8ddddbb3ece300a84bb13205e40686b78c39fde7",
                 "shasum": ""
             },
             "require": {
@@ -548,17 +549,17 @@
                 "ext-libxml": "*",
                 "ext-xmlreader": "*",
                 "ext-zip": "*",
-                "php": "~8.3.0 || ~8.4.0 || ~8.5.0"
+                "php": "~8.3.0 || ~8.4.0 || ~8.5.0 || ~8.6.0"
             },
             "require-dev": {
                 "ext-zlib": "*",
-                "friendsofphp/php-cs-fixer": "^3.86.0",
-                "infection/infection": "^0.31.2",
-                "phpbench/phpbench": "^1.4.1",
-                "phpstan/phpstan": "^2.1.22",
-                "phpstan/phpstan-phpunit": "^2.0.7",
-                "phpstan/phpstan-strict-rules": "^2.0.6",
-                "phpunit/phpunit": "^12.3.7"
+                "friendsofphp/php-cs-fixer": "^3.90.0",
+                "infection/infection": "^0.31.9",
+                "phpbench/phpbench": "^1.4.3",
+                "phpstan/phpstan": "^2.1.32",
+                "phpstan/phpstan-phpunit": "^2.0.8",
+                "phpstan/phpstan-strict-rules": "^2.0.7",
+                "phpunit/phpunit": "^12.4.4"
             },
             "suggest": {
                 "ext-iconv": "To handle non UTF-8 CSV files (if \"php-mbstring\" is not already installed or is too limited)",
@@ -606,7 +607,7 @@
             ],
             "support": {
                 "issues": "https://github.com/openspout/openspout/issues",
-                "source": "https://github.com/openspout/openspout/tree/v4.32.0"
+                "source": "https://github.com/openspout/openspout/tree/v4.33.0"
             },
             "funding": [
                 {
@@ -618,7 +619,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2025-09-03T16:03:54+00:00"
+            "time": "2026-11-19T13:20:45+00:00"
         },
         {
             "name": "paragonie/random_compat",
@@ -775,30 +776,29 @@
         },
         {
             "name": "setasign/fpdi",
-            "version": "v2.6.7",
+            "version": "v2.6.10",
             "source": {
                 "type": "git",
                 "url": "https://github.com/Setasign/FPDI.git",
-                "reference": "388c51e69982a3fc16698710b763e8107a49f510"
+                "reference": "be29a9d43c64f06569c1075f181e43d829a3d5bb"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Setasign/FPDI/zipball/388c51e69982a3fc16698710b763e8107a49f510",
-                "reference": "388c51e69982a3fc16698710b763e8107a49f510",
+                "url": "https://api.github.com/repos/Setasign/FPDI/zipball/be29a9d43c64f06569c1075f181e43d829a3d5bb",
+                "reference": "be29a9d43c64f06569c1075f181e43d829a3d5bb",
                 "shasum": ""
             },
             "require": {
                 "ext-zlib": "*",
-                "php": ">=7.2 <=8.5.99999"
+                "php": ">=7.2 <8.7"
             },
             "conflict": {
                 "setasign/tfpdf": "<1.31"
             },
             "require-dev": {
                 "phpunit/phpunit": "^8.5.52",
-                "setasign/fpdf": "~1.8.6",
+                "setasign/fpdf": "^1.9.0",
                 "setasign/tfpdf": "~1.33",
-                "squizlabs/php_codesniffer": "^3.5",
                 "tecnickcom/tcpdf": "^6.8"
             },
             "suggest": {
@@ -835,7 +835,7 @@
             ],
             "support": {
                 "issues": "https://github.com/Setasign/FPDI/issues",
-                "source": "https://github.com/Setasign/FPDI/tree/v2.6.7"
+                "source": "https://github.com/Setasign/FPDI/tree/v2.6.10"
             },
             "funding": [
                 {
@@ -843,20 +843,20 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-05-13T10:16:22+00:00"
+            "time": "2026-11-09T10:58:35+00:00"
         },
         {
             "name": "smarty/smarty",
-            "version": "v4.5.7",
+            "version": "v4.6.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/smarty-php/smarty.git",
-                "reference": "838d6ad1c635f8a6bafc08d791b8af18d8304b3a"
+                "reference": "3f60fe2058b8b3944907038afc0296a1e55c61b9"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/smarty-php/smarty/zipball/838d6ad1c635f8a6bafc08d791b8af18d8304b3a",
-                "reference": "838d6ad1c635f8a6bafc08d791b8af18d8304b3a",
+                "url": "https://api.github.com/repos/smarty-php/smarty/zipball/3f60fe2058b8b3944907038afc0296a1e55c61b9",
+                "reference": "3f60fe2058b8b3944907038afc0296a1e55c61b9",
                 "shasum": ""
             },
             "require": {
@@ -907,7 +907,7 @@
             "support": {
                 "forum": "https://github.com/smarty-php/smarty/discussions",
                 "issues": "https://github.com/smarty-php/smarty/issues",
-                "source": "https://github.com/smarty-php/smarty/tree/v4.5.7"
+                "source": "https://github.com/smarty-php/smarty/tree/v4.6.1"
             },
             "funding": [
                 {
@@ -915,20 +915,20 @@
                     "type": "github"
                 }
             ],
-            "time": "2026-06-29T08:48:56+00:00"
+            "time": "2026-11-27T09:56:39+00:00"
         },
         {
             "name": "twbs/bootstrap",
-            "version": "v5.3.8",
+            "version": "v5.3.9",
             "source": {
                 "type": "git",
                 "url": "https://github.com/twbs/bootstrap.git",
-                "reference": "25aa8cc0b32f0d1a54be575347e6d84b70b1acd7"
+                "reference": "349bdb50b8ab6782248c1b296443087cd7222ead"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/twbs/bootstrap/zipball/25aa8cc0b32f0d1a54be575347e6d84b70b1acd7",
-                "reference": "25aa8cc0b32f0d1a54be575347e6d84b70b1acd7",
+                "url": "https://api.github.com/repos/twbs/bootstrap/zipball/349bdb50b8ab6782248c1b296443087cd7222ead",
+                "reference": "349bdb50b8ab6782248c1b296443087cd7222ead",
                 "shasum": ""
             },
             "replace": {
@@ -963,9 +963,9 @@
             ],
             "support": {
                 "issues": "https://github.com/twbs/bootstrap/issues",
-                "source": "https://github.com/twbs/bootstrap/tree/v5.3.8"
+                "source": "https://github.com/twbs/bootstrap/tree/v5.3.9"
             },
-            "time": "2025-08-26T02:01:02+00:00"
+            "time": "2026-11-11T17:41:09+00:00"
         }
     ],
     "packages-dev": [],
@@ -978,5 +978,5 @@
         "php": ">=8.4"
     },
     "platform-dev": {},
-    "plugin-api-version": "2.9.0"
+    "plugin-api-version": "2.6.0"
 }
