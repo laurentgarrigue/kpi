@@ -21,7 +21,11 @@
 >   (§3.6) ;
 > - **v7 (2026-11-28)** : un 60 s peut aussi suivre un **avantage** (faute non sifflée, geste
 >   d'avantage) ; **décision : touches gauche / droite seules**, le mode relatif est abandonné ;
->   **pavé USB externe à 4 touches en carré** (§3.5.5).
+>   **pavé USB externe à 4 touches en carré** (§3.5.5) ;
+> - **v8 (2026-11-28)** : saisie par les bancs (§4.1) **déclassée** (architecture lourde, implication
+>   inégale des bancs) ; **concession sur C3** : le secrétaire saisit les **tirs** et les **arrêts** avec
+>   **deux touches**, l'équipe étant déduite de la possession (chronomètre de tir + switch) — nouvelle
+>   solution retenue (§4.0) ; recommandation, modèle de données et questions revus (Q23–Q26).
 >
 > **Contexte** : console Scoring d'app4 ([PAGE_SCORING.md](../../specs/PAGE_SCORING.md), notamment
 > §0.4 « fait de match extensible », §0.13 touches du chronomètre de tir, §6.5 chronomètre de tir),
@@ -46,8 +50,8 @@ facilité de mise en place et d'exploitation** :
 | Ordre | Donnée | Mise en place | Exploitation | Pourquoi ce rang |
 |---|---|---|---|---|
 | **1** | **Possession** (par équipe) | **aucune personne en plus** : touches gauche / droite du chronométreur de tir (§3.5), déjà là | calcul serveur, contrôlé par les buts (§3.5.3) ; **tous les matchs scorés** | coût d'organisation nul, couverture totale |
-| **2** | **Tirs cadrés et arrêts + cadre** (par équipe) | aucune : chaque 40 s + les buts (§3.3) | même calcul ; minorant (un tir arrêté récupéré par la défense n'est pas vu) | gratuit, mais incomplet |
-| **3** | **Arrêts et tirs par joueur** | **un responsable d'équipe** (ou délégué) par équipe et par match, fenêtre de 24 h (§4.1) | contrôles de cohérence, seuil de couverture 80 % | le plus demandé (Q5) mais dépend de bénévoles : couverture variable |
+| **2** | **Tirs et arrêts** (par équipe) | **deux touches du secrétaire** (§4.0), l'équipe venant de la possession | contrôle par les 40 s du chronomètre de tir (§4.0) ; tous les matchs scorés | coût d'organisation nul (v8) ; ~~minorant par les seuls 40 s~~ |
+| **3** | Arrêts et tirs **par joueur** | ~~bancs (§4.1, déclassé)~~ ; seulement si le numéro devient facultatif (Q24) | — | **repoussé** : aucune voie sans bénévole |
 | 4 | Passes, interceptions | vidéo (§4.3) | lourde | repoussé |
 
 | Donnée visée | Granularité utile | Exemples de stats dérivées |
@@ -66,7 +70,7 @@ facilité de mise en place et d'exploitation** :
 |---|---|---|
 | C1 | **Le gardien n'est pas un joueur fixe.** C'est généralement un rôle dédié, mais pendant le match n'importe lequel des 5 joueurs peut l'être : le règlement désigne comme gardien **le joueur qui se tient sous le but, pagaie levée à la verticale**. | Un arrêt **ne peut pas** être imputé automatiquement au « gardien de la composition » : il faut l'imputer au **joueur qui a fait l'arrêt** (son numéro). Le rôle « gardien » est un **état instantané**, pas un attribut du joueur. |
 | C2 | **Le chronométreur de tir est un rôle dédié**, avec un **statut d'arbitre**, qui **ne peut rien faire d'autre** que le chronomètre de tir. | Aucune saisie **en plus** de son rôle. Ce qu'il saisit **déjà** (départ 60 s, départ 40 s, arrêt) est une source de données (§3.2). |
-| C3 | **Le secrétaire de table de marque** (scoring : chrono principal, buts, cartons, pénalités) est **déjà très occupé et concentré**. | **Aucune** saisie supplémentaire. La console ne se complexifie pas pour lui. |
+| C3 | **Le secrétaire de table de marque** (scoring : chrono principal, buts, cartons, pénalités) est **déjà très occupé et concentré**. | ~~Aucune saisie supplémentaire.~~ **Concession du 2026-11-28** : **deux touches** (tir, arrêt), **un appui chacune**, sans joueur, sans temps, sans fenêtre — l'équipe vient de la possession (§4.0). Rien d'autre ne lui est demandé. |
 | C4 | **Bénévoles supplémentaires rarement disponibles** à chaque table de marque. | Une solution qui exige une personne de plus **par terrain et par match** ne sera pas généralisable. |
 | C5 | **Ne pas impacter le déroulement du match.** | Les stats étendues sont **non officielles** : jamais bloquantes, jamais sur la feuille de match, jamais dans `kp_match_detail`. |
 | C6 | Le jeu est **rapide** : une possession dure au plus 60 s, les passes s'enchaînent en 1–3 s. | La saisie exhaustive des passes en direct est irréaliste. |
@@ -167,7 +171,7 @@ règles ci-dessus ne servent seules que là où aucun côté n'est déclaré (co
 **Limite** : l'engagement. Après chaque but, l'équipe qui gagne le sprint d'engagement n'est pas
 connue ; la possession suivante est ancrée **par le but suivant**, en remontant la chaîne. Une période
 sans but (ou la fin de période après le dernier but) reste **non ancrée** : sa possession n'est pas
-publiable sans correction (§3.4) ou sans saisie du banc (§4.1).
+publiable sans correction (§3.4). *(v7 : levé par les touches gauche / droite, §3.5.)*
 
 ### 3.4 Raccourci `/` : « 60 s, même équipe » — ❌ abandonné (v7)
 
@@ -209,8 +213,8 @@ avoir un **sens fixe**, qui ne dépend que de ce qu'il voit sur le terrain.
     chiffres (`utils/scoringShortcuts.ts`).
 
 **L'engagement reste non ancré** : qui gagne le sprint n'est connu ni du chronométreur de tir (il tape
-`+` sans dire pour qui) ni du secrétaire. C'est le **banc** qui le fixe (§4.1, ligne « Engagement ») ; à
-défaut, le but suivant l'ancre en remontant la chaîne.
+`+` sans dire pour qui) ni du secrétaire. *(v7 : levé par les touches gauche / droite,
+§3.5 ; le passage sur le banc, §4.1, est déclassé en v8.)* À défaut, le but suivant l'ancre en remontant la chaîne.
 
 ### 3.5 Inversion des côtés (« switch ») et touches spatiales
 
@@ -381,14 +385,68 @@ tir) saisit sur **la console du constructeur**, pas sur la console KPI (plan de 
 - après le lot 5, la reconstruction (§3.3) dépend de ce que transporte le flux du constructeur : les
   départs **60 s / 40 s distincts** sont nécessaires (à vérifier sur les captures 0.5) ; **aucun côté**
   n'est déclaré (pas de touches spatiales, réponse Q1) : la règle relative « 60 s = l'autre équipe »
-  s'applique, avec les coups francs et avantages (Q9) comme incohérences ; le squelette du banc (§4.1)
-  y gagne en importance ;
+  s'applique, avec les coups francs et avantages (Q9) comme incohérences ; les tirs et arrêts du
+  secrétaire (§4.0) n'ont pas d'équipe sûre et seraient attribués par la reconstruction ;
 - **à ajouter à l'action 0.5** : relever dans les captures comment le constructeur code les départs du
   chronomètre de tir (60 / 40 / arrêt) et s'il transporte une notion d'équipe ou de côté.
 
 ## 4. Solutions avec une saisie humaine, hors table de marque
 
-### 4.1 S1 — Les bancs complètent un squelette déjà pré-rempli (solution retenue pour arrêts et tirs)
+### 4.0 S0 — Le secrétaire : deux touches, l'équipe vient de la possession (solution retenue, v8)
+
+**Concession sur C3 (2026-11-28)** : puisque le chronométreur de tir (touches gauche / droite) et le switch
+des côtés disent **quelle équipe a le ballon**, le secrétaire n'a plus à désigner d'équipe ni de joueur. Il
+signale l'issue d'un tir non marqué d'**un seul appui** ; le but, lui, est déjà saisi.
+
+| Touche (FR / EN, proposition Q23) | Fait enregistré | Équipe | Exemple |
+|---|---|---|---|
+| **`T`** / **`S`** (*Tir* / *Shot*) | **tir non marqué et non arrêté par le gardien** : à côté, sur le cadre, contré par un joueur de champ | **en possession** (attaque) | le ballon frappe la barre |
+| **`A`** / **`K`** (*Arrêt* / *Keeper save*) | **tir arrêté par le gardien** | **en défense** (l'autre équipe) | le gardien repousse le tir |
+| `B` (existant) | but | marqueur | inchangé |
+
+Le joueur, le temps et l'équipe ne sont **pas** saisis : le temps est celui du chrono, l'équipe celle de la
+dernière possession déclarée (dernier départ 60 s, maintenue par un 40 s), le gardien n'est pas désigné (C1).
+
+**Règles de saisie** (à porter dans la spec) :
+
+- **un appui = un fait enregistré**, sans fenêtre, sans confirmation, sans choix ; il n'arme pas de fait et ne
+  touche pas à une saisie en cours (un carton à moitié saisi reste là) ;
+- un **retour visuel discret** sur le tableau de la console (« Tir A » / « Arrêt B » une seconde), jamais de son ;
+- **annulable** comme un fait de jeu : la ligne apparaît dans la chronologie (style atténué) avec sa corbeille ;
+- **possession inconnue** (aucun départ 60 s encore dans la période) : le fait est enregistré **sans équipe**,
+  signalé dans la chronologie, et la reconstruction de fin de match tente de l'attribuer ; sinon il est écarté ;
+- **jamais** sur la feuille de match, le PDF ni `kp_match_detail` : statistiques non officielles (C5) ;
+- **mode direct seulement**, match En cours ; inactif en post-match et en mode score seul.
+
+**Ce que ça donne** (par équipe, tous les matchs scorés) :
+
+| Stat | Calcul |
+|---|---|
+| Tirs | buts + `A` subis par l'adversaire + `T` |
+| Tirs cadrés | buts + arrêts subis (+ cadre si Q25 le distingue) |
+| Arrêts, % d'arrêts | `A` ; `A` / (`A` + buts encaissés) |
+| Efficacité | buts / tirs |
+| Tirs par possession | tirs / possessions (§3.3) |
+
+**Contrôle de qualité, sans bénévole** : le chronométreur de tir produit **déjà** une trace indépendante. Un
+**40 s** (rebond offensif après un tir sur le cadre ou un arrêt, Q2) doit être **précédé** de quelques secondes
+par un `T` ou un `A`. La part des 40 s ainsi précédés mesure la **couverture** du match ; sous le seuil (80 %,
+Q12), les tirs et arrêts du match sont **masqués** (pas publiés). Inversement, un `A` suivi d'un 60 s de
+l'**autre** équipe dit que la défense a récupéré : cohérent.
+
+**Coût pour le secrétaire** : deux touches, le même geste qu'aujourd'hui pour un but sans le numéro. Tenable
+même sur des séquences rapides, puisqu'il n'y a ni équipe ni joueur à choisir. Le **pavé 4 touches** du
+chronométreur de tir (§3.5.5) n'est pas concerné : ces touches sont sur le clavier du secrétaire.
+
+**Limite** : pas d'arrêts ni de tirs **par joueur** (pas de médaille « Mur » individuelle). Les médailles possibles
+sont **d'équipe** (« Muraille » : meilleur % d'arrêts d'une équipe dans un match ; « Efficacité »). Un numéro
+**facultatif** juste après la touche (le temps de le taper, sinon rien) est possible plus tard (Q24).
+
+### 4.1 S1 — Les bancs complètent un squelette déjà pré-rempli — ❌ déclassé (v8)
+
+> **Déclassé le 2026-11-28** : architecture lourde (accès par responsable d'équipe, délégation, fenêtre de
+> 24 h, contrôles croisés) pour un résultat qui dépend de la **disponibilité et de l'implication du banc**,
+> très inégales d'une équipe à l'autre. Remplacé par S0 (§4.0). Conservé pour mémoire.
 
 **Leçon de 2022 (C7)** : demander à quelqu'un de **tout** saisir, en direct, à partir d'une page
 blanche, donne une qualité trop faible. Ici, la personne du banc **ne crée presque rien** : elle
@@ -464,7 +522,7 @@ Hors de portée à court terme ; même dépendance aux vidéos que S3.
 
 | Piste | Raison |
 |---|---|
-| Ajouter des boutons dans la console pour le secrétaire | viole C3 |
+| ~~Ajouter des boutons dans la console pour le secrétaire~~ | ~~viole C3~~ — **levé en v8** pour deux touches seulement (§4.0) ; toute autre saisie reste écartée |
 | Demander les tireurs / arrêteurs au chronométreur de tir | viole C2 |
 | Saisie exhaustive en direct par une personne dédiée | C7 (2022) |
 | Capteurs embarqués | coût, robustesse, budget (< 1 000 € / terrain, étude afficheurs) |
@@ -477,7 +535,8 @@ Hors de portée à court terme ; même dépendance aux vidéos que S3.
 | §3.3 Reconstruction (chrono de tir + buts) | par équipe (arrêts + cadre) | cadrés par équipe (minorant) | par équipe, **hors segments non ancrés** | non | aucun | tous les matchs scorés |
 | §3.4 Touche `/` (60 s même équipe) | — | — | coups francs / avantages (Q9) | non | nul | tous les matchs scorés |
 | §3.5 Switch + touches spatiales | — | — | **toutes les possessions, engagements compris** | non | nul (panneau dans le sens du jeu) | tous les matchs scorés ; période sans but non tranchable si switch oublié |
-| §4.1 Bancs sur squelette | ✅ par joueur | ✅ par joueur | (corrige les pertes) | **oui, motivée** | aucun | variable, croissante |
+| **§4.0 Secrétaire, deux touches (v8)** | ✅ **par équipe** | ✅ **par équipe** (issue : arrêté / non arrêté) | — | **non** | deux appuis du secrétaire | tous les matchs scorés, mesurée par les 40 s |
+| ~~§4.1 Bancs sur squelette~~ (déclassé) | par joueur | par joueur | (corrige les pertes) | oui | aucun | très inégale |
 | §4.2 Statisticien | ✅ | ✅ | — | oui | aucun | complément |
 | §4.3 Vidéo | ✅ | ✅ | ✅ | oui, différé | aucun | faible (Q4) |
 
@@ -486,17 +545,19 @@ Hors de portée à court terme ; même dépendance aux vidéos que S3.
 0. **Switch des côtés et touches gauche / droite** : spec écrite ([PAGE_SCORING §0.18](../../specs/PAGE_SCORING.md),
    SIDE-01 à 23), **en cours d'implémentation** (2026-11-28). Utile **sans** les stats, et c'est lui qui
    rend la possession gratuite.
-1. **Lot 1 — Possession, puis tirs cadrés et arrêts par équipe** (§3.3, §3.5.3) : calcul serveur après le
-   match, à partir des départs du chronomètre de tir (côté déclaré), des buts, des côtés et du chrono
-   principal. **Possession d'abord** : aucune organisation à prévoir, tous les matchs scorés. Comptes
-   d'équipe publics. Socle du squelette du lot 3. **Suppression de `kp_stats`** dans ce lot (Q15).
-2. **Lot 2 — Pilote** : un tournoi (Moreuil, terrain pilote du scoring), indicateur de conflits (§3.5.4),
-   choix du pavé (Q22).
-3. **Lot 3 — Page « Stats de mon équipe »** (§4.1) : arrêts et tirs **par joueur**, squelette pré-rempli,
-   un geste par ligne, responsable d'équipe, fenêtre de 24 h, contrôles de cohérence, seuil de 80 %. Avec
-   deux ou trois clubs volontaires. Vient en dernier : c'est le seul lot qui demande des bénévoles.
-4. **Médailles** (après une saison de données) : « Maîtrise » (temps de possession) d'abord, puis
-   « Efficacité » (buts / tirs cadrés) et « Mur » (% d'arrêts, couverture ≥ seuil).
+1. **Lot 1 — Possession par équipe** (§3.3, §3.5.3) : calcul serveur après le match, à partir des départs du
+   chronomètre de tir (côté déclaré), des buts, des côtés et du chrono principal. Aucune organisation à prévoir,
+   tous les matchs scorés. Comptes d'équipe publics. **Suppression de `kp_stats`** dans ce lot (Q15).
+2. **Lot 2 — Tirs et arrêts par équipe** (§4.0) : deux touches du secrétaire, équipe déduite de la possession,
+   couverture mesurée par les 40 s, masquage sous 80 %. Spec à écrire dans PAGE_SCORING (touches, retour
+   visuel, chronologie) et dans une spec de stats (calculs, publication).
+3. **Lot 3 — Pilote** : un tournoi (Moreuil, terrain pilote du scoring) : conflits de possession (§3.5.4),
+   couverture des tirs (§4.0), choix du pavé (Q22), retour des secrétaires sur la charge.
+4. **Médailles** (après une saison de données) : « Maîtrise » (temps de possession), puis « Efficacité »
+   (buts / tirs) et « Muraille » (% d'arrêts d'une équipe), seulement sur les matchs au-dessus du seuil.
+
+Abandonné : la page « Stats de mon équipe » (S1, §4.1). Les stats **par joueur** restent hors de portée
+tant qu'aucune voie sans bénévole n'existe (Q24).
 
 > **Préalable** : le scoring live n'est pas encore validé de bout en bout (lots 1–3 essayés en dev, cf.
 > SCORING_ROLLOUT_CHECKLIST R1/R2). Ces lots supposent que la console tienne de vrais matchs ; ils ne
@@ -504,17 +565,13 @@ Hors de portée à court terme ; même dépendance aux vidéos que S3.
 
 ## 7. Esquisse du modèle de données (à affiner dans une spec)
 
-**Table dédiée `match_stat_fact`** (préférée à des `kind` en plus dans `scoring_live_event`) : les stats
-étendues vivent **après** la consolidation du match (fenêtre de relecture), viennent de plusieurs
-sources concurrentes et ne doivent jamais toucher le chemin critique du scoring.
+**Tirs et arrêts dans `scoring_live_event`** (v8) : ils sont désormais saisis **par la console**, pendant le
+match, comme les buts — la table des faits de match, conçue extensible (`kind`, PAGE_SCORING §0.4), les
+accueille : `kind = SHOT` (issue `MISSED`, et `FRAME` si Q25) et `kind = SAVE`, `team` = équipe déduite (ou
+vide si possession inconnue), `id_player` vide, `periode`, `temps`. Ils sont **exclus de la consolidation**
+vers `kp_match_detail` et du PDF. La table dédiée `match_stat_fact` (plusieurs sources, fenêtre de relecture)
+n'a plus lieu d'être sans S1.
 
-Colonnes indicatives : `uid`, `id_match`, `kind` (`SHOT` / `SAVE` / `POSSESSION`…), `outcome` (tir :
-`GOAL` / `SAVED` / `FRAME` / `LOST`), `team`, `player` (licence), `periode`, `game_time_ms`, `origin_clock`
-(id du départ 40 s / 60 s qui a créé la ligne), `source` (`SHOTCLOCK` / `GOAL` / `BENCH_A` / `BENCH_B` /
-`STATISTICIAN` / `VIDEO`), `author`, `created_at`, `updated_at`.
-
-- Les lignes du squelette sont créées par le serveur (`source = SHOTCLOCK` ou `GOAL`) ; le banc ne fait
-  que renseigner `player` (et `outcome` pour une perte).
 - **Possession** : calculée, pas saisie — une vue ou une table de résultats recalculable, comme les
   médailles (recalcul saison par saison).
 - **Touches du chronomètre de tir** : la commande `start60` porte le **côté déclaré** (`side = L | R`),
@@ -528,9 +585,16 @@ Colonnes indicatives : `uid`, `id_match`, `kind` (`SHOT` / `SAVE` / `POSSESSION`
   (**le reste de l'app, relais WSM, est conservé jusqu'au lot 5**), de `PUT /api/wsm/stats/` (legacy,
   `wsmControllers.php`) et de `PUT /api2/admin/scoring/stats` (`ScoringController::putStats`).
 
-## 8. Questions ouvertes (v7)
+## 8. Questions ouvertes (v8)
 
-Plus de question bloquante pour l'étude. Restent à vérifier **au pilote** :
+| # | Question |
+|---|---|
+| **Q23** | **Touches** du secrétaire : `T` (Tir) et `A` (Arrêt) en français, `S` (Shot) et `K` (Keeper save) en anglais ? Libres aujourd'hui, réassignables comme les autres. |
+| **Q24** | **Joueur** : pas de numéro du tout (deux appuis, rien d'autre), ou un numéro **facultatif** tapé juste après la touche quand le secrétaire en a le temps ? |
+| **Q25** | **Issue d'un tir non arrêté** : une seule touche `T` (à côté, cadre et contré confondus), ou distinguer le **cadre** (tir cadré) au prix d'une troisième touche ? |
+| **Q26** | **Contré par un joueur de champ** (pagaie, bateau) : est-ce un `T` (tir non arrêté par le gardien) ou un `A` ? Le règlement ne reconnaît comme gardien que le joueur sous le but, pagaie verticale (C1). |
+
+À vérifier **au pilote** :
 
 | # | Question |
 |---|---|
@@ -538,5 +602,5 @@ Plus de question bloquante pour l'étude. Restent à vérifier **au pilote** :
 | **Q21** | Le taux de conflits tient-il la cible (≤ 1 par période, §3.5.4) ? |
 | **Q22** | Pavé : macro-pad du commerce ou fabrication maison (§3.5.5) ? Un modèle à tester avant le pilote. |
 
-Prochaine étape : spec des statistiques étendues (lots 1 et 3, `FEATURE_EXTENDED_STATS.md`), ou
-implémentation du switch des côtés (PAGE_SCORING §0.18).
+Prochaine étape : après Q23–Q26, spec des tirs et arrêts (PAGE_SCORING, nouvelle section) puis implémentation
+en TDD ; spec de la possession (lot 1).
