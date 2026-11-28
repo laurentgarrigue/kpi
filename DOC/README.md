@@ -88,6 +88,7 @@ nouveau site public app3, avec leurs critères d'acceptation. Index et statut pa
 - **[API2_ENDPOINTS.md](developer/reference/API2_ENDPOINTS.md)** - Référence complète des endpoints API2
 - **[APP4_STRUCTURE.md](developer/reference/APP4_STRUCTURE.md)** - Architecture app4 (stores, composants, patterns)
 - **[APP2_TECHNICAL_ARCHITECTURE.md](developer/reference/APP2_TECHNICAL_ARCHITECTURE.md)** - Architecture app2 (PWA, erreurs, API)
+- **[LEGACY_ARCHIVED_ENDPOINTS.md](developer/reference/LEGACY_ARCHIVED_ENDPOINTS.md)** - `connector/` et `live/` legacy fermés en HTTP (410), conservés pour archive
 - **[PROFILE_ROLES.md](developer/reference/PROFILE_ROLES.md)** - Profils ↔ rôles Symfony, mandats, piège `#[IsGranted]`
 - **[PLAYER_ELIGIBILITY_RULES.md](developer/reference/PLAYER_ELIGIBILITY_RULES.md)** - Règles « joueur en règle »
 - **[LIVE_MATCH_WEBSOCKET_ARCHITECTURE.md](developer/reference/LIVE_MATCH_WEBSOCKET_ARCHITECTURE.md)** - Chaîne temps réel d'un match (existant)

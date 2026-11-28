@@ -1,5 +1,6 @@
 #!/usr/bin/env php
 <?php
+require_once __DIR__ . '/../commun/ArchivedEndpoint.php'; archivedEndpointGuard(__FILE__);
 /**
  * Worker d'événements - Processus en arrière-plan
  *

@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../commun/ArchivedEndpoint.php'; archivedEndpointGuard(__FILE__);
 include_once('page.php');	
 
 class Schema extends MyPage

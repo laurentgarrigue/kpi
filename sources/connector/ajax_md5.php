@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../commun/ArchivedEndpoint.php'; archivedEndpointGuard(__FILE__);
 $user = '';
 if (isset($_GET['user'])) $user = $_GET['user'];
 

@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../commun/ArchivedEndpoint.php'; archivedEndpointGuard(__FILE__);
 
 /**
  * Get a web file (HTML, XHTML, XML, image, etc.) from a URL.  Return an

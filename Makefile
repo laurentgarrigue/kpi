@@ -1098,8 +1098,8 @@ api2_coverage: api2_test_fixtures ## Tests api2 (unit + integration) + couvertur
 test: app2_test app3_test app4_test api2_test ci_scripts_test ## TOUS les tests (app2, app3, app4, api2, scripts de CI) — équivalent local de la CI
 	@echo "✅ Tous les tests sont passés"
 
-ci_scripts_test: ## Tests des scripts de CI (scripts/ci/, node --test, sans Docker ; le test Nginx demande le binaire nginx local)
-	node --test scripts/ci/coverage-summary.test.mjs scripts/ci/coverage-check.test.mjs scripts/ci/check-sw-prompt.test.mjs scripts/ci/nginx-static.test.mjs
+ci_scripts_test: ## Tests des scripts de CI (scripts/ci/, node --test, sans Docker ; binaires nginx et php locaux)
+	node --test scripts/ci/coverage-summary.test.mjs scripts/ci/coverage-check.test.mjs scripts/ci/check-sw-prompt.test.mjs scripts/ci/nginx-static.test.mjs scripts/ci/legacy-archived-endpoints.test.mjs
 
 ## ACCÈS SHELLS
 db_bash: ## Ouvre un shell dans le container MySQL

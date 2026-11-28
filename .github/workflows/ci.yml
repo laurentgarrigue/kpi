@@ -77,8 +77,12 @@ jobs:
               - 'docker/**'
               - 'Makefile'
             # Scripts de la CI elle-même (cliquet de couverture) : ils sont testés (COV-05, COV-12 à COV-15).
+            # + points d'entrée legacy archivés, gardés par legacy-archived-endpoints.test.mjs (ARCH-01 à ARCH-05).
             ci:
               - 'scripts/ci/**'
+              - 'sources/connector/**'
+              - 'sources/live/*'
+              - 'sources/commun/ArchivedEndpoint.php'
 
   # ---------------------------------------------------------------------------
   # 2. Lint ESLint des apps Nuxt (app2 / app3 / app4).
@@ -1078,7 +1082,8 @@ jobs:
 
   # ---------------------------------------------------------------------------
   # ---------------------------------------------------------------------------
-  # Tests des scripts de CI (cliquet de couverture, contrôle du service worker, conf Nginx statique) — node --test.
+  # Tests des scripts de CI (cliquet de couverture, contrôle du service worker, conf Nginx statique,
+  # points d'entrée legacy archivés) — node --test.
   # ---------------------------------------------------------------------------
   tests-ci-scripts:
     needs: [changes]
@@ -1090,7 +1095,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
       - run: command -v nginx >/dev/null || (sudo apt-get update && sudo apt-get install -y nginx-light)
-      - run: node --test scripts/ci/coverage-summary.test.mjs scripts/ci/coverage-check.test.mjs scripts/ci/check-sw-prompt.test.mjs scripts/ci/nginx-static.test.mjs
+      - run: node --test scripts/ci/coverage-summary.test.mjs scripts/ci/coverage-check.test.mjs scripts/ci/check-sw-prompt.test.mjs scripts/ci/nginx-static.test.mjs scripts/ci/legacy-archived-endpoints.test.mjs
 
   ci-summary:
     needs: [changes, lint-nuxt, build-nuxt, tests-app3, tests-ci-scripts, lint-api2, phpstan-api2, smoke-api2, tests-api2, lint-legacy, lint-docker, audit-composer, audit-npm, secrets-scan, trivy-config]

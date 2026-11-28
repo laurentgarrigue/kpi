@@ -37,6 +37,12 @@
 > tout nouveau code). Cette section **remplace** les points de situation antérieurs ; les
 > suivis d'exécution détaillés restent au pied de chaque lot.
 
+> **28/11/2026 — legacy `live/` et `connector/` fermés en HTTP** (revue de sécurité : écriture sans authentification).
+> Code conservé pour archive ; la reprise, ou non, de chaque fonction (incrustations `tv2.php`/`score*.php`, pilotage
+> des voies, import/export d'événements) est à décider ici : tableau de correspondance dans
+> [LEGACY_ARCHIVED_ENDPOINTS.md](../reference/LEGACY_ARCHIVED_ENDPOINTS.md). Le module TV d'app4 pointe encore vers
+> ces pages : ses liens répondent 403/410 tant que `/live/overlay` (lot 4) ne les remplace pas.
+
 ### 0.1 Où on en est, lot par lot
 
 | Lot | État | Ce qui existe | Ce qui manque |
