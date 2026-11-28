@@ -90,6 +90,12 @@ export default defineNuxtConfig({
     '@vite-pwa/nuxt'
   ],
 
+  // Fonts are self-hosted (public/fonts, assets/css/admin.css) or system: disable @nuxt/fonts, which would query
+  // third-party providers (and, since @nuxt/fonts 1.x, fails the build on a system font such as Arial). Same as app3.
+  ui: {
+    fonts: false,
+  },
+
   // PWA — console installable pour la tablette de la table de marque (PAGE_SCORING §0.8,
   // plan lot 3) et garantie « dernière version déployée » pour toute l'admin.
   // Contrat : DOC/specs/PWA_AUTO_UPDATE.md §5 (miroir d'app2).

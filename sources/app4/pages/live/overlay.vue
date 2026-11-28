@@ -128,9 +128,9 @@ const CARD_COLOUR: Record<string, string> = {
 </script>
 
 <template>
-  <!-- 1920×1080 stage, scaled to the browser source: the overlay is authored once at
-       broadcast resolution and adapts if OBS captures at another size. -->
   <div class="overlay-root" :style="{ background }">
+    <!-- 1920×1080 stage, scaled to the browser source: the overlay is authored once at
+         broadcast resolution and adapts if OBS captures at another size. -->
     <div class="overlay-stage" :style="{ '--stage-scale': scale }">
       <!-- Top centre: score banner, then period / clock / shot clock underneath -->
       <div class="top">

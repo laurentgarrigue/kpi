@@ -155,7 +155,6 @@ export const useApi = () => {
     } = options
 
     let response = null
-    let error = null
 
     try {
       // Add timeout wrapper (10 seconds)
@@ -179,8 +178,7 @@ export const useApi = () => {
       }
 
       return response
-    } catch (err) {
-      error = err
+    } catch (error) {
       const errorType = detectErrorType(error, response)
 
       // Show appropriate error toast (if not HTTP error already handled)
