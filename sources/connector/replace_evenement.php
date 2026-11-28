@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../commun/ArchivedEndpoint.php'; archivedEndpointGuard(__FILE__);
 include_once('../commun/MyBdd.php');
 if(!isset($_SESSION)) {
 	session_start(); 
@@ -40,18 +41,11 @@ function Replace_Table($tableName, &$jsonArray, &$bdd, $indexCol1=-1, $offset1=0
 		if ($indexCol2 >= 0) $recTable[$indexCol2] = ((int) $recTable[$indexCol2])+$offset2;
 		if ($indexCol3 >= 0) $recTable[$indexCol3] = ((int) $recTable[$indexCol3])+$offset3;
 				
-		$sql = "REPLACE INTO kp_".$tableName;
-		$sql .= " VALUES (";
-		for ($j=0;$j<count($recTable);$j++) {
-			if ($j > 0) 
-				$sql .= ',';
-			$sql .= "'";
-			$sql .= $recTable[$j];
-			$sql .= "'";
-		}
-		$sql .= ')';
-		
-		$myBdd->pdo->query($sql);
+		// Valeurs du JSON importé : requête préparée ($tableName vient de la liste fixe de Replace_Evenement).
+		$values = array_values($recTable);
+		$sql = "REPLACE INTO kp_" . $tableName
+			. " VALUES (" . implode(',', array_fill(0, count($values), '?')) . ")";
+		$myBdd->pdo->prepare($sql)->execute($values);
 	}
 
 	return 'Table '.$tableName.' = '.$nbRows.' <br>';
@@ -124,11 +118,12 @@ function Delete_Evenement(&$jsonArray, &$bdd)
 	$nbRows = $jsonTable['count'];
 	if ($nbRows == 0) return;
 	
+	// Identifiants entiers uniquement : la liste est interpolée dans les clauses IN (...) ci-dessous.
 	$lstEvenement = '-1';
 	$rowsTable = $jsonTable['rows'];
 	for ($i=0;$i<$nbRows;$i++) {
 		$recTable = $rowsTable[$i];
-		$lstEvenement .= ','.$recTable[0];
+		$lstEvenement .= ',' . (int) $recTable[0];
 	}
 	
 	// Prise des Id Journees ...
@@ -141,7 +136,7 @@ function Delete_Evenement(&$jsonArray, &$bdd)
 	
 	$lstJournees = '-1';
 	while ($row = $stmt->fetch()) {
-		$lstJournees .= ','.$row[0];
+		$lstJournees .= ',' . (int) $row[0];
 	}
 	
 	// Prise des Id Match ..
@@ -152,7 +147,7 @@ function Delete_Evenement(&$jsonArray, &$bdd)
 	
 	$lstMatchs = '-1';
 	while ($row = $stmt->fetch()) {
-		$lstMatchs .= ','.$row[0];
+		$lstMatchs .= ',' . (int) $row[0];
 	}
 
 	// Suppression Matchs_Detail ...

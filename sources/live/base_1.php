@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../commun/ArchivedEndpoint.php'; archivedEndpointGuard(__FILE__);
 // Configuration g�n�rale et Connexion � la base de donn�es ...
 include_once($_SERVER['DOCUMENT_ROOT'].'/adv/advUty.php');	
 include_once($_SERVER['DOCUMENT_ROOT'].'/adv/advBase.php');

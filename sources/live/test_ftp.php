@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../commun/ArchivedEndpoint.php'; archivedEndpointGuard(__FILE__);
 include_once('../commun/MyParams.php');
 
 $ftp_server = FTP_SERVER;

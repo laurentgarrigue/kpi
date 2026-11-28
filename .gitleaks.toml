@@ -51,6 +51,12 @@ paths = [
   # template (`f8a6b3c9…`, motif de démonstration, jamais déployé).
   '''sources/api2/\.env(\.dist|\.dev)?$''',
 
+  # --- Environnement de test d'api2 (vérifié le 2026-11-28) ---
+  # `.env.test` ne porte que des valeurs factices (clé du second facteur = base64 de « test… »,
+  # PDF_LINK_SECRET « test-… ») ; il est chargé par PHPUnit uniquement, jamais déployé.
+  # N'y mettre AUCUN secret réel.
+  '''sources/api2/\.env\.test$''',
+
   # --- Clé Google Maps v3 front-end retirée (commits 2018) ---
   # `sources/js/kpclubs.js` a porté une clé `AIza…` en 2018 — déjà DANS DU CODE
   # COMMENTÉ à l'époque, et absente de la version actuelle du fichier (vérifié :
@@ -101,3 +107,12 @@ description = "Clés de champs de formulaire dans les maquettes app3"
 condition = "AND"
 paths = ['''^DOC/specs/public/maquettes/data/[^/]*\.json$''']
 regexes = ['''^[a-z0-9_]+_[0-9]{10,13}$''']
+
+# Valeurs de test d'api2 dans tests/ — vérifiées le 2026-11-28 : le secret TOTP de référence de la
+# RFC 6238 (base32 de « 12345678901234567890 », TotpTest) et les jetons factices `tsttok-…` des tests
+# d'intégration du Scoring. Condition AND : ces seules valeurs, et seulement sous sources/api2/tests/.
+[[rules.allowlists]]
+description = "Vecteur RFC 6238 et jetons factices des tests api2"
+condition = "AND"
+paths = ['''^sources/api2/tests/''']
+regexes = ['''^GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ$''', '''^tsttok-[a-z0-9-]+$''']

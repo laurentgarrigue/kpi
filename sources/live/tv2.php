@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../commun/ArchivedEndpoint.php'; archivedEndpointGuard(__FILE__);
 //include_once('base.php');
 include_once('../commun/MyConfig.php');
 include_once('../commun/MyTools.php');

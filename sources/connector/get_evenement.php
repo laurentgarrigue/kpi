@@ -1,4 +1,5 @@
-<?php	
+<?php
+require_once __DIR__ . '/../commun/ArchivedEndpoint.php'; archivedEndpointGuard(__FILE__);
 
 // Exemple : http://localhost/connector/get_evenement.php?lst=2,5
 //           https://kayak-polo.info/connector/get_evenement.php?lst=2,5
@@ -30,10 +31,19 @@ function load( & $arrayJson, $sql,  & $bdd)
 	return $lstId;
 }
 
+/** JSONP : seul un nom de fonction JavaScript est renvoyé tel quel (pas d'injection de script). */
+function jsonpCallback(): string
+{
+	return preg_replace('/[^A-Za-z0-9_.$]/', '', (string) utyGetGet('callback', ''));
+}
+
 // Parsing des paramètres ...
-$lstEvenement = '-1';
-if (utyGetGet('lst', false))
-	$lstEvenement = utyGetGet('lst', false);
+// Identifiants entiers uniquement : `lst` est interpolé dans les clauses IN (...) ci-dessous.
+$requestedEvents = array_values(array_filter(
+	array_map('intval', explode(',', (string) utyGetGet('lst', ''))),
+	fn (int $id): bool => $id > 0
+));
+$lstEvenement = implode(',', array_merge([-1], $requestedEvents));
 	
 $userpwd = '';
 if (utyGetGet('session', false))
@@ -75,24 +85,15 @@ if (PRODUCTION) {
 		$UserCode = $row["Code"];
 		$UserIdentite = $row["Identite"];
 
-		$arraySrc = explode(',', $lstEvenement);
-		$arrayUser = explode('|', $userEvenement);
-		
-		for ($i=0;$i<count($arraySrc);$i++) {
-			$bKo = true;
-			for ($j=0;$j<count($arrayUser);$j++) {
-				if ($arraySrc[$i] == $arrayUser[$j]) {
-					$bKo = false;
-					break;
-				}
-			}
-		}
+		// CHAQUE événement demandé doit être autorisé (avant : seul le dernier de la liste était vérifié).
+		$allowedEvents = array_map('intval', explode('|', (string) $userEvenement));
+		$bKo = $requestedEvents === [] || array_diff($requestedEvents, $allowedEvents) !== [];
 	}
 
 	
 	if ($bKo) {
 		if (utyGetGet('callback', false)) {
-			$callback = utyGetGet('callback', false);
+			$callback = jsonpCallback();
 			if ($bUserPwd)
 				echo $callback."('ERREUR Evènement ou date expirée...');";
 			else
@@ -318,7 +319,7 @@ if (utyGetGet('callback', false)) {
 	//Fonction EvtExport
 	if (PRODUCTION)
 		$myBdd->EvtExport($UserCode, $lstEvenement, 'Export', $UserIdentite, '');
-	$callback = utyGetGet('callback', false);
+	$callback = jsonpCallback();
 	echo $callback.'('.$jsondata.');';
 } else {
 	//Fonction EvtExport

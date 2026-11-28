@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../commun/ArchivedEndpoint.php'; archivedEndpointGuard(__FILE__);
 /**
  * API REST pour contrôler le worker d'événements
  * Permet de démarrer/arrêter/configurer le worker qui génère les caches automatiquement

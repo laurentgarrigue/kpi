@@ -16,7 +16,10 @@
     "config": {
         "vendor-dir": "vendor",
         "optimize-autoloader": true,
-        "platform-check": false
+        "platform-check": false,
+        "platform": {
+            "php": "8.4.27"
+        }
     },
     "autoload": {
         "classmap": [
