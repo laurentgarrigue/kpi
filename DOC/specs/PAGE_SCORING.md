@@ -756,7 +756,7 @@ appelée par `setChrono.php`, `StatutPeriode.php`, `evt_match.php`, `ajax_update
   signature `(isLocked: Ref<boolean>)`.
 - **Accès ouvert** : profils **1 à 6 et 9** (« Table de marque »). Les boutons V2/V3 de /games ont été
   supprimés ; « Scoring » les remplace pour tous ces profils. Côté serveur, `ScoringController` :
-  `ROLE_ORGANIZER` ou niveau 9 (les profils 7-8 héritent de `ROLE_SCORER` et sont donc exclus explicitement).
+  `SCORING_ACCESS` (`ScoringVoter`, niveaux ≤ 6 ou 9) (les profils 7-8 héritent de `ROLE_SCORER` et sont donc exclus explicitement).
   `canValidate` / `canLock` restent réservés au profil ≤ 6.
 - *Historique (phase d'expérimentation, obsolète)* :
 - **Cible post-validation** (à élargir une fois la fonctionnalité validée, non implémenté

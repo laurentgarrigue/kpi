@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\User;
 use App\Scoring\ScoringRules;
 use App\Service\ScoringDisplayAccessService;
+use App\Security\ScoringVoter;
 use App\Service\ScoringLiveService;
 use App\Service\ScoringProgramService;
 use App\Trait\AdminLoggableTrait;
@@ -12,7 +13,6 @@ use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use OpenApi\Attributes as OA;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\ExpressionLanguage\Expression;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -33,11 +33,11 @@ use Symfony\Component\Routing\Attribute\Route;
  * end-of-match consolidation (Statut → END). Endpoints and payloads are unchanged, so the
  * console UI did not move. See LIVE_MATCH_SCORING_REFACTORING_PROPOSALS.md.
  *
- * Access: profiles 1 to 6 (ROLE_ORGANIZER and above) and profile 9 "Table de marque".
- * Profiles 7-8 inherit ROLE_SCORER through the hierarchy, hence the explicit level check.
+ * Access: profiles 1 to 6 and profile 9 "Table de marque" (ScoringVoter). Profiles 7-8 inherit
+ * ROLE_SCORER through the hierarchy, hence a voter rather than a role.
  */
 #[Route('/admin/scoring', name: 'scoring_')]
-#[IsGranted(new Expression("is_granted('ROLE_ORGANIZER') or user.getEffectiveNiveau() == 9"))]
+#[IsGranted(ScoringVoter::ACCESS)]
 class ScoringController extends AbstractController
 {
     use AdminLoggableTrait;
