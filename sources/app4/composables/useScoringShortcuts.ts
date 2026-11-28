@@ -2,8 +2,8 @@
  * Configurable keyboard shortcuts of the scoring console (spec §6.5, decisions §0.8/§0.9).
  *
  * The bindings are a per-device/user preference, persisted in localStorage. Defaults
- * (utils/scoringShortcuts): Espace = game clock start/stop · `+` = shotclock start/reset
- * 60 s · `-` = start/reset 40 s · `*` = shotclock stop (back to "--") · one letter per fact,
+ * (utils/scoringShortcuts): Espace = game clock start/stop · `/` and `*` = shotclock 60 s for
+ * the left / right team · `-` = start/reset 40 s · `+` = shotclock stop (back to "--") · one letter per fact,
  * after the interface language (FR B V J R N, EN O G Y R B). The defaults of either language
  * can be restored whatever the interface language.
  *
@@ -14,9 +14,9 @@
 import { isEditableTarget } from '~/utils/scoringKeyboard'
 import { SHORTCUT_ACTIONS, mergeStoredBindings, shortcutDefaults, type ShortcutAction } from '~/utils/scoringShortcuts'
 
-// v2 (2026-11-08): the shot clock left `Entrée` / `.` / `0`; bindings saved before kept
-// `Entrée` on the 60 s start, so they are dropped rather than merged.
-const STORAGE_KEY = 'kpi.scoring.shortcuts.v2'
+// v2 (2026-11-08): the shot clock left `Entrée` / `.` / `0`. v3 (2026-11-28, §0.18): one 60 s per
+// side, `+` and `*` change meaning — bindings saved before are dropped rather than merged.
+const STORAGE_KEY = 'kpi.scoring.shortcuts.v3'
 
 
 export function useScoringShortcuts(

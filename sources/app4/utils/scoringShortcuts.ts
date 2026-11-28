@@ -7,14 +7,17 @@ import type { ScoringEventCode } from '~/types/scoring'
  *
  * Clock keys are the same in every language. Fact keys follow the interface language
  * (initial of the fact), always rebindable. No digit is ever a fact key: once a fact is
- * armed, digits type the player's number. The shot clock keys (`+` 60 s, `-` 40 s, `*` stop)
- * stay off `Entrée`, the digits and `.`, which validate a fact and type the player's number
- * (decision 2026-11-08). The shot clock is adjusted by clicking its countdown, never by key.
+ * armed, digits type the player's number. The shot clock keys (`/` 60 s for the left team, `*`
+ * 60 s for the right team, `-` 40 s, `+` stop — §0.18, 2026-11-28) stay off `Entrée`, the digits
+ * and `.`, which validate a fact and type the player's number (decision 2026-11-08). They match a
+ * 4-key USB pad laid out as the pitch (D14). The shot clock is adjusted by clicking its countdown,
+ * never by key.
  */
 
 export type ShortcutAction =
   | 'gameClockToggle'
-  | 'shotclockStart60'
+  | 'shotclockStart60Left'
+  | 'shotclockStart60Right'
   | 'shotclockStart40'
   | 'shotclockStop'
   | 'penaltiesClearExpired'
@@ -35,7 +38,8 @@ const FACT_ACTIONS: Partial<Record<ShortcutAction, ScoringEventCode>> = {
 
 export const SHORTCUT_ACTIONS: ShortcutAction[] = [
   'gameClockToggle',
-  'shotclockStart60',
+  'shotclockStart60Left',
+  'shotclockStart60Right',
   'shotclockStart40',
   'shotclockStop',
   'penaltiesClearExpired',
@@ -51,9 +55,11 @@ type Bindings = Record<ShortcutAction, string>
 /** KeyboardEvent.key values — ' ' is the space bar. Same keys in every language. */
 const CLOCK_KEYS = {
   gameClockToggle: ' ',
-  shotclockStart60: '+',
+  // 60 s gives the ball to the team on that half (seen from the table, §0.18 D7)
+  shotclockStart60Left: '/',
+  shotclockStart60Right: '*',
   shotclockStart40: '-',
-  shotclockStop: '*',
+  shotclockStop: '+',
   // Expired penalties (00:00, blinking) all removed at once — §0.16
   penaltiesClearExpired: 'x'
 } as const

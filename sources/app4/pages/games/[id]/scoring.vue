@@ -8,6 +8,7 @@ import { isPenaltyExpired } from '~/utils/scoringPenalties'
 import { remainingMs, runningDriftMs } from '~/utils/overlayClock'
 import { isEditableTarget, keyboardFrameShown, keyboardKeysActive, keyboardState, type KeyboardState } from '~/utils/scoringKeyboard'
 import { CARD_REASONS } from '~/utils/scoringCardReasons'
+import { possessionConflict, startForSides, teamOnSide, toggleSidesForPeriod, type LastPossession, type PitchSide, type Sides } from '~/utils/scoringSides'
 
 definePageMeta({
   layout: 'admin',
@@ -259,15 +260,17 @@ onUnmounted(() => {
 // ─── Shotclock (chronomètre de tir) — 3 commands, auto-follows the game clock (§6.5) ───
 const shotclock = useShotclock({ onExpired: () => buzzer.playShotclock() })
 
-const persistShotclock = (action: 'run' | 'stop' | 'RAZ') => {
+const persistShotclock = (action: 'run' | 'stop' | 'RAZ', possession?: PitchSide) => {
   void scoringStore.setTimer(action, {
     kind: 'SHOTCLOCK',
     startTime: action === 'RAZ' ? 0 : shotclock.elapsedSeconds.value,
     runTime: 0,
-    maxTime: shotclock.initSeconds.value
+    maxTime: shotclock.initSeconds.value,
+    ...(possession ? { possession } : {})
   })
 }
-const shotclockStart = (seconds: number) => {
+/** `possession`: half of the team given the ball by a 60 s start (§0.18 D7/D10) — journalized. */
+const shotclockStart = (seconds: number, possession?: PitchSide) => {
   if (!canScore.value || !isLive.value || !matchOn.value) return
   shotclock.start(seconds)
   // The shotclock follows the game clock (§6.5): loading 60/40 while the game clock is
@@ -276,10 +279,84 @@ const shotclockStart = (seconds: number) => {
   // while already stopped has to be suspended here.
   if (!isRunning.value) {
     shotclock.suspend()
-    persistShotclock('stop')
+    persistShotclock('stop', possession)
     return
   }
-  persistShotclock('run')
+  persistShotclock('run', possession)
+}
+
+// ─── Pitch sides (§0.18): teams on their half, seen from the table ───
+const sides = computed<Sides>(() => scoringStore.currentSides)
+const teamNameOf = (team: TeamSide): string => (team === 'A' ? match.value?.equipeA : match.value?.equipeB) ?? team
+const halfTeam = (side: PitchSide) => {
+  const team = teamOnSide(sides.value, side)
+  return { team, name: teamNameOf(team) }
+}
+const currentPeriod = (): Period => (match.value?.periode as Period | null | undefined) ?? 'M1'
+
+/** Team given the ball by the last shot-clock start of the period (D11). */
+const lastPossession = ref<LastPossession | null>(null)
+const shotclockStart60 = (side: PitchSide) => {
+  if (!canScore.value || !isLive.value || !matchOn.value) return
+  lastPossession.value = { team: teamOnSide(sides.value, side), period: currentPeriod() }
+  shotclockStart(scoringStore.config.shotclockDurations.full, side)
+}
+const shotclockStart40 = () => {
+  if (!scoringStore.config.shotclockOffensiveReboundEnabled) return
+  // 40 s: the team that shot keeps the ball — the last possession stands.
+  shotclockStart(scoringStore.config.shotclockDurations.offensiveRebound)
+}
+
+/**
+ * Sides window (D4, D15). `check`: kick-off check (or a start of the first period with the sides
+ * still unchecked). `swap`: confirmed manual swap, game clock stopped only.
+ */
+const sidesModal = ref<{ mode: 'check' | 'swap', sides: Sides } | null>(null)
+const flipSides = (s: Sides): Sides => (s === 'A_LEFT' ? 'A_RIGHT' : 'A_LEFT')
+const sidesUnchecked = computed(() => scoringStore.sides.start === null)
+const openSidesCheck = () => { sidesModal.value = { mode: 'check', sides: sides.value } }
+const askSidesSwap = () => {
+  if (!canScore.value || isRunning.value) return
+  if (sidesUnchecked.value) return openSidesCheck()
+  sidesModal.value = { mode: 'swap', sides: flipSides(sides.value) }
+}
+const confirmSides = async (chosen: Sides) => {
+  const mode = sidesModal.value?.mode
+  sidesModal.value = null
+  const period = currentPeriod()
+  const setting = mode === 'swap'
+    ? toggleSidesForPeriod(scoringStore.sides, period)
+    : { start: startForSides(chosen, period, scoringStore.sides.overrides), overrides: [...scoringStore.sides.overrides] }
+  possessionAlert.value = null
+  try {
+    await scoringStore.setSides(setting, { period, time: clockDisplay.value })
+  } catch { /* useApi already toasts; the store rolled back */ }
+}
+
+/** Change of ends (D16): shown on the board until the game clock starts. */
+const sidesNotice = ref<string | null>(null)
+const sidesSummary = (s: Sides): string => {
+  const left = teamOnSide(s, 'L')
+  const right = teamOnSide(s, 'R')
+  return `${t('scoring.sides.left')} : ${left} ${teamNameOf(left)} · ${t('scoring.sides.right')} : ${right} ${teamNameOf(right)}`
+}
+// Not on load (no period before): only a change of period or of setting during the match.
+watch(() => [match.value?.periode, sides.value] as const, ([, now], [periodBefore, before]) => {
+  if (periodBefore === undefined || now === before || !isLive.value || !matchOn.value) return
+  sidesNotice.value = `${t('scoring.sides.changed', { period: periodLabel(currentPeriod()) })} · ${sidesSummary(now)}`
+})
+
+/** Likely inversion (D11): a goal by the team the last start of the period did not give the ball to. */
+const possessionAlert = ref<{ team: TeamSide, scorer: TeamSide, period: Period } | null>(null)
+const possessionAlertIgnored = ref<Period | null>(null)
+const checkPossessionOnGoal = (scorer: TeamSide, period: Period) => {
+  const last = lastPossession.value
+  if (!isLive.value || possessionAlertIgnored.value === period || !last || !possessionConflict(last, scorer, period)) return
+  possessionAlert.value = { team: last.team, scorer, period }
+}
+const ignorePossessionAlert = () => {
+  possessionAlertIgnored.value = possessionAlert.value?.period ?? null
+  possessionAlert.value = null
 }
 const shotclockStop = () => {
   if (!canScore.value || shotclock.state.value === 'IDLE') return
@@ -432,6 +509,7 @@ const broadcast = useScoringBroadcast(() => ({
   matchId: matchId.value,
   teamA: match.value?.equipeA ?? '',
   teamB: match.value?.equipeB ?? '',
+  sides: sides.value,
   scoreA: scoringStore.scoreA,
   scoreB: scoringStore.scoreB,
   period: match.value?.periode ?? null,
@@ -448,6 +526,7 @@ watch(isRunning, () => broadcast.timerStatus())
 watch(() => shotclock.display.value, () => broadcast.shotclock())
 watch(() => shotclock.state.value, () => broadcast.shotclock())
 watch(() => [scoringStore.scoreA, scoringStore.scoreB], () => broadcast.scores())
+watch(sides, () => broadcast.teams())
 watch(() => match.value?.periode, () => broadcast.period())
 watch(() => penalties.penalties.value.map(p => `${p.slot}${p.team}${Math.ceil(p.remainingMs / 1000)}${p.running}`).join(),
   () => broadcast.penalties())
@@ -559,19 +638,17 @@ const toolItems = computed(() => [
 // — they must not also drive the clocks). Clock keys: live mode, match in
 // progress only. Fact keys: Déroulement view with the detailed entry (live and post-match).
 const shortcutsEnabled = computed(() => canScore.value && !shortcutsOpen.value
-  && displayOptionsFor.value === null && !closeOpen.value && closeWarnings.value.length === 0 && !reopenOpen.value && !reasonOpen.value && deletePending.value === null)
+  && displayOptionsFor.value === null && !closeOpen.value && closeWarnings.value.length === 0 && !reopenOpen.value && !reasonOpen.value && deletePending.value === null
+  && sidesModal.value === null)
 const clockKey = (handler: () => void) => () => { if (isLive.value && matchOn.value) handler() }
 const factKey = (code: ScoringEventCode) => () => {
   if (view.value === 'run' && !scoreOnly.value) void stageEvent(code)
 }
 const { bindings, setBinding, resetDefaults } = useScoringShortcuts({
   gameClockToggle: clockKey(() => toggleClock()),
-  shotclockStart60: clockKey(() => shotclockStart(scoringStore.config.shotclockDurations.full)),
-  shotclockStart40: clockKey(() => {
-    if (scoringStore.config.shotclockOffensiveReboundEnabled) {
-      shotclockStart(scoringStore.config.shotclockDurations.offensiveRebound)
-    }
-  }),
+  shotclockStart60Left: clockKey(() => shotclockStart60('L')),
+  shotclockStart60Right: clockKey(() => shotclockStart60('R')),
+  shotclockStart40: clockKey(shotclockStart40),
   shotclockStop: clockKey(shotclockStop),
   penaltiesClearExpired: clockKey(clearExpiredPenalties),
   factGoal: factKey('B'),
@@ -1006,6 +1083,7 @@ const pushEvent = async (code: ScoringEventCode) => {
     clearEntry()
 
     if (code === 'B') {
+      checkPossessionOnGoal(team, event.period)
       // Conceded goal: propose the early lift of the conceding team's oldest liftable
       // (V/J) penalty — an R runs its full 2 minutes whatever happens (spec §7.4).
       const conceding: TeamSide = team === 'A' ? 'B' : 'A'
@@ -1100,6 +1178,7 @@ const setPeriod = (p: Period) => {
   if (!canScore.value) return
   scoringStore.setPeriod(p)
   eventPeriod.value = p
+  possessionAlert.value = null
   // The break countdown deliberately SURVIVES the period change (spec §7.5): the operator
   // sets up the next period while the teams are still resting, and needs to keep seeing the
   // time left. Only the game clock starting ends it (see `timer('run')`).
@@ -1118,6 +1197,8 @@ const kickoff = () => {
   if (!canScore.value) return
   void scoringStore.setStatus('ON').catch(() => { /* useApi already toasts */ })
   if (!match.value?.periode) setPeriod('M1')
+  // D15: the table checks which team is on which side before the first clock start.
+  if (isLive.value) openSidesCheck()
 }
 
 // In live mode the entry period follows the match period (local change, remote terminal or
@@ -1130,7 +1211,13 @@ watch(() => match.value?.periode, (p) => {
 const timer = (action: 'run' | 'stop' | 'RAZ') => {
   if (!canScore.value) return
   const maxTime = scoringStore.currentPeriodDuration
+  if (action === 'run' && isLive.value && sidesUnchecked.value && currentPeriod() === 'M1') {
+    // D15: no first-period clock before the sides are checked — the check opens instead.
+    openSidesCheck()
+    return
+  }
   if (action === 'run') {
+    sidesNotice.value = null
     // Starting the game clock is the ONLY thing that ends the inter-period break: play has
     // resumed, so the rest countdown no longer means anything (spec §7.5).
     stopBreak()
@@ -1412,6 +1499,8 @@ const toggleLock = async () => {
           :can-open-clock-adjust="isLive && matchOn && canScore"
           :clock-adjustable="clockAdjustable"
           :shotclock-adjustable="shotclock.state.value === 'SUSPENDED'"
+          :sides="sides"
+          :sides-notice="isLive && matchOn ? sidesNotice : null"
           @bump="bumpScore"
           @remove-penalty="removePenalty"
           @adjust-penalty="adjustPenalty"
@@ -1441,6 +1530,21 @@ const toggleLock = async () => {
               icon="i-heroicons-arrow-uturn-left"
               @click="reopenOpen = true"
             >{{ t('scoring.reopen.action') }}</UButton>
+            <!-- Pitch sides (§0.18): set and swapped here, game clock stopped, always confirmed -->
+            <UButton
+              v-if="isLive && match.statut !== 'END' && canScore"
+              size="xs"
+              variant="outline"
+              :color="sidesUnchecked ? 'warning' : 'neutral'"
+              icon="i-heroicons-arrows-right-left"
+              data-sides-button
+              :disabled="isRunning"
+              :title="isRunning ? t('scoring.sides.button_locked') : t('scoring.sides.button_title')"
+              @click="askSidesSwap"
+            >
+              {{ t('scoring.sides.button') }}
+              <span v-if="sidesUnchecked" class="text-xs">({{ t('scoring.sides.unchecked') }})</span>
+            </UButton>
             <ScoringPeriodSelector
               v-if="matchOn"
               :period="match.periode"
@@ -1494,10 +1598,13 @@ const toggleLock = async () => {
             :state="shotclock.state.value"
             :durations="scoringStore.config.shotclockDurations"
             :offensive-rebound-enabled="scoringStore.config.shotclockOffensiveReboundEnabled"
+            :left="halfTeam('L')"
+            :right="halfTeam('R')"
             :can-score="canScore"
-            :keys="{ start60: bindings.shotclockStart60, start40: bindings.shotclockStart40, stop: bindings.shotclockStop }"
+            :keys="{ start60Left: bindings.shotclockStart60Left, start60Right: bindings.shotclockStart60Right, start40: bindings.shotclockStart40, stop: bindings.shotclockStop }"
             :kbd-class="kbdClass"
-            @start="shotclockStart"
+            @start60="shotclockStart60"
+            @start40="shotclockStart40"
             @stop="shotclockStop"
             @test-sound="buzzer.test()"
           />
@@ -1508,6 +1615,27 @@ const toggleLock = async () => {
         </div>
       </div>
 
+      <!-- Likely side inversion (§0.18 D11): for the secretary, never blocking -->
+      <div
+        v-if="possessionAlert && isLive && matchOn"
+        role="status"
+        class="flex flex-wrap items-center gap-2 rounded-lg border border-amber-400 bg-amber-50 dark:bg-amber-950/40 px-3 py-2 text-sm"
+      >
+        <UIcon name="i-heroicons-arrows-right-left" class="size-4 shrink-0 text-amber-700 dark:text-amber-300" />
+        <span class="flex-1 min-w-0">{{ t('scoring.sides.conflict', {
+          team: `${possessionAlert.team} ${teamNameOf(possessionAlert.team)}`,
+          scorer: `${possessionAlert.scorer} ${teamNameOf(possessionAlert.scorer)}`
+        }) }}</span>
+        <UButton
+          size="xs"
+          color="warning"
+          :disabled="isRunning"
+          :title="isRunning ? t('scoring.sides.button_locked') : undefined"
+          @click="askSidesSwap"
+        >{{ t('scoring.sides.conflict_swap') }}</UButton>
+        <UButton size="xs" variant="ghost" color="neutral" @click="ignorePossessionAlert">{{ t('scoring.sides.conflict_ignore') }}</UButton>
+      </div>
+
       <!-- Work area: roster A | entry panel | roster B (lg) — rosters side by side with the
            entry below (md and mobile, where rosters show numbers only and the entry bar is
            pinned at the bottom, within thumb reach). Pick the player, then the fact. -->
@@ -1515,12 +1643,12 @@ const toggleLock = async () => {
         v-if="!scoreOnly"
         class="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-[minmax(0,1fr)_21rem_minmax(0,1fr)] lg:items-start
                transition-[grid-template-columns] duration-300 motion-reduce:transition-none"
-        :class="wideTeam === 'A' ? 'max-md:grid-cols-[minmax(0,2.2fr)_minmax(0,1fr)]'
-          : wideTeam === 'B' ? 'max-md:grid-cols-[minmax(0,1fr)_minmax(0,2.2fr)]' : ''"
+        :class="wideTeam === halfTeam('L').team ? 'max-md:grid-cols-[minmax(0,2.2fr)_minmax(0,1fr)]'
+          : wideTeam === halfTeam('R').team ? 'max-md:grid-cols-[minmax(0,1fr)_minmax(0,2.2fr)]' : ''"
       >
         <ScoringTeamColumn
           v-for="side in (['A', 'B'] as TeamSide[])" :key="side"
-          :class="side === 'A' ? 'lg:order-1' : 'lg:order-3'"
+          :class="halfTeam('L').team === side ? 'order-1 lg:order-1' : 'order-2 lg:order-3'"
           :team="side"
           :team-name="(side === 'A' ? match.equipeA : match.equipeB) ?? side"
           :players="side === 'A' ? scoringStore.playersA : scoringStore.playersB"
@@ -1783,12 +1911,25 @@ const toggleLock = async () => {
         :editing-uid="editingUid"
         :can-score="canEditFacts"
         :recent-count="isLive ? HISTORY_RECENT_COUNT : 0"
-        :team-a="match.equipeA ?? 'A'"
-        :team-b="match.equipeB ?? 'B'"
+        :team-a="`A — ${match.equipeA ?? 'A'}`"
+        :team-b="`B — ${match.equipeB ?? 'B'}`"
         @edit="startEdit"
         @remove="askDelete"
       />
       </template>
+
+      <!-- Pitch sides (§0.18): kick-off check (D15) and confirmed manual swap (D4) -->
+      <ScoringSidesModal
+        :open="sidesModal !== null"
+        :mode="sidesModal?.mode ?? 'check'"
+        :sides="sidesModal?.sides ?? sides"
+        :team-a="match.equipeA ?? 'A'"
+        :team-b="match.equipeB ?? 'B'"
+        :period="currentPeriod()"
+        :period-label="periodLabel(currentPeriod())"
+        @confirm="confirmSides"
+        @close="sidesModal = null"
+      />
 
       <!-- Leaving « Paramètres » with officials not saved -->
       <AdminConfirmModal

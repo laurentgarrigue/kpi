@@ -2,6 +2,7 @@
 
 namespace App\Service;
 
+use App\Scoring\ScoringRules;
 use Doctrine\DBAL\Connection;
 
 /**
@@ -150,6 +151,47 @@ class ScoringLiveService
 
             return $tick;
         });
+    }
+
+    /**
+     * Record the pitch sides of a match (PAGE_SCORING.md §0.18): the starting side of team A
+     * (null = not checked yet, D15) and the periods swapped by hand (D4). Full replacement —
+     * the current sides are computed, never stored (ScoringRules::sidesFor). Display setting:
+     * any source may write it (a console in supervision follows the hardware's periods, D12).
+     * Returns the new tick; the score block carries the sides to the other terminals.
+     *
+     * @param list<string> $overrides
+     */
+    public function setSides(int $matchId, ?string $start, array $overrides): int
+    {
+        if ($start !== null && !in_array($start, [ScoringRules::SIDES_A_LEFT, ScoringRules::SIDES_A_RIGHT], true)) {
+            throw new \InvalidArgumentException("Unknown sides: $start");
+        }
+        foreach ($overrides as $period) {
+            if (!is_string($period) || preg_match('/^(M1|M2|TB|P\d+)$/', $period) !== 1) {
+                throw new \InvalidArgumentException('Unknown period in sides overrides');
+            }
+        }
+        $stored = implode(',', array_values(array_unique($overrides)));
+
+        return $this->connection->transactional(function () use ($matchId, $start, $stored): int {
+            $this->ensureState($matchId);
+            $this->connection->executeStatement(
+                'UPDATE scoring_live_state SET sides_start = ?, sides_overrides = ? WHERE id_match = ?',
+                [$start, $stored, $matchId]
+            );
+
+            $tick = $this->bumpTick($matchId);
+            $this->depositScoreState($matchId, $tick);
+
+            return $tick;
+        });
+    }
+
+    /** @return list<string> periods swapped by hand, from the stored comma list */
+    public static function sidesOverrides(?string $stored): array
+    {
+        return $stored === null || $stored === '' ? [] : explode(',', $stored);
     }
 
     /**
@@ -401,6 +443,9 @@ class ScoringLiveService
             'scoreA' => (int) $state['score_a'],
             'scoreB' => (int) $state['score_b'],
             'heureFin' => $state['heure_fin'],
+            // Pitch sides (§0.18): starting side (null = not checked) + periods swapped by hand
+            'sidesStart' => $state['sides_start'] ?? null,
+            'sidesOverrides' => self::sidesOverrides($state['sides_overrides'] ?? ''),
             'activeSource' => $state['active_source'],
             'promotedAt' => $state['promoted_at'],
             'clocks' => array_map(static function (array $c): array {
@@ -508,6 +553,8 @@ class ScoringLiveService
             'periode' => $state['periode'],
             'scoreA' => (int) $state['score_a'],
             'scoreB' => (int) $state['score_b'],
+            'sidesStart' => $state['sides_start'] ?? null,
+            'sidesOverrides' => self::sidesOverrides($state['sides_overrides'] ?? ''),
         ]);
     }
 

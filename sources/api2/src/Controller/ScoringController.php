@@ -555,9 +555,67 @@ class ScoringController extends AbstractController
         }
 
         $target = $slot > 0 ? "{$team}{$slot}" : $team;
-        $this->logScoring('Scoring chrono', $matchId, implode(' ', array_filter([$kind, $data->params->action, $target, $shown], 'strlen')));
+        // A shot clock 60 s start names the half of the team given the ball (§0.18 D7/D10).
+        $possession = $kind === 'SHOTCLOCK' && in_array($data->params->possession ?? '', ['L', 'R'], true)
+            ? 'possession ' . $data->params->possession
+            : '';
+        $this->logScoring('Scoring chrono', $matchId, implode(' ', array_filter([$kind, $data->params->action, $target, $possession, $shown], 'strlen')));
 
         return new JsonResponse(['success' => true]);
+    }
+
+    #[Route('/sides/{matchId}', name: 'sides_put', methods: ['PUT'])]
+    #[OA\Put(
+        path: '/admin/scoring/sides/{matchId}',
+        summary: 'Record the pitch sides: starting side of team A and periods swapped by hand (PAGE_SCORING §0.18)',
+        tags: ['6. Scoring'],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['start', 'overrides'],
+                properties: [
+                    new OA\Property(property: 'start', type: 'string', enum: ['A_LEFT', 'A_RIGHT'], nullable: true),
+                    new OA\Property(property: 'overrides', type: 'array', items: new OA\Items(type: 'string', example: 'M2')),
+                    new OA\Property(property: 'period', type: 'string', example: 'M2', description: 'Period of the action, for the journal'),
+                    new OA\Property(property: 'time', type: 'string', example: '10:00', description: 'Game time shown, for the journal'),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: 'Sides recorded (tick bumped, journalized)'),
+            new OA\Response(response: 400, description: 'Unknown side or period, or locked game')
+        ]
+    )]
+    public function putSides(int $matchId, Request $request): JsonResponse
+    {
+        if ($err = $this->assertMatchAuthorized($matchId)) return $err;
+
+        $data = json_decode($request->getContent());
+        $start = isset($data->start) && $data->start !== null ? (string) $data->start : null;
+        $overrides = is_array($data->overrides ?? null) ? $data->overrides : [];
+
+        $locked = $this->connection->fetchOne(
+            "SELECT COUNT(Id) FROM kp_match WHERE Id = ? AND Validation != 'O'",
+            [$matchId]
+        );
+        if ($locked != 1) {
+            return new JsonResponse(['error' => 'Game locked'], 400);
+        }
+
+        try {
+            $tick = $this->live->setSides($matchId, $start, $overrides);
+        } catch (\InvalidArgumentException $e) {
+            return new JsonResponse(['error' => $e->getMessage()], 400);
+        }
+
+        $at = trim(implode(' ', array_filter([(string) ($data->period ?? ''), (string) ($data->time ?? '')], 'strlen')));
+        $this->logScoring('Scoring côtés', $matchId, implode(' — ', array_filter([
+            'départ ' . ($start ?? 'non vérifié'),
+            $overrides === [] ? 'aucune inversion' : 'inversées : ' . implode(', ', $overrides),
+            $at,
+        ], 'strlen')));
+
+        return new JsonResponse(['success' => true, 'tick' => $tick]);
     }
 
     #[Route('/state/{matchId}', name: 'state_get', methods: ['GET'])]

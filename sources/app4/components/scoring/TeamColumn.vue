@@ -7,7 +7,7 @@ import type { PlayerTally } from '~/utils/scoringRoster'
  * fact. Each row carries the player's goals and current card, so the operator sees who is
  * already carded before the progression alert ever opens (spec §7.3). Running penalties
  * live on the board, next to the clocks they follow. Left/right of the entry panel on wide
- * screens (no team name: the board above already says which side is which).
+ * screens, on the half the team occupies (§0.18), headed by its letter A / B and name (D16).
  *
  * On mobile both teams sit side by side with truncated names; tapping the team name above
  * the column asks the page to widen this side for a few seconds (`expand`).
@@ -46,15 +46,17 @@ const tallyOf = (p: ScoringPlayer) => props.tallies.get(String(p.matric))
 
 <template>
   <div class="space-y-2 min-w-0">
-    <!-- Mobile only: the team name, which widens this side for a moment -->
+    <!-- Team letter and name (D16). On mobile it also widens this side for a moment. -->
     <button
       type="button"
-      class="md:hidden w-full flex items-center gap-1 rounded-md px-2 py-1.5 text-left text-sm font-semibold bg-header-100 dark:bg-header-800"
+      data-team-head
+      class="w-full flex items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm font-semibold bg-header-100 dark:bg-header-800 md:cursor-default"
       :aria-expanded="expanded"
       @click="emit('expand')"
     >
+      <span class="team-letter">{{ team }}</span>
       <span class="flex-1 min-w-0 truncate">{{ teamName }}</span>
-      <UIcon name="i-heroicons-arrows-pointing-out" class="size-4 shrink-0 opacity-60" />
+      <UIcon name="i-heroicons-arrows-pointing-out" class="md:hidden size-4 shrink-0 opacity-60" />
     </button>
 
     <template v-if="showRoster">
@@ -119,6 +121,15 @@ const tallyOf = (p: ScoringPlayer) => props.tallies.get(String(p.matric))
 </template>
 
 <style scoped>
+.team-letter {
+  flex-shrink: 0;
+  min-width: 1.5rem;
+  padding: 0 0.3rem;
+  border: 2px solid currentColor;
+  border-radius: 0.3rem;
+  font-weight: 700;
+  text-align: center;
+}
 .roster-row:focus-visible {
   outline: 2px solid var(--ui-primary);
   outline-offset: 2px;

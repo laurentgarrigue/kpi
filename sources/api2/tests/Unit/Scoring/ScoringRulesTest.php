@@ -365,4 +365,41 @@ final class ScoringRulesTest extends TestCase
         yield 'négatif borné à zéro' => [-500, '0.0'];
         yield 'shotclock' => [38000, '0:38'];
     }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Côtés du terrain (§0.18) — même table que app4 utils/scoringSides.ts (SIDE-18)
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Les côtés d'une période se déduisent du côté de départ, de la période (changement de côté à
+     * chaque période, prolongations comprises) et des inversions manuelles, qui ne valent que pour
+     * leur période. Côtés non vérifiés (départ vide) : A à gauche.
+     *
+     * @param list<string> $overrides
+     */
+    #[DataProvider('sidesProvider')]
+    public function testSidesFor(?string $start, string $period, array $overrides, string $expected): void
+    {
+        self::assertSame($expected, ScoringRules::sidesFor($start, $period, $overrides));
+    }
+
+    public static function sidesProvider(): iterable
+    {
+        yield 'M1 = départ' => ['A_LEFT', 'M1', [], 'A_LEFT'];
+        yield 'M2 inversée' => ['A_LEFT', 'M2', [], 'A_RIGHT'];
+        yield 'P1 = M1' => ['A_LEFT', 'P1', [], 'A_LEFT'];
+        yield 'P2 inversée à la main' => ['A_LEFT', 'P2', ['P2'], 'A_LEFT'];
+        yield 'M1 inversée à la main' => ['A_RIGHT', 'M1', ['M1'], 'A_LEFT'];
+        yield 'P3 = départ' => ['A_RIGHT', 'P3', [], 'A_RIGHT'];
+        yield 'dérogation d\'une autre période ignorée' => ['A_RIGHT', 'P4', ['M2'], 'A_LEFT'];
+        yield 'non vérifiés : A à gauche en M1' => [null, 'M1', [], 'A_LEFT'];
+        yield 'non vérifiés : inversés en M2' => [null, 'M2', [], 'A_RIGHT'];
+        yield 'tirs au but : côtés de départ' => ['A_RIGHT', 'TB', [], 'A_RIGHT'];
+    }
+
+    public function testSidesForRejectsAnUnknownStart(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        ScoringRules::sidesFor('LEFT', 'M1', []);
+    }
 }

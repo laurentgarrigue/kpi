@@ -1,4 +1,5 @@
-// PAGE_SCORING.md §6.5 — shot clock commands: start/reset 60 s, 40 s after an offensive rebound, stop.
+// PAGE_SCORING.md §6.5 and §0.18 — shot clock commands: 60 s with the ball to the left or the right
+// team (seen from the table), 40 s after an offensive rebound, stop.
 import { describe, expect, it } from 'vitest'
 import { mountSuspended } from '@nuxt/test-utils/runtime'
 import Shotclock from '../../components/scoring/Shotclock.vue'
@@ -9,22 +10,36 @@ const base = {
   durations: { full: 60, offensiveRebound: 40 },
   offensiveReboundEnabled: true,
   canScore: true,
+  left: { team: 'B' as const, name: 'Paris' },
+  right: { team: 'A' as const, name: 'Lyon' },
 }
 
 const buttonByText = (wrapper: Awaited<ReturnType<typeof mountSuspended>>, text: string) =>
   wrapper.findAll('button').find(button => button.text().includes(text))!
+const leftStart = (wrapper: Awaited<ReturnType<typeof mountSuspended>>) => wrapper.find('[data-side="L"]')
+const rightStart = (wrapper: Awaited<ReturnType<typeof mountSuspended>>) => wrapper.find('[data-side="R"]')
 
-describe('ScoringShotclock (§6.5)', () => {
-  it('starts the full shot clock with its duration', async () => {
+describe('ScoringShotclock (§6.5, §0.18)', () => {
+  it('starts 60 s with the ball to the left team, then to the right team (SIDE-08, SIDE-09)', async () => {
     const wrapper = await mountSuspended(Shotclock, { props: base })
-    await buttonByText(wrapper, '60 s').trigger('click')
-    expect(wrapper.emitted('start')).toEqual([[60]])
+    await leftStart(wrapper).trigger('click')
+    await rightStart(wrapper).trigger('click')
+    expect(wrapper.emitted('start60')).toEqual([['L'], ['R']])
+  })
+
+  it('puts the 60 s of each team on its side, with its letter and its name (SIDE-23)', async () => {
+    const wrapper = await mountSuspended(Shotclock, { props: base })
+    expect(leftStart(wrapper).text()).toContain('B')
+    expect(leftStart(wrapper).text()).toContain('60')
+    expect(leftStart(wrapper).attributes('title')).toBe(t('scoring.shotclock.start60_left', { team: 'B — Paris' }))
+    expect(rightStart(wrapper).text()).toContain('A')
+    expect(rightStart(wrapper).attributes('title')).toBe(t('scoring.shotclock.start60_right', { team: 'A — Lyon' }))
   })
 
   it('starts the shorter clock after an offensive rebound, when the rule is enabled', async () => {
     const wrapper = await mountSuspended(Shotclock, { props: base })
     await buttonByText(wrapper, '40 s').trigger('click')
-    expect(wrapper.emitted('start')).toEqual([[40]])
+    expect(wrapper.emitted('start40')).toHaveLength(1)
   })
 
   it('has no 40 s command when the competition does not use the rule', async () => {
@@ -34,8 +49,7 @@ describe('ScoringShotclock (§6.5)', () => {
 
   it('follows the durations of the competition', async () => {
     const wrapper = await mountSuspended(Shotclock, { props: { ...base, durations: { full: 45, offensiveRebound: 30 } } })
-    await buttonByText(wrapper, '45 s').trigger('click')
-    expect(wrapper.emitted('start')).toEqual([[45]])
+    expect(leftStart(wrapper).text()).toContain('45')
     expect(wrapper.text()).toContain('30 s')
   })
 
@@ -51,13 +65,15 @@ describe('ScoringShotclock (§6.5)', () => {
   it('locks every command without the right to score, the sound test stays available', async () => {
     const wrapper = await mountSuspended(Shotclock, { props: { ...base, state: 'RUNNING', canScore: false } })
     const disabled = wrapper.findAll('button').filter(button => button.attributes('disabled') !== undefined)
-    expect(disabled).toHaveLength(3)
+    expect(disabled).toHaveLength(4)
     await wrapper.find(`button[aria-label="${t('scoring.sound_test')}"]`).trigger('click')
     expect(wrapper.emitted('testSound')).toHaveLength(1)
   })
 
   it('shows the keyboard key of each command when keys are given', async () => {
-    const wrapper = await mountSuspended(Shotclock, { props: { ...base, keys: { start60: 'KeyA', start40: 'KeyZ', stop: 'KeyE' } } })
-    expect(wrapper.findAll('kbd')).toHaveLength(3)
+    const wrapper = await mountSuspended(Shotclock, {
+      props: { ...base, keys: { start60Left: '/', start60Right: '*', start40: '-', stop: '+' } },
+    })
+    expect(wrapper.findAll('kbd').map(k => k.text())).toEqual(['/', '*', '-', '+'])
   })
 })

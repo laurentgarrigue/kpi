@@ -472,35 +472,42 @@ le lui retire sans que rien ne le montre : l'opérateur appuie sur `+`, rien ne 
 > position réelle des équipes. Prime sur §6.5 pour les touches du chronomètre de tir.
 > **Révisé le 2026-11-28** : mode relatif abandonné (touches gauche / droite seules) ; pavé USB
 > externe à 4 touches en carré (D14).
+> **Révisé le 2026-11-28 (implémentation)** : réglage dans **Déroulement du jeu** et non dans Paramètres
+> (D2) ; **vérification obligatoire des côtés au coup d'envoi** avant le chrono de la première période
+> (D15) ; inversion manuelle **chrono à l'arrêt seulement** et **toujours confirmée** (D4, D11) ; lettres
+> A / B toujours visibles et bandeau de changement de côté (D16).
 
 #### 0.18.1 Règles
 
 | # | Décision | Pourquoi |
 |---|---|---|
 | D1 | **Repère** : « gauche » et « droite » s'entendent **vus de l'arbitre principal et de la table de marque**, qui sont du même côté du terrain. L'**équipe de gauche** est celle qui occupe la moitié gauche du terrain | réponse Q16 ; un seul repère pour la console, le panneau et les touches |
-| D2 | **Côté de départ** réglé dans **Paramètres** avant le coup d'envoi : « Équipe A à gauche / à droite ». Défaut : **A à gauche**. Il figure dans les **contrôles avant coup d'envoi** (§0.11), sans bloquer le coup d'envoi | l'arbitre tire au sort les côtés ; la table le reporte |
-| D3 | **Changement de côté automatique** à **chaque nouvelle période**, prolongations comprises : `côtés(période) = côté de départ inversé une fois par période écoulée` (M1 = départ, M2 = inversé, P1 = départ, P2 = inversé…), **fonction pure de la période**. Revenir à une période précédente (menu de la période, correction) rend les côtés de cette période | réponse Q18 (changement systématique) ; aucun geste à ne pas oublier ; une correction de période reste cohérente |
-| D4 | **Inversion manuelle** : bouton **« ⇄ Inverser les côtés »** dans l'en-tête de la console, **avec confirmation** (« Inverser les côtés pour la période M2 ? »), **sans raccourci clavier**. Elle vaut **pour la période en cours seulement** (dérogation mémorisée par période) et s'annule par un second clic | corriger une erreur de côté de départ ou un oubli ; ne doit jamais partir par erreur en plein jeu |
-| D5 | **Ce qui suit les côtés** : la **console** (colonnes d'équipe : noms, scores, effectifs, pénalités ; en-têtes de la chronologie sur PC) et le **tableau de score** plein écran (`games/[id]/scoreboard`). **Ce qui ne les suit pas** : les **incrustations** (A reste à gauche, réponse Q19), l'écran du chronomètre de tir (aucune équipe), le PDF, les données | le public lit le panneau dans le sens du jeu ; le téléspectateur garde le même repère tout le match |
+| D2 | **Côté de départ** réglé dans **Déroulement du jeu**, sur le tableau de la console (bouton **« ⇄ Côtés »** de la ligne d'état, D4), pas dans Paramètres. Tant qu'il n'est pas vérifié (D15), la console affiche **A à gauche** et le signale (« côtés à vérifier ») | plus visuel : l'opérateur règle les côtés là où il les voit ; l'arbitre tire au sort les côtés, la table le reporte |
+| D3 | **Changement de côté automatique** à **chaque nouvelle période**, prolongations comprises : `côtés(période) = côté de départ inversé une fois par période écoulée` (M1 = départ, M2 = inversé, P1 = départ, P2 = inversé…), **fonction pure de la période**. Revenir à une période précédente (menu de la période, correction) rend les côtés de cette période. Tirs au but (`TB`) : côtés de départ | réponse Q18 (changement systématique) ; aucun geste à ne pas oublier ; une correction de période reste cohérente |
+| D4 | **Inversion manuelle** : bouton **« ⇄ Côtés »** dans la ligne d'état du tableau de la console, **chrono principal à l'arrêt seulement** (désactivé quand il tourne, avec l'explication), **toujours confirmée** : la fenêtre nomme la période et montre le résultat (« Gauche : B — Paris · Droite : A — Lyon »). **Pas de raccourci clavier.** Avant la vérification (D15), elle change le **côté de départ** ; après, elle vaut **pour la période en cours seulement** (dérogation mémorisée par période), et une seconde inversion confirmée l'annule | corriger une erreur de côté de départ ou un oubli ; ne doit jamais partir par erreur en plein jeu |
+| D5 | **Ce qui suit les côtés** : la **console** (tableau : noms, scores, pénalités ; colonnes d'effectif ; boutons 60 s) et le **tableau de score** plein écran (`games/[id]/scoreboard`). La **chronologie** garde A à gauche et B à droite (elle mêle les périodes), ses en-têtes portent les lettres (« A — Lyon »). **Ce qui ne les suit pas** : les **incrustations** (A reste à gauche, réponse Q19), l'écran du chronomètre de tir (aucune équipe), le PDF, les données | le public lit le panneau dans le sens du jeu ; le téléspectateur garde le même repère tout le match |
 | D6 | **L'identité A / B ne change jamais** : feuille de match, couleurs, `team` dans `scoring_live_*`, consolidation `kp_*`. Seul l'**affichage** est mis en miroir | aucune donnée ne dépend de l'affichage |
 | D7 | **Touches spatiales du chronomètre de tir** (seul jeu de touches) : **`/` = départ 60 s, possession à l'équipe de gauche** ; **`*` = départ 60 s, possession à l'équipe de droite** ; **`-` = départ 40 s** (inchangé) ; **`+` = arrêt** (retour à `--`). Les boutons à l'écran suivent : **60 s ◀** à gauche, **60 s ▶** à droite, aux couleurs de l'équipe du côté | `/` et `*` côte à côte sous les doigts, sans regarder l'écran (Q10) ; un 60 s peut suivre un changement de possession **ou** un coup franc / une faute laissée à l'avantage de l'équipe en possession (Q9) : désigner l'équipe évite d'avoir à le décider ; l'engagement est connu |
 | D8 | **Les deux touches 60 s ont exactement le même effet sur le match** : même décompte de 60 s, mêmes affichages. Elles ne diffèrent que par le **côté déclaré**, enregistré avec la commande | une erreur de touche ne gêne jamais le match (seule une statistique est fausse) |
 | D9 | ~~Mode relatif en préférence de poste~~ — **abandonné le 2026-11-28** : avec deux touches 60 s, on désigne directement l'équipe | YAGNI ; un seul jeu de touches à apprendre et à tester |
 | D10 | **La commande enregistre le côté, pas l'équipe** : `start60` porte `side = L \| R` ; l'équipe se déduit des côtés de la période. Une inversion manuelle (D4) **réattribue donc toute la période**, y compris les commandes déjà tapées | une période entière inversée se corrige d'un seul geste |
-| D11 | **Inversion probable détectée** : quand un **but** de X est saisi alors que la dernière commande 60 s / 40 s de la période attribuait le ballon à l'autre équipe, un **bandeau** s'affiche pour le **secrétaire** : « Ballon attribué à <Y> avant le but de <X> : côtés inversés ? » — **[Inverser les côtés]** (D4, sans seconde confirmation) / **[Ignorer]** (plus de bandeau pour cette période). Jamais bloquant, jamais de son | le secrétaire regarde l'écran, le chronométreur de tir non (Q10) ; une erreur de touche isolée ne doit pas imposer d'inversion |
+| D11 | **Inversion probable détectée** : quand un **but** de X est saisi alors que la dernière commande 60 s / 40 s de la période attribuait le ballon à l'autre équipe, un **bandeau** s'affiche pour le **secrétaire** : « Ballon attribué à <Y> avant le but de <X> : côtés inversés ? » — **[Inverser les côtés]** (ouvre la confirmation de D4 ; désactivé tant que le chrono tourne) / **[Ignorer]** (plus de bandeau pour cette période). Jamais bloquant, jamais de son | le secrétaire regarde l'écran, le chronométreur de tir non (Q10) ; une erreur de touche isolée ne doit pas imposer d'inversion |
 | D12 | **Source matériel** (`HARDWARE`) : les côtés et D3 s'appliquent à la console en supervision et au tableau de score KPI (les changements de période reçus du relais déclenchent D3). Le panneau du constructeur garde son propre affichage. Aucune touche spatiale (la saisie est sur la console du constructeur) : les départs reçus n'ont pas de côté. **Score seul** (`SCORE_ONLY`) : côtés d'affichage seulement | la saisie propriétaire passe par le relais (plan lot 5), dont le format n'est pas encore connu (action 0.5) |
 | D13 | **Legacy** : FeuilleMarque V2 / V3 et l'onglet WSM ne changent pas | [ADR-0002](../developer/reference/adr/0002-plus-d-evolution-du-legacy.md) |
+| D15 | **Vérification des côtés au coup d'envoi** : au passage **En cours** (coup d'envoi), une fenêtre **« Vérifiez les côtés »** s'ouvre : schéma du terrain vu de la table, à gauche et à droite la **lettre** (A / B) et le **nom** de chaque équipe ; **[⇄ Inverser]** (change l'aperçu) et **[Les côtés sont bons]** (enregistre le côté de départ). Tant que les côtés ne sont pas vérifiés, **le chrono de la première période ne démarre pas** : Démarrer (bouton ou `Espace`) rouvre la fenêtre. Même règle quand le statut a été passé En cours ailleurs (liste des matchs) | une erreur de côté de départ fausse la console, le panneau et les touches du chronomètre de tir pendant toute la période |
+| D16 | **Désignation A / B toujours claire** : chaque équipe porte en permanence sa **lettre A ou B** à côté de son nom sur le tableau de la console, en tête de sa colonne d'effectif et sur son bouton 60 s. À chaque **changement de côté** (période suivante, inversion), un **bandeau « Changement de côté »** dans le tableau (« M2 — à gauche : B Paris · à droite : A Lyon ») reste affiché **jusqu'au démarrage du chrono**. Le tableau de score public ne montre pas les lettres (le public ne les connaît pas) | l'opérateur lit les équipes par leur lettre (feuille de match) ; le changement de côté ne doit jamais passer inaperçu |
 | D14 | **Pavé USB externe à 4 touches en carré** (facultatif), vu du chronométreur de tir : en haut **« 60 ▶ »** (équipe de gauche, qui attaque vers la droite) et **« ◀ 60 »** (équipe de droite, qui attaque vers la gauche) ; en bas **« ARRÊT »** et **« 40 »**. Il **émet les touches de la console** (`/`, `*`, `+`, `-`) : aucun développement côté KPI, il est vu comme un clavier. Macro-pad programmable du commerce ou fabrication maison (étude §3.5.5) | quatre touches de même taille, au toucher ; position = équipe, flèche = sens de l'attaque, comme le geste de l'arbitre |
 
 #### 0.18.2 Données et diffusion
 
-- **`scoring_live_state`** : `sides_start` (`A_LEFT` / `A_RIGHT`, D2) et `sides_overrides` (liste des
-  périodes inversées à la main, D4). Les côtés courants ne sont **pas stockés** : ils se calculent
+- **`scoring_live_state`** : `sides_start` (`A_LEFT` / `A_RIGHT`, **vide tant que les côtés ne sont pas
+  vérifiés**, D2/D15) et `sides_overrides` (liste des périodes inversées à la main, D4), écrits par
+  `PUT /admin/scoring/sides/{matchId}` (`{ start, overrides }`, remplacement complet). Les côtés courants ne sont **pas stockés** : ils se calculent
   (`sidesFor(sidesStart, période, overrides)`, D3), côté app4 (`utils/scoringSides.ts`) et côté api2
   (`ScoringRules::sidesFor`), même table de vérité testée des deux côtés.
 - **Commandes du chronomètre de tir** : `start60` + `side` (D10), persistés avec le départ
-  (`scoring_live_clock` ou fait associé, à fixer à l'implémentation) et journalisés (« Scoring chrono » :
-  `SHOTCLOCK run 60 L 1:00`). La machine à états (`ScoringRules::shotclockTransition`) **ne change
+  dans le **journal** (« Scoring chrono » : `SHOTCLOCK run possession L 1:00`) ; l'historique structuré
+  des départs (pour les statistiques) viendra avec le lot 1 des statistiques étendues. La machine à états (`ScoringRules::shotclockTransition`) **ne change
   pas**.
 - **Journal** (`kp_journal`, « Scoring côtés ») : réglage du côté de départ, inversion manuelle et son
   annulation, avec période et temps de jeu.
@@ -516,33 +523,55 @@ le lui retire sans que rien ne le montre : l'opérateur appuie sur `+`, rien ne 
 
 | # | Étant donné | Quand | Alors |
 |---|---|---|---|
-| **SIDE-01** | un match en attente | j'ouvre Paramètres | le côté de départ est proposé, **A à gauche** par défaut, et figure dans les contrôles avant coup d'envoi |
+| **SIDE-01** | un match en attente, côtés jamais vérifiés | j'ouvre la console (Déroulement du jeu) | A est à gauche, B à droite, chacun avec sa lettre ; le bouton « ⇄ Côtés » est présent et signale « côtés à vérifier » |
 | **SIDE-02** | côté de départ « A à droite » enregistré | j'ouvre la console et le tableau de score | B est à gauche et A à droite **sur les deux**, noms, scores et pénalités compris |
 | **SIDE-03** | M1 en cours, A à gauche | je passe à M2 (bouton » ou menu) | A passe à droite sur la console et le tableau de score, **sans autre geste** |
 | **SIDE-04** | un match éliminatoire à égalité en fin de M2 | je passe en P1, puis en P2 | les côtés s'inversent à chaque passage (P1 = côtés de M1, P2 = côtés de M2) |
 | **SIDE-05** | M2 en cours | je reviens à M1 par le menu de la période | les côtés de M1 reviennent |
-| **SIDE-06** | M2 en cours | je clique « ⇄ Inverser les côtés » | une confirmation nomme la période ; « Annuler » ne change rien ; « Confirmer » inverse la console et le tableau de score, pour M2 seulement (passer en P1 applique la règle D3 sans la dérogation) |
+| **SIDE-06** | M2 en cours, chrono arrêté | je clique « ⇄ Côtés » | une confirmation nomme la période et montre le résultat ; « Annuler » ne change rien ; « Confirmer » inverse la console et le tableau de score, pour M2 seulement (passer en P1 applique la règle D3 sans la dérogation) |
 | **SIDE-07** | un match en cours | une incrustation est affichée | A reste à gauche quelles que soient la période et les inversions |
 | **SIDE-08** | A à gauche, chronomètre de tir à `--` | je tape `/` | le chronomètre de tir part à 60 s, la commande est enregistrée avec `side = L` (équipe A) |
 | **SIDE-09** | A à gauche | je tape `*` | même décompte de 60 s qu'avec `/`, mêmes affichages ; commande enregistrée avec `side = R` (équipe B) |
 | **SIDE-10** | chronomètre de tir à `--` | je tape `-`, puis `+` | `-` lance 40 s ; `+` ramène à `--` |
 | **SIDE-11** | M2 en cours avec des départs 60 s déjà tapés | j'inverse les côtés (SIDE-06) | les départs déjà tapés de M2 sont réattribués à l'autre équipe ; ceux de M1 ne bougent pas |
-| **SIDE-12** | dernier départ attribuant le ballon à B | le secrétaire saisit un but de A | le bandeau « côtés inversés ? » s'affiche ; « Inverser les côtés » applique SIDE-06 sans seconde confirmation ; « Ignorer » le masque jusqu'à la fin de la période |
+| **SIDE-12** | dernier départ attribuant le ballon à B | le secrétaire saisit un but de A | le bandeau « côtés inversés ? » s'affiche ; « Inverser les côtés » ouvre la confirmation de SIDE-06 (désactivé tant que le chrono tourne) ; « Ignorer » le masque jusqu'à la fin de la période |
 | **SIDE-13** | dernier départ attribuant le ballon à A | le secrétaire saisit un but de A | aucun bandeau |
 | **SIDE-14** | modale Raccourcis clavier | je réassigne « 60 s équipe de gauche » à `F13` | `F13` lance 60 s pour l'équipe de gauche, `/` ne fait plus rien ; « Valeurs par défaut » rend `/` |
 | **SIDE-15** | des préférences de touches enregistrées en v2 | j'ouvre la console | les touches par défaut du mode spatial s'appliquent (préférences v2 abandonnées) |
 | **SIDE-16** | une inversion, un réglage du côté de départ | je consulte le journal | une ligne « Scoring côtés » par action, avec période et temps de jeu |
 | **SIDE-17** | source active `HARDWARE` | le relais annonce le passage en M2 | la console en supervision et le tableau de score KPI inversent les côtés |
 | **SIDE-18** | `sidesFor` app4 et `ScoringRules::sidesFor` api2 | on les teste sur la même table (côté de départ × période M1, M2, P1…P4 × dérogations) | ils rendent les mêmes côtés |
+| **SIDE-19** | un match en attente | je donne le coup d'envoi | la fenêtre « Vérifiez les côtés » s'ouvre ; « ⇄ Inverser » change l'aperçu ; « Les côtés sont bons » enregistre le côté de départ montré |
+| **SIDE-20** | un match en cours, côtés jamais vérifiés, M1 | je clique Démarrer (ou `Espace`) | le chrono ne démarre pas, la fenêtre « Vérifiez les côtés » s'ouvre ; une fois confirmée, Démarrer lance le chrono |
+| **SIDE-21** | le chrono principal tourne | je regarde le bouton « ⇄ Côtés » | il est désactivé et explique qu'il faut arrêter le chrono |
+| **SIDE-22** | M1 terminée, A à gauche | je passe en M2 | le bandeau « Changement de côté » montre « à gauche : B … · à droite : A … » et disparaît au démarrage du chrono |
+| **SIDE-23** | un match en cours | je regarde la console | chaque équipe porte sa lettre A ou B sur le tableau, en tête de sa colonne d'effectif et sur son bouton 60 s ; le tableau de score public n'en porte pas |
 
-**Tests** : `utils/scoringSides.ts` et `utils/scoringShortcuts.ts` (Vitest, SIDE-03 à 05, 14, 15, 18),
-`ScoringRules::sidesFor` (PHPUnit `unit`, SIDE-18), rendu des composants console / tableau de score /
-incrustation (SIDE-02, 06, 07, 12), route de commande du chronomètre de tir (PHPUnit `integration`,
-SIDE-08, 09, 11). Tests fonctionnels à ajouter à
+**Tests** : `utils/scoringSides.ts` et `utils/scoringShortcuts.ts` (Vitest, SIDE-03 à 05, 11, 13, 14,
+15, 18), `ScoringRules::sidesFor` (PHPUnit `unit`, SIDE-18), rendu des composants (Board, Shotclock,
+TeamColumn, SidesCheckModal : SIDE-01, 02, 06, 08–10, 19, 21–23), route `PUT /sides` (PHPUnit
+`integration`, SIDE-16). Tests fonctionnels à ajouter à
 [SCORING_ROLLOUT_CHECKLIST.md](../developer/in-progress/SCORING_ROLLOUT_CHECKLIST.md) avec le lot.
 
 **Hors périmètre** : reconstruction de la possession et statistiques (étude, lots 1 et 3) ; inversion
 des incrustations ; changement de côté en cours de période (inexistant au règlement).
+
+#### 0.18.4 Implémentation (2026-11-28)
+
+- **app4** : `utils/scoringSides.ts` (règles pures : `sidesFor`, `toggleSidesForPeriod`, `startForSides`,
+  `possessionConflict`…), `components/scoring/SidesModal.vue` (vérification et confirmation), côtés et lettres
+  dans `Board.vue`, `TeamColumn.vue`, `Shotclock.vue` (A 60 ▶ / ◀ 60 B) ; store `sides` + `setSides` ; page
+  `scoring.vue` (bouton ⇄ Côtés, blocage du premier démarrage, bandeau, alerte D11) ; tableau de score plein
+  écran et canal local (`teams` porte `sides`). Raccourcis v3.
+- **api2** : `ScoringRules::sidesFor`, `ScoringLiveService::setSides`, `PUT /admin/scoring/sides/{matchId}`,
+  côtés dans `GET /state` et le bloc Mercure `score`, `possession` journalisée par `PUT /gameTimer`.
+- **Base** : `SQL/migrations/2026-11-28_scoring_live_sides.sql` (5ᵉ migration de la checklist R0.2).
+- **Tests** : Vitest `scoringSides`, `scoringShortcuts`, `scoring-board`, `scoring-shotclock`,
+  `scoring-sides-modal`, `scoring-team-column` (verts) ; PHPUnit `ScoringRulesTest::testSidesFor` et
+  `ScoringLiveSidesTest` (écrits ; **non exécutés** dans l'environnement de rédaction, faute de PHP 8.4 — la
+  table de vérité a été vérifiée par un script). Tests fonctionnels 3.104 à 3.115 de la checklist.
+- **Non couvert par un test automatique** : le câblage de la page (coup d'envoi → fenêtre, blocage du premier
+  démarrage, bandeau de changement de côté, alerte D11) — couvert par les tests fonctionnels 3.104 à 3.113.
 
 ## 1. Contexte et objectif
 

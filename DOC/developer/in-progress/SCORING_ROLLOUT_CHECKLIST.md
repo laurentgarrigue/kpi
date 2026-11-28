@@ -47,11 +47,12 @@ make api2_restart             # FrankenPHP garde le kernel en mémoire : requis 
 ### R0.2 ⌨️ 🗄 Les tables scoring sur la base courante
 
 ```bash
-# Les 4 migrations, idempotentes (IF NOT EXISTS / CREATE OR REPLACE), dans l'ordre chronologique
+# Les 5 migrations, idempotentes (IF NOT EXISTS / CREATE OR REPLACE), dans l'ordre chronologique
 for f in SQL/migrations/2026-07-27_scoring_live_tables.sql \
          SQL/migrations/2026-07-29_scoring_display_settings.sql \
          SQL/migrations/2026-07-29_scoring_display_token.sql \
-         SQL/migrations/2026-07-29_scoring_live_compat_views.sql; do
+         SQL/migrations/2026-07-29_scoring_live_compat_views.sql \
+         SQL/migrations/2026-11-28_scoring_live_sides.sql; do
   make db_migrate file=$f || break
 done
 make api2_restart
@@ -59,7 +60,7 @@ make api2_restart
 
 | # | Commande / action | Résultat attendu | ☑ |
 |---|---|---|---|
-| 4 | La boucle ci-dessus | 4 lignes `✔ … appliqué`, aucune erreur | ☑ |
+| 4 | La boucle ci-dessus | 5 lignes `✔ … appliqué`, aucune erreur (la 5ᵉ, côtés du terrain §0.18, ajoutée le 2026-11-28) | ☐ |
 | 5 | 🗄 `SELECT table_name FROM information_schema.tables WHERE table_schema = DATABASE() AND (table_name LIKE 'scoring%' OR table_name LIKE 'v_match%');` | 8 lignes : `scoring_live_state`, `scoring_live_clock`, `scoring_live_event`, `scoring_outbox`, `scoring_display_token`, `scoring_display_settings`, `v_match_detail`, `v_match_live` | ☑ |
 | 6 | 🗄 `SHOW COLUMNS FROM kp_match LIKE 'uid';` | 1 ligne (colonne additive du lot 1) | ☑ |
 
@@ -430,6 +431,27 @@ Spec : [PAGE_SCORING.md](../../specs/PAGE_SCORING.md) §0.14. Sur un PC avec sou
 | 3.102 | Chrono principal à 0 (fin de période), puis fin de pause | le buzzer **principal** (grave, ~1 s) dans les deux cas | | ☐ |
 | 3.103 | Chronomètre de tir et fin de période **simultanés** | les deux buzzers se superposent et restent distincts à l'oreille | | ☐ |
 
+#### Côtés du terrain et touches gauche / droite (2026-11-28, spec §0.18)
+
+Préalable : la 5ᵉ migration de R0.2 (`2026-11-28_scoring_live_sides.sql`) appliquée, puis `make api2_restart`.
+⚠️ Les touches du chronomètre de tir changent (`/` 60 s gauche, `*` 60 s droite, `-` 40 s, `+` arrêt) : les tests 3.12,
+3.19, 3.79, 3.91 et 3.92 ci-dessus parlent encore de l'ancien jeu (`+` 60 s, `*` arrêt) ; à rejouer avec les nouvelles.
+
+| # | Test | Attendu | Exécuté le | ☑ |
+|---|---|---|---|---|
+| 3.104 | Match **En attente**, ouvrir la console (Déroulement) | A à gauche, B à droite, lettres A / B sur le tableau et en tête des effectifs ; bouton **⇄ Côtés (à vérifier)** ambre (SIDE-01, SIDE-23) | | ☐ |
+| 3.105 | **Coup d'envoi** | la fenêtre **« Vérifiez les côtés »** s'ouvre ; **Inverser** change l'aperçu ; **Les côtés sont bons** ferme et la console suit (SIDE-19) | | ☐ |
+| 3.106 | Recharger un match passé En cours **depuis la liste des matchs**, côtés jamais vérifiés, puis **Démarrer** (ou `Espace`) en M1 | le chrono **ne démarre pas**, la fenêtre de vérification s'ouvre ; après confirmation, Démarrer lance le chrono (SIDE-20) | | ☐ |
+| 3.107 | Chrono **en marche** : regarder **⇄ Côtés** | désactivé, info-bulle « Arrêtez le chrono… » (SIDE-21) | | ☐ |
+| 3.108 | Chrono arrêté en M1 : **⇄ Côtés** → **Annuler**, puis **⇄ Côtés** → **Inverser les côtés** | Annuler ne change rien ; la confirmation nomme la période et montre le résultat ; après confirmation, console **et** tableau de score plein écran inversés (SIDE-06) | | ☐ |
+| 3.109 | Fin de M1 → **»** (M2) | les équipes changent de côté sans geste ; bandeau ambre **« Changement de côté — Période 2 · Gauche : … · Droite : … »** sur le tableau, qui disparaît au **Démarrer** (SIDE-03, SIDE-22) | | ☐ |
+| 3.110 | M2 : revenir à M1 par le menu de la période | les côtés de M1 reviennent (SIDE-05) | | ☐ |
+| 3.111 | Touches `/`, `*`, `-`, `+` (pavé numérique, puis pavé USB 4 touches s'il est là) | `/` et `*` lancent tous deux 60 s ; `-` 40 s ; `+` ramène à `--` ; boutons **A 60 ▶** / **◀ 60 B** du côté de leur équipe (SIDE-08 à 10) | | ☐ |
+| 3.112 | 🗄 Après 3.111 : `SELECT Journal FROM kp_journal WHERE Actions IN ('Scoring chrono', 'Scoring côtés') ORDER BY Id DESC LIMIT 6;` | `SHOTCLOCK run possession L …` / `possession R` ; une ligne « Scoring côtés » par vérification ou inversion, avec période et temps (SIDE-16) | | ☐ |
+| 3.113 | `/` (ballon à l'équipe de gauche), puis saisir un **but de l'équipe de droite** | bandeau « Ballon attribué à … avant le but de … : côtés inversés ? » ; **Ignorer** le fait taire jusqu'à la fin de la période ; **Inverser les côtés** (chrono arrêté) ouvre la confirmation (SIDE-12) | | ☐ |
+| 3.114 | Incrustation ouverte (lot 4) pendant 3.108 et 3.109 | **A reste à gauche** (SIDE-07) | | ☐ |
+| 3.115 | Deux consoles sur le même match, inverser les côtés sur l'une | l'autre suit (synchro Mercure) | | ☐ |
+
 ### Lot 4 — Page d'incrustation unique
 
 Les migrations du lot 4 sont dans R0.2. Puis :
@@ -520,7 +542,7 @@ le déploiement preprod est automatique, **pas les migrations SQL** (elles sont 
 |---|---|---|---|---|
 | R3.1 | 🌐 | PR vers `develop`, CI verte (`lint-nuxt (app4)`, `build-nuxt (app4)`, tests api2 unit + integration) | tous les jobs verts | ☐ |
 | R3.2 | 🖥 | `cd /data/kpi_preprod && git log -1 --oneline` après le déploiement auto | le commit fusionné | ☐ |
-| R3.3 | 🖥 | `make db_migrate file=SQL/migrations/<fichier>` pour les **4** migrations, dans l'ordre de R0.2 | 4 × `✔ … appliqué` | ☐ |
+| R3.3 | 🖥 | `make db_migrate file=SQL/migrations/<fichier>` pour les **5** migrations, dans l'ordre de R0.2 | 5 × `✔ … appliqué` | ☐ |
 | R3.4 | 🖥 | `grep -c MERCURE_JWT_SECRET docker/.env sources/api2/.env` puis comparer les valeurs | identiques | ☐ |
 | R3.5 | 🖥 | `make docker_preprod_up` (env du worker) puis `docker logs --tail 50 kpi_preprod_event_cache_worker` | drainage sans erreur 401/403 | ☐ |
 | R3.6 | 🌐 | Rejouer **4.1d** sur `preprod` (incrustation avec jeton, `?debug`) | état SSE `live` **avec `MERCURE_ANONYMOUS=0`** — c'est la validation du lot 0.3 | ☐ |
@@ -532,7 +554,7 @@ le déploiement preprod est automatique, **pas les migrations SQL** (elles sont 
 | # | Où | Commande / action | Résultat attendu | ☑ |
 |---|---|---|---|---|
 | R4.1 | 🌐 | PR `develop` → `main`, déploiement prod manuel (cf. [runbook](../infrastructure/DEPLOYMENT_RUNBOOK.md)) | déploiement OK | ☐ |
-| R4.2 | 🖥 | Les 4 migrations sur `/data/kpi` (comme R3.3) | 4 × `✔` | ☐ |
+| R4.2 | 🖥 | Les 5 migrations sur `/data/kpi` (comme R3.3) | 5 × `✔` | ☐ |
 | R4.3 | 🖥 | Comme R3.4 et R3.5 sur la prod | idem | ☐ |
 | R4.4 | 🌐 | Un **terrain pilote** d'un vrai événement tenu à la console, **en parallèle** du dispositif legacy (FMV3 / WSM sur une autre table) | mêmes scores, même déroulement, aucune perte au rechargement ; feuille PDF identique après clôture | ☐ |
 | R4.5 | 🌐 | Incrustation unique sur ce terrain dans OBS, comparée à l'incrustation legacy (4.13) | mêmes valeurs ; bascule possible terrain par terrain | ☐ |

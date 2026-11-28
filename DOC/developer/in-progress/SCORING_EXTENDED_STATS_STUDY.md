@@ -40,7 +40,15 @@ officielle, pour :
 2. proposer plus tard de **nouvelles médailles** (ex. « Mur » pour un gardien, « Pressing » pour une
    équipe qui récupère beaucoup de ballons, « Efficacité » pour un buteur).
 
-**Priorités (Q5)** : **1. arrêts, 2. tirs, 3. possession.** Passes et interceptions : plus tard.
+**Priorités** : Q5 donnait l'**intérêt** (1. arrêts, 2. tirs, 3. possession). **Revues le 2026-11-28 selon la
+facilité de mise en place et d'exploitation** :
+
+| Ordre | Donnée | Mise en place | Exploitation | Pourquoi ce rang |
+|---|---|---|---|---|
+| **1** | **Possession** (par équipe) | **aucune personne en plus** : touches gauche / droite du chronométreur de tir (§3.5), déjà là | calcul serveur, contrôlé par les buts (§3.5.3) ; **tous les matchs scorés** | coût d'organisation nul, couverture totale |
+| **2** | **Tirs cadrés et arrêts + cadre** (par équipe) | aucune : chaque 40 s + les buts (§3.3) | même calcul ; minorant (un tir arrêté récupéré par la défense n'est pas vu) | gratuit, mais incomplet |
+| **3** | **Arrêts et tirs par joueur** | **un responsable d'équipe** (ou délégué) par équipe et par match, fenêtre de 24 h (§4.1) | contrôles de cohérence, seuil de couverture 80 % | le plus demandé (Q5) mais dépend de bénévoles : couverture variable |
+| 4 | Passes, interceptions | vidéo (§4.3) | lourde | repoussé |
 
 | Donnée visée | Granularité utile | Exemples de stats dérivées |
 |---|---|---|
@@ -230,8 +238,9 @@ réelle des équipes sur leur demi-terrain après chaque changement de côté.
   le début. Les afficheurs du chronomètre de tir ne montrent pas d'équipe : non concernés.
 - **Repère** (Q16) : gauche / droite s'entendent **vus de l'arbitre principal et de la table**, qui sont
   du même côté du terrain.
-- **Bénéfice hors stats** : le secrétaire saisit un but « à gauche » quand le but est marqué à gauche ;
-  le public lit le panneau dans le sens du jeu.
+- **Bénéfice hors stats** : le secrétaire trouve l'équipe qui a marqué **du même côté de la console
+  que sur le terrain** (l'équipe de gauche marque dans le but de **droite**, qu'elle attaque) ; le
+  public lit le panneau dans le sens des moitiés de terrain.
 
 #### 3.5.2 Ce que ça permet : des touches « 60 s gauche » / « 60 s droite »
 
@@ -472,23 +481,22 @@ Hors de portée à court terme ; même dépendance aux vidéos que S3.
 | §4.2 Statisticien | ✅ | ✅ | — | oui | aucun | complément |
 | §4.3 Vidéo | ✅ | ✅ | ✅ | oui, différé | aucun | faible (Q4) |
 
-## 6. Recommandation (v2)
+## 6. Recommandation (v2, ordre revu le 2026-11-28)
 
-0. **Switch des côtés** : ✅ **spec écrite** ([PAGE_SCORING §0.18](../../specs/PAGE_SCORING.md), SIDE-01
-   à 18) — côté de départ, inversion automatique à chaque période, panneau miroir, alerte d'inversion
-   probable sur but. Utile **sans** les stats.
-1. **Lot 1 — Reconstruction** (§3.3, §3.5.3) : calcul serveur après le match, à partir de
-   `scoring_live_clock` (départs 60 / 40 / arrêt), des buts, des côtés et du chrono principal. Comptes
-   d'équipe publics : possession (quand tranchée), tirs cadrés, arrêts + cadre, violations. Socle du
-   squelette du lot 3. **Suppression de `kp_stats`** dans ce lot (Q15).
-2. **Lot 2 — Touches du chronomètre de tir** : **spatiales** par défaut (`/` équipe de gauche, `*` équipe
-   de droite, `-` 40 s, `+` arrêt, §3.5.4), relatives en préférence de poste. Livré avec le switch,
-   **avant** le pilote ; validé au pilote par le taux de conflits.
-3. **Lot 3 — Page « Stats de mon équipe »** (§4.1) : squelette pré-rempli (dont les engagements), un
-   geste par ligne, responsable d'équipe, fenêtre de 24 h, contrôles de cohérence, seuil de 80 %. Démarrer par
-   un **tournoi pilote** (Moreuil, terrain pilote du scoring) avec deux ou trois clubs volontaires.
-4. **Médailles** (après une saison de données) : « Mur » (% d'arrêts, couverture ≥ seuil), « Efficacité »
-   (buts / tirs cadrés), « Maîtrise » (temps de possession).
+0. **Switch des côtés et touches gauche / droite** : spec écrite ([PAGE_SCORING §0.18](../../specs/PAGE_SCORING.md),
+   SIDE-01 à 23), **en cours d'implémentation** (2026-11-28). Utile **sans** les stats, et c'est lui qui
+   rend la possession gratuite.
+1. **Lot 1 — Possession, puis tirs cadrés et arrêts par équipe** (§3.3, §3.5.3) : calcul serveur après le
+   match, à partir des départs du chronomètre de tir (côté déclaré), des buts, des côtés et du chrono
+   principal. **Possession d'abord** : aucune organisation à prévoir, tous les matchs scorés. Comptes
+   d'équipe publics. Socle du squelette du lot 3. **Suppression de `kp_stats`** dans ce lot (Q15).
+2. **Lot 2 — Pilote** : un tournoi (Moreuil, terrain pilote du scoring), indicateur de conflits (§3.5.4),
+   choix du pavé (Q22).
+3. **Lot 3 — Page « Stats de mon équipe »** (§4.1) : arrêts et tirs **par joueur**, squelette pré-rempli,
+   un geste par ligne, responsable d'équipe, fenêtre de 24 h, contrôles de cohérence, seuil de 80 %. Avec
+   deux ou trois clubs volontaires. Vient en dernier : c'est le seul lot qui demande des bénévoles.
+4. **Médailles** (après une saison de données) : « Maîtrise » (temps de possession) d'abord, puis
+   « Efficacité » (buts / tirs cadrés) et « Mur » (% d'arrêts, couverture ≥ seuil).
 
 > **Préalable** : le scoring live n'est pas encore validé de bout en bout (lots 1–3 essayés en dev, cf.
 > SCORING_ROLLOUT_CHECKLIST R1/R2). Ces lots supposent que la console tienne de vrais matchs ; ils ne

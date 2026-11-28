@@ -12,6 +12,7 @@ import type {
   OfficialRole,
   OfficialSuggestionsResponse
 } from '~/types/scoring'
+import type { Sides, SidesSetting, SidesStart } from '~/utils/scoringSides'
 
 /**
  * Scoring store — live match console state (Phase 1: online, api2-backed).
@@ -87,6 +88,9 @@ interface ScoringLiveStateResponse {
   scoreA?: number
   scoreB?: number
   activeSource?: 'MANUAL' | 'HARDWARE' | 'SCORE_ONLY' | 'IMPORT'
+  /** Pitch sides (§0.18): starting side of team A (null = not checked) + periods swapped by hand */
+  sidesStart?: SidesStart
+  sidesOverrides?: Period[]
   clocks?: LiveClock[]
   /** Server seconds since midnight — drift basis for restoring running clocks */
   nowServer?: number
@@ -131,6 +135,8 @@ interface ScoringState {
   topicBase: string
   /** Active writing source of the match (plan §4.1) */
   activeSource: 'MANUAL' | 'HARDWARE' | 'SCORE_ONLY' | 'IMPORT'
+  /** Pitch sides setting (§0.18): the current sides are computed from it (utils/scoringSides). */
+  sides: SidesSetting
   /**
    * Epoch ms of the last LOCAL mutation. The live sync uses it to ignore the echo of
    * our own writes coming back on the Mercure channel (see useScoringLiveSync).
@@ -167,6 +173,7 @@ export const useScoringStore = defineStore('scoring', {
     mercureToken: '',
     topicBase: '',
     activeSource: 'MANUAL',
+    sides: { start: null, overrides: [] },
     lastMutationAt: 0,
     loading: false,
     initialized: false
@@ -186,6 +193,10 @@ export const useScoringStore = defineStore('scoring', {
       const p = state.match?.periode as Period | null | undefined
       return periodDurationOf(p ?? 'M1', state.config.periodDurations)
     },
+
+    /** Sides of the current period (D3): A on the left or on the right, seen from the table. */
+    currentSides: (state): Sides =>
+      sidesFor(state.sides.start, (state.match?.periode as Period | null | undefined) ?? 'M1', state.sides.overrides),
 
     scoreA: (state): number => Number(state.match?.scoreA ?? 0),
     scoreB: (state): number => Number(state.match?.scoreB ?? 0)
@@ -235,6 +246,7 @@ export const useScoringStore = defineStore('scoring', {
           this.liveClocks = liveState.clocks ?? []
           if (liveState.activeSource) this.activeSource = liveState.activeSource
         }
+        this.sides = sidesSettingOf(liveState)
         this.mercureUrl = liveState.mercureUrl ?? ''
         this.mercureToken = liveState.mercureToken ?? ''
         this.topicBase = liveState.topicBase ?? ''
@@ -448,6 +460,7 @@ export const useScoringStore = defineStore('scoring', {
         }
         this.liveClocks = liveState.clocks ?? []
         if (liveState.activeSource) this.activeSource = liveState.activeSource
+        this.sides = sidesSettingOf(liveState)
       }
 
       this.events = resEvents.events.map(e => ({
@@ -622,6 +635,24 @@ export const useScoringStore = defineStore('scoring', {
       this.lastMutationAt = Date.now()
       const api = apiInstance ?? sharedApi ?? useApi()
       await api.put(`/admin/scoring/gameTimer/${this.match.id}`, { params: { action, ...params } })
+    },
+
+    /**
+     * Record the pitch sides (§0.18 — check at kick-off, confirmed manual swap), optimistic +
+     * rollback. `at` (period, game time shown) only feeds the journal.
+     */
+    async setSides(setting: SidesSetting, at: { period: string, time: string }, apiInstance?: ReturnType<typeof useApi>) {
+      if (!this.match) return
+      this.lastMutationAt = Date.now()
+      const api = apiInstance ?? sharedApi ?? useApi()
+      const previous = this.sides
+      this.sides = { start: setting.start, overrides: [...setting.overrides] }
+      try {
+        await api.put(`/admin/scoring/sides/${this.match.id}`, { start: setting.start, overrides: setting.overrides, ...at })
+      } catch (error) {
+        this.sides = previous
+        throw error
+      }
     },
 
     /**

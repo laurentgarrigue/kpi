@@ -294,4 +294,37 @@ final class ScoringRules
             default => throw new \InvalidArgumentException("Unknown shotclock command: $command"),
         };
     }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Pitch sides (PAGE_SCORING.md §0.18) — mirror of app4 utils/scoringSides.ts (SIDE-18)
+    // ─────────────────────────────────────────────────────────────────────────
+
+    public const SIDES_A_LEFT = 'A_LEFT';
+    public const SIDES_A_RIGHT = 'A_RIGHT';
+
+    /**
+     * Sides of a period (seen from the head referee and the table): the starting side, swapped once
+     * per period played before this one (M1 = 0, M2 = 1, P{n} = n + 1, shoot-out = 0), then swapped
+     * again when the table swapped that period by hand. A null start (sides not checked yet) shows
+     * A on the left.
+     *
+     * @param list<string> $overrides periods swapped by hand
+     */
+    public static function sidesFor(?string $start, string $period, array $overrides): string
+    {
+        $sides = $start ?? self::SIDES_A_LEFT;
+        if (!in_array($sides, [self::SIDES_A_LEFT, self::SIDES_A_RIGHT], true)) {
+            throw new \InvalidArgumentException("Unknown sides: $sides");
+        }
+
+        $before = $period === 'M2' ? 1 : (self::isOvertime($period) ? self::overtimeIndex($period) + 1 : 0);
+        $swaps = ($before % 2) + (in_array($period, $overrides, true) ? 1 : 0);
+
+        return $swaps % 2 === 1 ? self::flipSides($sides) : $sides;
+    }
+
+    private static function flipSides(string $sides): string
+    {
+        return $sides === self::SIDES_A_LEFT ? self::SIDES_A_RIGHT : self::SIDES_A_LEFT;
+    }
 }

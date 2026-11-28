@@ -121,3 +121,12 @@ describe('ScoringTeamColumn — mobile team name', () => {
     expect(wrapper.emitted('expand')).toHaveLength(1)
   })
 })
+
+describe('ScoringTeamColumn — team letter (§0.18 D16)', () => {
+  it('heads the column with the team letter and name, at every screen size (SIDE-23)', async () => {
+    const wrapper = await mountSuspended(TeamColumn, { props: { ...base, team: 'B', teamName: 'Paris' } })
+    const head = wrapper.find('[data-team-head]')
+    expect(head.find('.team-letter').text()).toBe('B')
+    expect(head.text()).toContain('Paris')
+  })
+})

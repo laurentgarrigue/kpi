@@ -882,6 +882,8 @@ CREATE TABLE `scoring_live_state` (
   `periode` varchar(4) NOT NULL DEFAULT 'M1',
   `statut` enum('ATT','ON','END') NOT NULL DEFAULT 'ATT',
   `heure_fin` time DEFAULT NULL,
+  `sides_start` enum('A_LEFT','A_RIGHT') DEFAULT NULL,
+  `sides_overrides` varchar(255) NOT NULL DEFAULT '',
   `active_source` enum('MANUAL','HARDWARE','SCORE_ONLY','IMPORT') NOT NULL DEFAULT 'MANUAL',
   `promoted_at` datetime(3) DEFAULT NULL,
   `tick` bigint(20) UNSIGNED NOT NULL DEFAULT 0,

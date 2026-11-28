@@ -18,6 +18,10 @@ import { isPenaltyExpired } from '~/utils/scoringPenalties'
  * venue has no Internet. Remote screens use the video overlay + Mercure instead
  * (PAGE_INCRUSTATION.md).
  *
+ * Pitch sides (§0.18): each team is shown on the half it occupies, seen from the table, as the
+ * console sends it (`sides`) — the public reads the board in the direction of the halves. No A / B
+ * letters here (the public does not know them).
+ *
  * URL options, chosen in the console's options dialog (utils/scoringDisplayOptions):
  * ?theme=light (black on white) · ?shotclock=0 (hide the shot clock).
  */
@@ -82,6 +86,11 @@ const { fontSize: clockSize } = useFitText(clockBox, () => ['00:00'])
 const shotBox = ref<HTMLElement | null>(null)
 const { fontSize: shotSize } = useFitText(shotBox, () => ['60', '8.8'], { fill: 0.85 })
 
+/** Teams in display order: left half, then right half. */
+const halves = computed<Array<'A' | 'B'>>(() => (state.sides === 'A_RIGHT' ? ['B', 'A'] : ['A', 'B']))
+const nameOf = (team: 'A' | 'B') => (team === 'A' ? state.teamA : state.teamB)
+const scoreOf = (team: 'A' | 'B') => (team === 'A' ? state.scoreA : state.scoreB)
+
 const penaltiesOf = (team: 'A' | 'B') =>
   state.penalties.filter(p => p.team === team).sort((a, b) => a.slot - b.slot)
 
@@ -107,16 +116,16 @@ const fmtPenalty = (ms: number): string => {
   >
     <!-- Team names: half the width each -->
     <div
-      v-for="(name, i) in [state.teamA, state.teamB]" :key="'name' + i"
+      v-for="team in halves" :key="'name' + team"
       class="min-w-0 flex items-end justify-center text-center font-semibold"
       :style="{ fontSize: portrait ? '5.5vmin' : '7vmin' }"
     >
-      <span class="w-full leading-tight" :class="portrait ? 'line-clamp-2 break-words' : 'truncate'">{{ name }}</span>
+      <span class="w-full leading-tight" :class="portrait ? 'line-clamp-2 break-words' : 'truncate'">{{ nameOf(team) }}</span>
     </div>
 
     <!-- Penalties: card colour, 00:00 blinking once expired -->
     <div
-      v-for="team in (['A', 'B'] as const)" :key="'pen' + team"
+      v-for="team in halves" :key="'pen' + team"
       class="min-w-0 flex flex-wrap items-center justify-center gap-[1vmin]"
     >
       <span
@@ -129,10 +138,10 @@ const fmtPenalty = (ms: number): string => {
 
     <!-- Scores: each in its half, same size -->
     <div ref="scoreBoxA" class="relative min-w-0 min-h-0">
-      <span class="absolute inset-0 flex items-center justify-center leading-none whitespace-nowrap" :style="{ fontSize: scoreSize + 'px' }">{{ state.scoreA }}</span>
+      <span class="absolute inset-0 flex items-center justify-center leading-none whitespace-nowrap" :style="{ fontSize: scoreSize + 'px' }">{{ scoreOf(halves[0]!) }}</span>
     </div>
     <div ref="scoreBoxB" class="relative min-w-0 min-h-0">
-      <span class="absolute inset-0 flex items-center justify-center leading-none whitespace-nowrap" :style="{ fontSize: scoreSize + 'px' }">{{ state.scoreB }}</span>
+      <span class="absolute inset-0 flex items-center justify-center leading-none whitespace-nowrap" :style="{ fontSize: scoreSize + 'px' }">{{ scoreOf(halves[1]!) }}</span>
     </div>
 
     <!-- Current period, above the clocks, centred on the screen -->

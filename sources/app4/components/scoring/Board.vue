@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { PenaltyClock } from '~/composables/usePenalties'
 import type { TeamSide } from '~/types/scoring'
+import type { Sides } from '~/utils/scoringSides'
 
 /**
  * The console's display panel: a replica of the pitch scoreboard (home score | game clock |
@@ -16,8 +17,12 @@ import type { TeamSide } from '~/types/scoring'
  *
  * Every countdown is corrected the same way: click on it → ScoringTimeAdjust popover (±10/±1 s
  * around a live copy of the value). No ± keys in the deck any more.
+ *
+ * Pitch sides (§0.18): each team sits on the half it occupies, seen from the table (`sides`), and
+ * carries its letter A / B (D16) — the operator reads the teams by their game-sheet letter. The
+ * page passes a change-of-ends notice, shown until the clock starts.
  */
-defineProps<{
+const props = withDefaults(defineProps<{
   teamA: string
   teamB: string
   scoreA: number | string
@@ -41,7 +46,22 @@ defineProps<{
   clockAdjustable?: boolean
   /** Shot clock correctable now (suspended: game clock stopped). */
   shotclockAdjustable?: boolean
-}>()
+  /** Which half team A occupies in the current period (§0.18). */
+  sides?: Sides
+  /** Letters A / B next to the names (the console); off for a public look. */
+  showLetters?: boolean
+  /** Change-of-ends notice (D16), shown under the state line. */
+  sidesNotice?: string | null
+}>(), {
+  shotclock: null,
+  shotclockState: 'IDLE',
+  breakDisplay: null,
+  penaltiesA: () => [],
+  penaltiesB: () => [],
+  sides: 'A_LEFT',
+  showLetters: true,
+  sidesNotice: null
+})
 
 const emit = defineEmits<{
   bump: [team: TeamSide, delta: 1 | -1]
@@ -52,6 +72,14 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+
+/** Left then right half: the team, its name, score and penalties, and which way it is aligned. */
+const halves = computed(() => {
+  const a = { team: 'A' as TeamSide, name: props.teamA, score: props.scoreA, penalties: props.penaltiesA }
+  const b = { team: 'B' as TeamSide, name: props.teamB, score: props.scoreB, penalties: props.penaltiesB }
+  const [left, right] = props.sides === 'A_LEFT' ? [a, b] : [b, a]
+  return { left, right }
+})
 
 /** The game clock also takes whole minutes (a period started late, a forgotten stop). */
 const CLOCK_STEPS = [-60, -10, -1, 1, 10, 60] as const
@@ -65,24 +93,36 @@ const CLOCK_STEPS = [-60, -10, -1, 1, 10, 60] as const
     <div class="flex items-center justify-center gap-2 flex-wrap">
       <slot name="state" />
     </div>
+    <!-- Change of ends (§0.18 D16): stays until the clock starts -->
+    <p
+      v-if="sidesNotice"
+      role="status"
+      class="mt-2 mx-auto w-fit rounded-md bg-amber-500 px-3 py-1 text-sm font-semibold text-black flex items-center gap-2"
+    >
+      <UIcon name="i-heroicons-arrows-right-left" class="size-4 shrink-0" />
+      {{ sidesNotice }}
+    </p>
 
     <div class="mt-2 grid grid-cols-[1fr_auto_1fr] items-start gap-3 sm:gap-10">
-      <!-- Team A: name over score, pushed towards the centre -->
-      <div class="min-w-0 text-right">
-        <div class="board-team line-clamp-2 break-words">{{ teamA }}</div>
-        <div class="scoring-digits board-score">{{ scoreA }}</div>
+      <!-- Left half: name over score, pushed towards the centre -->
+      <div class="board-side min-w-0 text-right">
+        <div class="flex items-baseline justify-end gap-2">
+          <div class="board-team line-clamp-2 break-words">{{ halves.left.name }}</div>
+          <span v-if="showLetters" class="board-letter">{{ halves.left.team }}</span>
+        </div>
+        <div class="scoring-digits board-score">{{ halves.left.score }}</div>
         <ScoringPenalties
-          v-if="penaltiesA?.length"
+          v-if="halves.left.penalties?.length"
           class="mt-1 justify-end"
-          :penalties="penaltiesA"
+          :penalties="halves.left.penalties"
           :can-score="canScore"
           :can-adjust="canAdjustPenalties"
           @remove="emit('remove-penalty', $event)"
           @adjust="(id, d) => emit('adjust-penalty', id, d)"
         />
         <div v-if="scoreOnly" class="mt-1 flex justify-end gap-1">
-          <button type="button" class="board-key" :disabled="!canScore" @click="emit('bump', 'A', -1)">−1</button>
-          <button type="button" class="board-key board-key--strong" :disabled="!canScore" @click="emit('bump', 'A', 1)">+1</button>
+          <button type="button" class="board-key" :disabled="!canScore" @click="emit('bump', halves.left.team, -1)">−1</button>
+          <button type="button" class="board-key board-key--strong" :disabled="!canScore" @click="emit('bump', halves.left.team, 1)">+1</button>
         </div>
       </div>
 
@@ -128,22 +168,25 @@ const CLOCK_STEPS = [-60, -10, -1, 1, 10, 60] as const
         </div>
       </div>
 
-      <!-- Team B: mirrored -->
-      <div class="min-w-0 text-left">
-        <div class="board-team line-clamp-2 break-words">{{ teamB }}</div>
-        <div class="scoring-digits board-score">{{ scoreB }}</div>
+      <!-- Right half: mirrored -->
+      <div class="board-side min-w-0 text-left">
+        <div class="flex items-baseline gap-2">
+          <span v-if="showLetters" class="board-letter">{{ halves.right.team }}</span>
+          <div class="board-team line-clamp-2 break-words">{{ halves.right.name }}</div>
+        </div>
+        <div class="scoring-digits board-score">{{ halves.right.score }}</div>
         <ScoringPenalties
-          v-if="penaltiesB?.length"
+          v-if="halves.right.penalties?.length"
           class="mt-1"
-          :penalties="penaltiesB"
+          :penalties="halves.right.penalties"
           :can-score="canScore"
           :can-adjust="canAdjustPenalties"
           @remove="emit('remove-penalty', $event)"
           @adjust="(id, d) => emit('adjust-penalty', id, d)"
         />
         <div v-if="scoreOnly" class="mt-1 flex gap-1">
-          <button type="button" class="board-key board-key--strong" :disabled="!canScore" @click="emit('bump', 'B', 1)">+1</button>
-          <button type="button" class="board-key" :disabled="!canScore" @click="emit('bump', 'B', -1)">−1</button>
+          <button type="button" class="board-key board-key--strong" :disabled="!canScore" @click="emit('bump', halves.right.team, 1)">+1</button>
+          <button type="button" class="board-key" :disabled="!canScore" @click="emit('bump', halves.right.team, -1)">−1</button>
         </div>
       </div>
     </div>
@@ -157,6 +200,17 @@ const CLOCK_STEPS = [-60, -10, -1, 1, 10, 60] as const
   font-size: clamp(1.1rem, 2.4vw, 1.75rem);
   line-height: 1.1;
   color: rgb(255 255 255 / 0.85);
+}
+.board-letter {
+  flex-shrink: 0;
+  min-width: 1.75rem;
+  padding: 0 0.35rem;
+  border: 2px solid rgb(255 255 255 / 0.85);
+  border-radius: 0.375rem;
+  font-weight: 700;
+  font-size: clamp(1rem, 2vw, 1.4rem);
+  line-height: 1.4;
+  text-align: center;
 }
 .board-score {
   font-size: clamp(3.5rem, 9vw, 6.5rem);

@@ -2813,7 +2813,9 @@
       "stop": "Arrêt",
       "short": "Tir",
       "adjust": "Corriger le chrono de tir",
-      "adjust_locked": "Arrêtez le chrono de jeu pour corriger le chrono de tir"
+      "adjust_locked": "Arrêtez le chrono de jeu pour corriger le chrono de tir",
+      "start60_left": "60 s — ballon à l'équipe de gauche ({team})",
+      "start60_right": "60 s — ballon à l'équipe de droite ({team})"
     },
     "break": {
       "title": "Pause",
@@ -2826,7 +2828,8 @@
       "press_key": "Pressez…",
       "reset": "Valeurs par défaut",
       "gameClockToggle": "Chrono : départ / arrêt",
-      "shotclockStart60": "Chrono de tir : départ/reset 60 s",
+      "shotclockStart60Left": "Chrono de tir : 60 s, ballon à l'équipe de gauche",
+      "shotclockStart60Right": "Chrono de tir : 60 s, ballon à l'équipe de droite",
       "shotclockStart40": "Chrono de tir : départ/reset 40 s",
       "shotclockStop": "Chrono de tir : arrêt (--)",
       "penaltiesClearExpired": "Pénalités échues (00:00) : retirer",
@@ -3012,6 +3015,28 @@
       "scoreboard_shotclock": "Afficher le chronomètre de tir",
       "shotclock_clock": "Afficher le chrono principal",
       "open": "Ouvrir"
+    },
+    "sides": {
+      "button": "Côtés",
+      "button_title": "Inverser les côtés gauche / droite (chrono arrêté)",
+      "button_locked": "Arrêtez le chrono pour inverser les côtés",
+      "unchecked": "à vérifier",
+      "left": "Gauche",
+      "right": "Droite",
+      "seen_from": "Vu de la table de marque et de l'arbitre principal",
+      "check_title": "Vérifiez les côtés",
+      "check_message": "Avant de lancer le chrono, vérifiez quelle équipe est à gauche et laquelle est à droite, vues de la table.",
+      "check_swap": "Inverser",
+      "check_confirm": "Les côtés sont bons",
+      "swap_title": "Inverser les côtés ?",
+      "swap_message": "Les côtés de la période {period} seront inversés sur la console et le tableau de score. Après inversion :",
+      "swap_confirm": "Inverser les côtés",
+      "cancel": "Annuler",
+      "changed": "Changement de côté — {period}",
+      "conflict": "Ballon attribué à {team} avant le but de {scorer} : côtés inversés ?",
+      "conflict_swap": "Inverser les côtés",
+      "conflict_ignore": "Ignorer",
+      "start_blocked": "Vérifiez les côtés avant de lancer le chrono de la première période"
     }
   },
   "competition": {

@@ -3,6 +3,7 @@ import type { PenaltyClock } from '~/composables/usePenalties'
 import type { ShotclockState } from '~/utils/scoringRules'
 import { displayQuery, type DisplayKind, type DisplayOptions } from '~/utils/scoringDisplayOptions'
 import { consoleMatchSwitch, matchSwitchTarget } from '~/utils/scoringDisplaySwitch'
+import type { Sides } from '~/utils/scoringSides'
 
 /** Match last shown by the console in this tab — survives the navigation to another match. */
 const CONSOLE_MATCH_KEY = 'kpi.scoring.console.match'
@@ -27,6 +28,8 @@ export interface BroadcastState {
   matchId: number | null
   teamA: string
   teamB: string
+  /** Half team A occupies, seen from the table (§0.18) — the scoreboard follows it. */
+  sides: Sides
   scoreA: number
   scoreB: number
   period: Period | null
@@ -57,7 +60,7 @@ export function useScoringBroadcast(getState: () => BroadcastState) {
   const period = () => post('period', getState().period)
   const teams = () => {
     const s = getState()
-    post('teams', { teamA: s.teamA, teamB: s.teamB })
+    post('teams', { teamA: s.teamA, teamB: s.teamB, sides: s.sides })
   }
   const scores = () => {
     const s = getState()
@@ -169,6 +172,7 @@ export function useScoringDisplay(matchId: number, role: 'scoreboard' | 'shotclo
     matchId,
     teamA: '',
     teamB: '',
+    sides: 'A_LEFT',
     scoreA: 0,
     scoreB: 0,
     period: null,
@@ -202,9 +206,11 @@ export function useScoringDisplay(matchId: number, role: 'scoreboard' | 'shotclo
       case 'shotclock_state': state.shotclockState = message.value as ShotclockState; break
       case 'period': state.period = message.value as Period | null; break
       case 'teams': {
-        const v = message.value as { teamA: string, teamB: string }
+        const v = message.value as { teamA: string, teamB: string, sides?: Sides }
         state.teamA = v.teamA
         state.teamB = v.teamB
+        // An older console sends no sides: A stays on the left.
+        state.sides = v.sides === 'A_RIGHT' ? 'A_RIGHT' : 'A_LEFT'
         break
       }
       case 'scores': {

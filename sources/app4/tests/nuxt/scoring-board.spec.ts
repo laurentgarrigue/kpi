@@ -116,3 +116,36 @@ describe('ScoringBoard — score-only mode', () => {
     expect(keys(wrapper).every(k => k.attributes('disabled') !== undefined)).toBe(true)
   })
 })
+
+describe('ScoringBoard — pitch sides (§0.18)', () => {
+  it('puts B on the left and A on the right when A starts on the right, scores and penalties included (SIDE-02)', async () => {
+    const wrapper = await mountSuspended(Board, {
+      props: { ...base, sides: 'A_RIGHT', penaltiesA: [penalty({ playerNumber: 7 })], penaltiesB: [] },
+    })
+    expect(wrapper.findAll('.board-team').map(el => el.text())).toEqual(['Paris', 'Lyon'])
+    expect(wrapper.findAll('.board-score').map(el => el.text())).toEqual(['2', '3'])
+    // A's penalty follows A, now on the right
+    expect(wrapper.findAll('.board-side')[1]!.text()).toContain('7')
+  })
+
+  it('shows the letter A or B of each team next to its name (SIDE-23)', async () => {
+    const wrapper = await mountSuspended(Board, { props: { ...base, sides: 'A_RIGHT' } })
+    expect(wrapper.findAll('.board-letter').map(el => el.text())).toEqual(['B', 'A'])
+  })
+
+  it('shows no letter on request (public scoreboard look)', async () => {
+    const wrapper = await mountSuspended(Board, { props: { ...base, showLetters: false } })
+    expect(wrapper.findAll('.board-letter')).toHaveLength(0)
+  })
+
+  it('keeps the real team of the ±1 keys whatever the sides', async () => {
+    const wrapper = await mountSuspended(Board, { props: { ...base, sides: 'A_RIGHT', scoreOnly: true, canScore: true } })
+    for (const key of wrapper.findAll('.board-key')) await key.trigger('click')
+    expect(wrapper.emitted('bump')).toEqual([['B', -1], ['B', 1], ['A', 1], ['A', -1]])
+  })
+
+  it('shows the change-of-ends notice given by the page (SIDE-22)', async () => {
+    const wrapper = await mountSuspended(Board, { props: { ...base, sidesNotice: 'Changement de côté — M2' } })
+    expect(wrapper.find('[role="status"]').text()).toContain('Changement de côté — M2')
+  })
+})

@@ -27,9 +27,13 @@ describe('shortcutDefaults — touches par défaut selon la langue', () => {
     expect(en.shotclockStop).toBe(fr.shotclockStop)
   })
 
-  it('pilote le chrono de tir par + (60 s), - (40 s) et * (arrêt)', () => {
+  it('pilote le chrono de tir par / (60 s équipe de gauche), * (60 s équipe de droite), - (40 s) et + (arrêt) — §0.18', () => {
     const d = shortcutDefaults('fr')
-    expect([d.shotclockStart60, d.shotclockStart40, d.shotclockStop]).toEqual(['+', '-', '*'])
+    expect([d.shotclockStart60Left, d.shotclockStart60Right, d.shotclockStart40, d.shotclockStop]).toEqual(['/', '*', '-', '+'])
+  })
+
+  it('n’a plus de 60 s sans équipe (remplacé par gauche / droite)', () => {
+    expect(SHORTCUT_ACTIONS).not.toContain('shotclockStart60')
   })
 
   it('retire les pénalités échues par X, en français comme en anglais', () => {
@@ -40,7 +44,7 @@ describe('shortcutDefaults — touches par défaut selon la langue', () => {
   it('ne lie jamais Entrée, un chiffre ou le point au chrono de tir (saisie des faits et du n° du joueur)', () => {
     for (const locale of ['fr', 'en']) {
       const d = shortcutDefaults(locale)
-      for (const k of [d.gameClockToggle, d.shotclockStart60, d.shotclockStart40, d.shotclockStop]) {
+      for (const k of [d.gameClockToggle, d.shotclockStart60Left, d.shotclockStart60Right, d.shotclockStart40, d.shotclockStop]) {
         expect(k).not.toMatch(/^(Enter|\d|\.)$/)
       }
     }
@@ -76,6 +80,10 @@ describe('mergeStoredBindings — préférences enregistrées sur le poste', () 
   it('ignore les actions qui n’existent plus (« joueur par numéro », chrono de tir ±1 s)', () => {
     const merged = mergeStoredBindings({ playerByNumber: 'n', shotclockPlus: '+', shotclockMinus: '-' }, 'fr')
     expect(Object.keys(merged).sort()).toEqual([...SHORTCUT_ACTIONS].sort())
+  })
+
+  it('accepte une touche réassignée à « 60 s équipe de gauche » (pavé qui émet F13, SIDE-14)', () => {
+    expect(mergeStoredBindings({ shotclockStart60Left: 'F13' }, 'fr').shotclockStart60Left).toBe('F13')
   })
 
   it('ignore une valeur qui n’est pas une chaîne', () => {
