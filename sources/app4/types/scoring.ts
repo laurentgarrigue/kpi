@@ -115,6 +115,21 @@ export interface ScoringEvent {
 }
 
 /**
+ * Unofficial shot statistic (spec §0.19), kept apart from the match facts (scoring_live_stat):
+ * SHOT = shot neither scored nor saved by the goalkeeper; SAVE = goalkeeper save. The team comes from
+ * the possession declared by the shot clock ('' = unknown); the player (shooter or goalkeeper) is optional.
+ */
+export interface ScoringShot {
+  uid: string
+  kind: 'SHOT' | 'SAVE'
+  period: Period
+  tpsJeu: string
+  team: TeamSide | ''
+  player: string | null
+  number: number | null
+}
+
+/**
  * Penalty (exclusion) with countdown — UI/timer logic implemented in Phase 2.
  */
 export interface Penalty {

@@ -2837,7 +2837,9 @@
       "factGreen": "Fait de jeu : carton vert",
       "factYellow": "Fait de jeu : carton jaune",
       "factRed": "Fait de jeu : carton rouge",
-      "factBlack": "Fait de jeu : carton noir"
+      "factBlack": "Fait de jeu : carton noir",
+      "statShot": "Statistique : tir (non marqué, non arrêté)",
+      "statSave": "Statistique : arrêt du gardien"
     },
     "sound_test": "Tester le son",
     "penalty": {
@@ -3037,6 +3039,23 @@
       "conflict_swap": "Inverser les côtés",
       "conflict_ignore": "Ignorer",
       "start_blocked": "Vérifiez les côtés avant de lancer le chrono de la première période"
+    },
+    "shots": {
+      "title": "Tirs et arrêts",
+      "shot": "Tir",
+      "save": "Arrêt",
+      "shots_total": "Tirs : {n}",
+      "saves_total": "Arrêts : {n}",
+      "unknown_team": "équipe ?",
+      "unknown_count": "sans équipe : {n}",
+      "number_prompt": "n° ?",
+      "number_hint": "chiffres puis Entrée · Échap pour ignorer",
+      "number_unknown": "n° {n} inconnu",
+      "remove": "Supprimer",
+      "empty": "Aucun tir saisi",
+      "shot_button_title": "Tir non marqué et non arrêté par le gardien (à côté, cadre, contré)",
+      "save_button_title": "Tir arrêté par le gardien",
+      "unofficial": "Statistiques non officielles (hors feuille de match)"
     }
   },
   "competition": {

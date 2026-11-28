@@ -26,6 +26,8 @@ export type ShortcutAction =
   | 'factYellow'
   | 'factRed'
   | 'factBlack'
+  | 'statShot'
+  | 'statSave'
 
 /** Fact actions → stored fact code (D = black card, code kept for storage compatibility). */
 const FACT_ACTIONS: Partial<Record<ShortcutAction, ScoringEventCode>> = {
@@ -47,7 +49,9 @@ export const SHORTCUT_ACTIONS: ShortcutAction[] = [
   'factGreen',
   'factYellow',
   'factRed',
-  'factBlack'
+  'factBlack',
+  'statShot',
+  'statSave'
 ]
 
 type Bindings = Record<ShortcutAction, string>
@@ -64,11 +68,12 @@ const CLOCK_KEYS = {
   penaltiesClearExpired: 'x'
 } as const
 
-const FACT_KEYS: Record<string, Pick<Bindings, 'factGoal' | 'factGreen' | 'factYellow' | 'factRed' | 'factBlack'>> = {
-  // But, Vert, Jaune, Rouge, Noir
-  fr: { factGoal: 'b', factGreen: 'v', factYellow: 'j', factRed: 'r', factBlack: 'n' },
-  // gOal, Green, Yellow, Red, Black — colours on their initial, the goal on its O
-  en: { factGoal: 'o', factGreen: 'g', factYellow: 'y', factRed: 'r', factBlack: 'b' }
+type FactKeys = Pick<Bindings, 'factGoal' | 'factGreen' | 'factYellow' | 'factRed' | 'factBlack' | 'statShot' | 'statSave'>
+const FACT_KEYS: Record<string, FactKeys> = {
+  // But, Vert, Jaune, Rouge, Noir · Tir, Arrêt (§0.19)
+  fr: { factGoal: 'b', factGreen: 'v', factYellow: 'j', factRed: 'r', factBlack: 'n', statShot: 't', statSave: 'a' },
+  // gOal, Green, Yellow, Red, Black — colours on their initial, the goal on its O · Shot, Keeper save
+  en: { factGoal: 'o', factGreen: 'g', factYellow: 'y', factRed: 'r', factBlack: 'b', statShot: 's', statSave: 'k' }
 }
 const DEFAULT_LOCALE = 'fr'
 

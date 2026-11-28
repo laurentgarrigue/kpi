@@ -8,6 +8,7 @@ import { isPenaltyExpired } from '~/utils/scoringPenalties'
 import { remainingMs, runningDriftMs } from '~/utils/overlayClock'
 import { isEditableTarget, keyboardFrameShown, keyboardKeysActive, keyboardState, type KeyboardState } from '~/utils/scoringKeyboard'
 import { CARD_REASONS } from '~/utils/scoringCardReasons'
+import { SHOT_NUMBER_WINDOW_MS, appendShotDigit, playerByNumber, possessionTeam, shotTeam } from '~/utils/scoringShots'
 import { possessionConflict, startForSides, teamOnSide, toggleSidesForPeriod, type LastPossession, type PitchSide, type Sides } from '~/utils/scoringSides'
 
 definePageMeta({
@@ -358,6 +359,78 @@ const ignorePossessionAlert = () => {
   possessionAlertIgnored.value = possessionAlert.value?.period ?? null
   possessionAlert.value = null
 }
+
+// ─── Shots and saves: two keys of the secretary, team from the possession (§0.19) ───
+// Live, match in progress, the console as active source; never with the score-only entry.
+const canEnterShots = computed(() => canScore.value && isLive.value && matchOn.value && !scoreOnly.value
+  && scoringStore.activeSource === 'MANUAL')
+/** Line just entered (highlighted) and the optional number typed after the key (T5). */
+const shotHighlight = ref<string | null>(null)
+const shotNumber = ref<{ uid: string, team: TeamSide | '', digits: string, unknown: number | null } | null>(null)
+let shotNumberTimer: ReturnType<typeof setTimeout> | null = null
+const clearShotNumberTimer = () => {
+  if (shotNumberTimer) clearTimeout(shotNumberTimer)
+  shotNumberTimer = null
+}
+const closeShotNumber = () => {
+  clearShotNumberTimer()
+  shotNumber.value = null
+}
+/** Validate the digits typed: attach the player of that team wearing the number, or say it is unknown. */
+const commitShotNumber = () => {
+  const pending = shotNumber.value
+  clearShotNumberTimer()
+  if (!pending || pending.digits === '' || pending.team === '') return closeShotNumber()
+  const number = Number(pending.digits)
+  const player = playerByNumber(pending.team === 'A' ? scoringStore.playersA : scoringStore.playersB, number)
+  if (!player) {
+    shotNumber.value = { ...pending, digits: '', unknown: number }
+    shotNumberTimer = setTimeout(closeShotNumber, SHOT_NUMBER_WINDOW_MS)
+    return
+  }
+  closeShotNumber()
+  void scoringStore.setShotPlayer(pending.uid, player).catch(() => { /* useApi already toasts */ })
+}
+const armShotNumberTimer = () => {
+  clearShotNumberTimer()
+  shotNumberTimer = setTimeout(commitShotNumber, SHOT_NUMBER_WINDOW_MS)
+}
+const enterShot = async (kind: 'SHOT' | 'SAVE') => {
+  if (!canEnterShots.value) return
+  commitShotNumber() // a number still being typed for the previous line is kept
+  const period = currentPeriod()
+  const team = shotTeam(kind, possessionTeam(lastPossession.value, period))
+  try {
+    const uid = await scoringStore.addShot({ kind, period, tpsJeu: gameTime.value, team, player: null, number: null })
+    if (!uid) return
+    shotHighlight.value = uid
+    shotNumber.value = { uid, team, digits: '', unknown: null }
+    armShotNumberTimer()
+  } catch { /* useApi already toasts; the store rolled back */ }
+}
+// Digits / Entrée / Échap while the « n° ? » prompt is open, outside any input field (T5).
+const onShotNumberKey = (event: KeyboardEvent) => {
+  const pending = shotNumber.value
+  if (!pending || pending.unknown !== null || isEditableTarget(event.target) || event.ctrlKey || event.metaKey || event.altKey) return
+  // Captured before every other key handler: these keys belong to the prompt while it is open.
+  const take = () => { event.preventDefault(); event.stopImmediatePropagation() }
+  if (event.key === 'Enter') { take(); commitShotNumber(); return }
+  if (event.key === 'Escape') { take(); closeShotNumber(); return }
+  const digits = appendShotDigit(pending.digits, event.key)
+  if (digits === null) return
+  take()
+  shotNumber.value = { ...pending, digits }
+  armShotNumberTimer()
+}
+onMounted(() => window.addEventListener('keydown', onShotNumberKey, { capture: true }))
+onUnmounted(() => {
+  window.removeEventListener('keydown', onShotNumberKey, { capture: true })
+  clearShotNumberTimer()
+})
+const removeShot = (uid: string) => {
+  if (shotNumber.value?.uid === uid) closeShotNumber()
+  void scoringStore.removeShot(uid).catch(() => { /* useApi already toasts */ })
+}
 const shotclockStop = () => {
   if (!canScore.value || shotclock.state.value === 'IDLE') return
   shotclock.stopToIdle()
@@ -655,7 +728,9 @@ const { bindings, setBinding, resetDefaults } = useScoringShortcuts({
   factGreen: factKey('V'),
   factYellow: factKey('J'),
   factRed: factKey('R'),
-  factBlack: factKey('D')
+  factBlack: factKey('D'),
+  statShot: () => { void enterShot('SHOT') },
+  statSave: () => { void enterShot('SAVE') }
 }, { enabled: shortcutsEnabled, locale })
 
 // Does the keyboard reach the console? (spec §0.14) — amber frame when the window lost the
@@ -1834,6 +1909,43 @@ const toggleLock = async () => {
               </div>
             </div>
           </div>
+          </template>
+
+          <!-- Shots and saves (§0.19): one tap each, team from the possession, optional number after -->
+          <template v-if="canEnterShots">
+            <div class="grid grid-cols-2 gap-2 border-t border-header-200 dark:border-header-700 pt-3">
+              <UButton
+                block
+                variant="outline"
+                color="neutral"
+                :title="t('scoring.shots.shot_button_title')"
+                :aria-keyshortcuts="bindings.statShot || undefined"
+                @click="enterShot('SHOT')"
+              >
+                {{ t('scoring.shots.shot') }}
+                <kbd v-if="bindings.statShot" class="rounded border border-current/40 px-1 text-sm font-mono leading-4" :class="kbdClass">{{ shortcutKeyLabel(bindings.statShot) }}</kbd>
+              </UButton>
+              <UButton
+                block
+                variant="outline"
+                color="neutral"
+                :title="t('scoring.shots.save_button_title')"
+                :aria-keyshortcuts="bindings.statSave || undefined"
+                @click="enterShot('SAVE')"
+              >
+                {{ t('scoring.shots.save') }}
+                <kbd v-if="bindings.statSave" class="rounded border border-current/40 px-1 text-sm font-mono leading-4" :class="kbdClass">{{ shortcutKeyLabel(bindings.statSave) }}</kbd>
+              </UButton>
+            </div>
+            <ScoringShotLog
+              :shots="scoringStore.shots"
+              :team-a="match.equipeA ?? 'A'"
+              :team-b="match.equipeB ?? 'B'"
+              :can-score="canScore"
+              :highlight-uid="shotHighlight"
+              :number-prompt="shotNumber ? { uid: shotNumber.uid, digits: shotNumber.digits, unknown: shotNumber.unknown } : null"
+              @remove="removeShot"
+            />
           </template>
         </section>
       </div>

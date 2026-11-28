@@ -326,6 +326,87 @@ class ScoringLiveService
         });
     }
 
+    /** Kinds of the unofficial shot statistics (PAGE_SCORING.md §0.19 T1). */
+    public const STAT_KINDS = ['SHOT', 'SAVE'];
+
+    /**
+     * Add / update / remove a shot statistic (§0.19): SHOT (shot neither scored nor saved by the
+     * goalkeeper) or SAVE (goalkeeper save). Kept in scoring_live_stat, apart from the match facts:
+     * never consolidated to kp_match_detail, never in v_match_detail (T8). $stat keys: uid, kind,
+     * period, temps (HH:MM:SS), team ('A' | 'B' | '' = unknown possession), player, number.
+     * Returns the new tick; the other consoles of the match reread on the /stat block.
+     *
+     * @param array<string,mixed> $stat
+     */
+    public function writeStat(int $matchId, string $action, array $stat): int
+    {
+        if (!in_array($action, ['add', 'update', 'remove'], true)) {
+            throw new \InvalidArgumentException("Unknown stat action: $action");
+        }
+        if (empty($stat['uid'])) {
+            throw new \InvalidArgumentException('uid required');
+        }
+        if ($action !== 'remove') {
+            if (!in_array($stat['kind'] ?? '', self::STAT_KINDS, true)) {
+                throw new \InvalidArgumentException('Unknown stat kind');
+            }
+            if (!in_array($stat['team'] ?? '', ['A', 'B', ''], true)) {
+                throw new \InvalidArgumentException('Unknown team');
+            }
+        }
+
+        return $this->connection->transactional(function () use ($matchId, $action, $stat): int {
+            $this->ensureState($matchId);
+
+            $values = [
+                $stat['kind'] ?? null, $stat['period'] ?? null, $stat['temps'] ?? null,
+                $stat['team'] ?? '', $stat['player'] ?? null, $stat['number'] ?? null,
+            ];
+            match ($action) {
+                'add' => $this->connection->executeStatement(
+                    'INSERT INTO scoring_live_stat (uid, id_match, kind, periode, temps, team, id_player, numero)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+                    [$stat['uid'], $matchId, ...$values]
+                ),
+                'update' => $this->connection->executeStatement(
+                    'UPDATE scoring_live_stat SET kind = ?, periode = ?, temps = ?, team = ?, id_player = ?, numero = ?
+                     WHERE uid = ? AND id_match = ?',
+                    [...$values, $stat['uid'], $matchId]
+                ),
+                'remove' => $this->connection->executeStatement(
+                    'DELETE FROM scoring_live_stat WHERE uid = ? AND id_match = ?',
+                    [$stat['uid'], $matchId]
+                ),
+            };
+
+            $tick = $this->bumpTick($matchId);
+            $this->deposit($matchId, 'stat', [
+                'type' => 'stat',
+                'tick' => $tick,
+                'action' => $action,
+                'uid' => $stat['uid'],
+            ]);
+
+            return $tick;
+        });
+    }
+
+    /**
+     * Shot statistics of a match, newest first (§0.19 T6).
+     *
+     * @return list<array<string,mixed>>
+     */
+    public function listStats(int $matchId): array
+    {
+        return $this->connection->fetchAllAssociative(
+            "SELECT uid, kind, periode period, TIME_FORMAT(temps, '%i:%s') tpsJeu, team,
+                    id_player player, numero number
+             FROM scoring_live_stat WHERE id_match = ?
+             ORDER BY created_at DESC",
+            [$matchId]
+        );
+    }
+
     /**
      * Upsert one clock of the match (4-value model, plan §3.1). $clock keys:
      * kind (GAME/SHOTCLOCK/PENALTY/BREAK), team (''|A|B), slot (0|1|2), initMs, elapsedMs,

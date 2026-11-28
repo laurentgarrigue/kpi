@@ -10,7 +10,8 @@ import type {
   ScoringConfig,
   LiveClock,
   OfficialRole,
-  OfficialSuggestionsResponse
+  OfficialSuggestionsResponse,
+  ScoringShot
 } from '~/types/scoring'
 import type { Sides, SidesSetting, SidesStart } from '~/utils/scoringSides'
 
@@ -101,6 +102,17 @@ interface ScoringLiveStateResponse {
   topicBase?: string
 }
 
+/** Response shape of GET /admin/scoring/shots/{id} (§0.19) — newest first. */
+interface ScoringShotsResponse {
+  shots: Array<Omit<ScoringShot, 'number'> & { number: number | string | null }>
+}
+
+/** Number columns come back as strings from the database. */
+const shotOf = (s: ScoringShotsResponse['shots'][number]): ScoringShot => ({
+  ...s,
+  number: s.number === null || s.number === '' ? null : Number(s.number)
+})
+
 /**
  * PUT /gameParam parameter (kp column name, the endpoint vocabulary) → ScoringMatch field,
  * for the optimistic update and its rollback.
@@ -137,6 +149,8 @@ interface ScoringState {
   activeSource: 'MANUAL' | 'HARDWARE' | 'SCORE_ONLY' | 'IMPORT'
   /** Pitch sides setting (§0.18): the current sides are computed from it (utils/scoringSides). */
   sides: SidesSetting
+  /** Unofficial shot statistics (§0.19), newest first — never on the game sheet. */
+  shots: ScoringShot[]
   /**
    * Epoch ms of the last LOCAL mutation. The live sync uses it to ignore the echo of
    * our own writes coming back on the Mercure channel (see useScoringLiveSync).
@@ -174,6 +188,7 @@ export const useScoringStore = defineStore('scoring', {
     topicBase: '',
     activeSource: 'MANUAL',
     sides: { start: null, overrides: [] },
+    shots: [],
     lastMutationAt: 0,
     loading: false,
     initialized: false
@@ -221,12 +236,14 @@ export const useScoringStore = defineStore('scoring', {
 
       try {
         const match = await api.get<ScoringMatch>(`/admin/games/${matchId}`)
-        const [resA, resB, resEvents, liveState] = await Promise.all([
+        const [resA, resB, resEvents, liveState, resShots] = await Promise.all([
           api.get<MatchPlayersResponse>(`/admin/matches/${matchId}/players`, { teamCode: 'A' }),
           api.get<MatchPlayersResponse>(`/admin/matches/${matchId}/players`, { teamCode: 'B' }),
           api.get<ScoringEventsResponse>(`/admin/scoring/events/${matchId}`),
-          api.get<ScoringLiveStateResponse>(`/admin/scoring/state/${matchId}`)
+          api.get<ScoringLiveStateResponse>(`/admin/scoring/state/${matchId}`),
+          api.get<ScoringShotsResponse>(`/admin/scoring/shots/${matchId}`)
         ])
+        this.shots = resShots.shots.map(shotOf)
 
         // Overlay the canonical live state on top of the kp_match snapshot: during a match
         // kp_* is only written at consolidation (Statut → END), so the live values win.
@@ -442,10 +459,12 @@ export const useScoringStore = defineStore('scoring', {
     async refreshLiveState(apiInstance?: ReturnType<typeof useApi>) {
       if (!this.match) return
       const api = apiInstance ?? sharedApi ?? useApi()
-      const [liveState, resEvents] = await Promise.all([
+      const [liveState, resEvents, resShots] = await Promise.all([
         api.get<ScoringLiveStateResponse>(`/admin/scoring/state/${this.match.id}`),
-        api.get<ScoringEventsResponse>(`/admin/scoring/events/${this.match.id}`)
+        api.get<ScoringEventsResponse>(`/admin/scoring/events/${this.match.id}`),
+        api.get<ScoringShotsResponse>(`/admin/scoring/shots/${this.match.id}`)
       ])
+      this.shots = resShots.shots.map(shotOf)
 
       if (liveState.exists && this.match) {
         if (liveState.statut) this.match.statut = liveState.statut
@@ -651,6 +670,58 @@ export const useScoringStore = defineStore('scoring', {
         await api.put(`/admin/scoring/sides/${this.match.id}`, { start: setting.start, overrides: setting.overrides, ...at })
       } catch (error) {
         this.sides = previous
+        throw error
+      }
+    },
+
+    /**
+     * Record a shot statistic (§0.19 T3), optimistic + rollback; newest first in the log. Returns its uid
+     * (the number typed afterwards is attached to it), null when no match is loaded.
+     */
+    async addShot(entry: Omit<ScoringShot, 'uid'>, apiInstance?: ReturnType<typeof useApi>): Promise<string | null> {
+      if (!this.match) return null
+      this.lastMutationAt = Date.now()
+      const api = apiInstance ?? sharedApi ?? useApi()
+      const shot: ScoringShot = { ...entry, uid: genUid() }
+      this.shots = [shot, ...this.shots]
+      try {
+        await api.put(`/admin/scoring/shots/${this.match.id}`, { action: 'add', ...shot })
+      } catch (error) {
+        this.shots = this.shots.filter(s => s.uid !== shot.uid)
+        throw error
+      }
+      return shot.uid
+    },
+
+    /** Attach the shooter / goalkeeper typed after the key (T5). */
+    async setShotPlayer(uid: string, player: { matric: number, numero: number }, apiInstance?: ReturnType<typeof useApi>) {
+      const index = this.shots.findIndex(s => s.uid === uid)
+      if (!this.match || index === -1) return
+      this.lastMutationAt = Date.now()
+      const api = apiInstance ?? sharedApi ?? useApi()
+      const previous = this.shots[index]!
+      const updated: ScoringShot = { ...previous, player: String(player.matric), number: player.numero }
+      this.shots.splice(index, 1, updated)
+      try {
+        await api.put(`/admin/scoring/shots/${this.match.id}`, { action: 'update', ...updated })
+      } catch (error) {
+        const at = this.shots.findIndex(s => s.uid === uid)
+        if (at !== -1) this.shots.splice(at, 1, previous)
+        throw error
+      }
+    },
+
+    /** Remove a shot statistic (T6, no confirmation), optimistic + rollback. */
+    async removeShot(uid: string, apiInstance?: ReturnType<typeof useApi>) {
+      if (!this.match) return
+      this.lastMutationAt = Date.now()
+      const api = apiInstance ?? sharedApi ?? useApi()
+      const previous = this.shots
+      this.shots = this.shots.filter(s => s.uid !== uid)
+      try {
+        await api.put(`/admin/scoring/shots/${this.match.id}`, { action: 'remove', uid })
+      } catch (error) {
+        this.shots = previous
         throw error
       }
     },

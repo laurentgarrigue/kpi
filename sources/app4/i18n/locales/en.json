@@ -2825,7 +2825,9 @@
       "factGreen": "Game fact: green card",
       "factYellow": "Game fact: yellow card",
       "factRed": "Game fact: red card",
-      "factBlack": "Game fact: black card"
+      "factBlack": "Game fact: black card",
+      "statShot": "Statistic: shot (not scored, not saved)",
+      "statSave": "Statistic: goalkeeper save"
     },
     "sound_test": "Test sound",
     "penalty": {
@@ -3025,6 +3027,23 @@
       "conflict_swap": "Swap the sides",
       "conflict_ignore": "Ignore",
       "start_blocked": "Check the sides before starting the clock of the first period"
+    },
+    "shots": {
+      "title": "Shots and saves",
+      "shot": "Shot",
+      "save": "Save",
+      "shots_total": "Shots: {n}",
+      "saves_total": "Saves: {n}",
+      "unknown_team": "team?",
+      "unknown_count": "no team: {n}",
+      "number_prompt": "no.?",
+      "number_hint": "digits then Enter · Esc to skip",
+      "number_unknown": "no. {n} unknown",
+      "remove": "Remove",
+      "empty": "No shot entered",
+      "shot_button_title": "Shot neither scored nor saved by the goalkeeper (wide, frame, blocked)",
+      "save_button_title": "Shot saved by the goalkeeper",
+      "unofficial": "Unofficial statistics (not on the game sheet)"
     }
   },
   "competition": {

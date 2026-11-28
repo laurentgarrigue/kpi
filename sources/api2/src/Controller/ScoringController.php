@@ -340,6 +340,85 @@ class ScoringController extends AbstractController
         return new JsonResponse(['success' => true]);
     }
 
+    #[Route('/shots/{matchId}', name: 'shots_put', methods: ['PUT'])]
+    #[OA\Put(
+        path: '/admin/scoring/shots/{matchId}',
+        summary: 'Add, update or remove a shot statistic: shot not scored nor saved, or goalkeeper save (PAGE_SCORING §0.19, unofficial)',
+        tags: ['6. Scoring'],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['action', 'uid'],
+                properties: [
+                    new OA\Property(property: 'action', type: 'string', enum: ['add', 'update', 'remove']),
+                    new OA\Property(property: 'uid', type: 'string'),
+                    new OA\Property(property: 'kind', type: 'string', enum: ['SHOT', 'SAVE']),
+                    new OA\Property(property: 'period', type: 'string', example: 'M1'),
+                    new OA\Property(property: 'tpsJeu', type: 'string', example: '06:42'),
+                    new OA\Property(property: 'team', type: 'string', enum: ['A', 'B', ''], description: "'' = possession unknown"),
+                    new OA\Property(property: 'player', type: 'string', nullable: true),
+                    new OA\Property(property: 'number', type: 'integer', nullable: true),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: 'Statistic written (tick bumped, journalized)'),
+            new OA\Response(response: 400, description: 'Invalid payload or locked game')
+        ]
+    )]
+    public function putShots(int $matchId, Request $request): JsonResponse
+    {
+        if ($err = $this->assertMatchAuthorized($matchId)) return $err;
+
+        $data = json_decode($request->getContent());
+
+        $locked = $this->connection->fetchOne(
+            "SELECT COUNT(Id) FROM kp_match WHERE Id = ? AND Validation != 'O'",
+            [$matchId]
+        );
+        if ($locked != 1) {
+            return new JsonResponse(['error' => 'Game locked'], 400);
+        }
+        if ($err = $this->assertSourceAllowed($matchId, 'shot ' . ($data->action ?? ''))) return $err;
+
+        $action = (string) ($data->action ?? '');
+        try {
+            $this->live->writeStat($matchId, $action, [
+                'uid' => $data->uid ?? null,
+                'kind' => $data->kind ?? null,
+                'period' => $data->period ?? null,
+                'temps' => isset($data->tpsJeu) ? $this->normalizeTemps((string) $data->tpsJeu) : null,
+                'team' => (string) ($data->team ?? ''),
+                'player' => isset($data->player) && $data->player !== '' ? (string) $data->player : null,
+                'number' => $data->number ?? null,
+            ]);
+        } catch (\InvalidArgumentException $e) {
+            return new JsonResponse(['error' => $e->getMessage()], 400);
+        }
+
+        $number = isset($data->number) ? '#' . $data->number : '';
+        $this->logScoring('Scoring tir', $matchId, trim(implode(' ', array_filter(
+            [$action, $data->kind ?? '', $data->team ?? '', $number, $data->period ?? '', $data->tpsJeu ?? '', $action === 'add' ? '' : (string) $data->uid],
+            'strlen'
+        ))));
+
+        return new JsonResponse(['success' => true]);
+    }
+
+    #[Route('/shots/{matchId}', name: 'shots_get', methods: ['GET'])]
+    #[OA\Get(
+        path: '/admin/scoring/shots/{matchId}',
+        summary: 'Shot statistics of a match, newest first (PAGE_SCORING §0.19)',
+        tags: ['6. Scoring'],
+        responses: [new OA\Response(response: 200, description: '{ shots: [...] }')]
+    )]
+    public function getShots(int $matchId): JsonResponse
+    {
+        if ($err = $this->assertMatchAuthorized($matchId)) return $err;
+
+        return new JsonResponse(['shots' => $this->live->listStats($matchId)]);
+    }
+
     #[Route('/events/{matchId}', name: 'game_events_get', methods: ['GET'])]
     #[OA\Get(
         path: '/admin/scoring/events/{matchId}',

@@ -22,6 +22,10 @@
 > - **v7 (2026-11-28)** : un 60 s peut aussi suivre un **avantage** (faute non sifflée, geste
 >   d'avantage) ; **décision : touches gauche / droite seules**, le mode relatif est abandonné ;
 >   **pavé USB externe à 4 touches en carré** (§3.5.5) ;
+> - **v9 (2026-11-28)** : réponses Q23–Q26 — touches `T` / `A` (FR) et `S` / `K` (EN), **numéro facultatif**
+>   (tireur ou gardien), pas de troisième touche, tir contré = `T` ; `T` seul étudié et écarté (il perd les
+>   arrêts dont la défense récupère le ballon, §4.0.1) ; spec écrite (PAGE_SCORING §0.19), table dédiée
+>   `scoring_live_stat` au lieu de `scoring_live_event` (§7) ;
 > - **v8 (2026-11-28)** : saisie par les bancs (§4.1) **déclassée** (architecture lourde, implication
 >   inégale des bancs) ; **concession sur C3** : le secrétaire saisit les **tirs** et les **arrêts** avec
 >   **deux touches**, l'équipe étant déduite de la possession (chronomètre de tir + switch) — nouvelle
@@ -438,7 +442,15 @@ l'**autre** équipe dit que la défense a récupéré : cohérent.
 même sur des séquences rapides, puisqu'il n'y a ni équipe ni joueur à choisir. Le **pavé 4 touches** du
 chronométreur de tir (§3.5.5) n'est pas concerné : ces touches sont sur le clavier du secrétaire.
 
-**Limite** : pas d'arrêts ni de tirs **par joueur** (pas de médaille « Mur » individuelle). Les médailles possibles
+#### 4.0.1 Et `T` seul ? (étudié le 2026-11-28, écarté)
+
+Idée : « s'il n'y a ni but ni 40 s après un `T`, c'est un tir contré ou non cadré ». Faux dans un cas fréquent :
+un tir **arrêté par le gardien dont la défense récupère le ballon** n'est suivi ni d'un but ni d'un 40 s, mais
+d'un 60 s pour l'autre équipe, exactement comme un tir non cadré ou contré. Avec `T` seul on obtient tirs,
+efficacité, tirs par possession et taux de rebonds offensifs (40 s / tirs), mais **pas les arrêts** ni le % d'arrêts
+(priorité n° 1 d'intérêt, Q5). La touche `A` porte la seule information qu'aucune trace ne donne : **gardée**.
+
+**Limite** : sans le numéro facultatif (Q24 : accepté), pas d'arrêts ni de tirs **par joueur**. Les médailles possibles
 sont **d'équipe** (« Muraille » : meilleur % d'arrêts d'une équipe dans un match ; « Efficacité »). Un numéro
 **facultatif** juste après la touche (le temps de le taper, sinon rien) est possible plus tard (Q24).
 
@@ -549,8 +561,8 @@ Hors de portée à court terme ; même dépendance aux vidéos que S3.
    chronomètre de tir (côté déclaré), des buts, des côtés et du chrono principal. Aucune organisation à prévoir,
    tous les matchs scorés. Comptes d'équipe publics. **Suppression de `kp_stats`** dans ce lot (Q15).
 2. **Lot 2 — Tirs et arrêts par équipe** (§4.0) : deux touches du secrétaire, équipe déduite de la possession,
-   couverture mesurée par les 40 s, masquage sous 80 %. Spec à écrire dans PAGE_SCORING (touches, retour
-   visuel, chronologie) et dans une spec de stats (calculs, publication).
+   numéro facultatif. **Saisie spécifiée et codée** (PAGE_SCORING §0.19, 2026-11-28). Restent la couverture
+   mesurée par les 40 s, le masquage sous 80 % et la publication : spec des statistiques à écrire.
 3. **Lot 3 — Pilote** : un tournoi (Moreuil, terrain pilote du scoring) : conflits de possession (§3.5.4),
    couverture des tirs (§4.0), choix du pavé (Q22), retour des secrétaires sur la charge.
 4. **Médailles** (après une saison de données) : « Maîtrise » (temps de possession), puis « Efficacité »
@@ -565,12 +577,11 @@ tant qu'aucune voie sans bénévole n'existe (Q24).
 
 ## 7. Esquisse du modèle de données (à affiner dans une spec)
 
-**Tirs et arrêts dans `scoring_live_event`** (v8) : ils sont désormais saisis **par la console**, pendant le
-match, comme les buts — la table des faits de match, conçue extensible (`kind`, PAGE_SCORING §0.4), les
-accueille : `kind = SHOT` (issue `MISSED`, et `FRAME` si Q25) et `kind = SAVE`, `team` = équipe déduite (ou
-vide si possession inconnue), `id_player` vide, `periode`, `temps`. Ils sont **exclus de la consolidation**
-vers `kp_match_detail` et du PDF. La table dédiée `match_stat_fact` (plusieurs sources, fenêtre de relecture)
-n'a plus lieu d'être sans S1.
+**Tirs et arrêts dans une table dédiée `scoring_live_stat`** (v9, PAGE_SCORING §0.19 T8) : saisis par la console
+pendant le match, comme les buts, mais **hors** `scoring_live_event`. Cette dernière alimente la consolidation
+`kp_match_detail` **et** la vue `v_match_detail`, lue par les médailles, les suspensions et les désignations :
+y ajouter des codes inconnus aurait exposé toutes ces règles. Colonnes : `uid`, `id_match`, `kind` (`SHOT` /
+`SAVE`), `periode`, `temps`, `team` (ou vide si possession inconnue), `id_player`, `numero`, `created_at`.
 
 - **Possession** : calculée, pas saisie — une vue ou une table de résultats recalculable, comme les
   médailles (recalcul saison par saison).
@@ -585,14 +596,10 @@ n'a plus lieu d'être sans S1.
   (**le reste de l'app, relais WSM, est conservé jusqu'au lot 5**), de `PUT /api/wsm/stats/` (legacy,
   `wsmControllers.php`) et de `PUT /api2/admin/scoring/stats` (`ScoringController::putStats`).
 
-## 8. Questions ouvertes (v8)
+## 8. Questions ouvertes (v9)
 
-| # | Question |
-|---|---|
-| **Q23** | **Touches** du secrétaire : `T` (Tir) et `A` (Arrêt) en français, `S` (Shot) et `K` (Keeper save) en anglais ? Libres aujourd'hui, réassignables comme les autres. |
-| **Q24** | **Joueur** : pas de numéro du tout (deux appuis, rien d'autre), ou un numéro **facultatif** tapé juste après la touche quand le secrétaire en a le temps ? |
-| **Q25** | **Issue d'un tir non arrêté** : une seule touche `T` (à côté, cadre et contré confondus), ou distinguer le **cadre** (tir cadré) au prix d'une troisième touche ? |
-| **Q26** | **Contré par un joueur de champ** (pagaie, bateau) : est-ce un `T` (tir non arrêté par le gardien) ou un `A` ? Le règlement ne reconnaît comme gardien que le joueur sous le but, pagaie verticale (C1). |
+Réponses Q23–Q26 intégrées (§4.0, spec PAGE_SCORING §0.19) : `T` / `A` et `S` / `K` ; numéro facultatif ;
+pas de troisième touche ; tir contré = `T`.
 
 À vérifier **au pilote** :
 

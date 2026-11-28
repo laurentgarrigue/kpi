@@ -422,7 +422,7 @@ Traefik terminates TLS and routes between them. See the API2 section above for w
   Rollout checklist (catch-up in dev → validation gate → preprod → prod pilot):
   [DOC/developer/in-progress/SCORING_ROLLOUT_CHECKLIST.md](DOC/developer/in-progress/SCORING_ROLLOUT_CHECKLIST.md).
   ⚠️ Lots 1–3 were tried in dev (Aug/Oct 2026) but never validated end to end; lot 4 never ran in OBS.
-  **Reloading the dev database from a prod dump drops the `scoring_live_*` tables** — re-run the 5
+  **Reloading the dev database from a prod dump drops the `scoring_live_*` tables** — re-run the 6
   scoring migrations (checklist R0.2) or the console answers 500. Do not open a new lot before R1/R2.
 - Legacy Vue.js applications in `app_dev/`, `app_live_dev/`, `app_wsm_dev/` are maintained but not primary focus
 - Configuration files are mounted from Docker directory to avoid committing sensitive data

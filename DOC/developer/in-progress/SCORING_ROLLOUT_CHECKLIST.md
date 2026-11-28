@@ -47,12 +47,13 @@ make api2_restart             # FrankenPHP garde le kernel en mémoire : requis 
 ### R0.2 ⌨️ 🗄 Les tables scoring sur la base courante
 
 ```bash
-# Les 5 migrations, idempotentes (IF NOT EXISTS / CREATE OR REPLACE), dans l'ordre chronologique
+# Les 6 migrations, idempotentes (IF NOT EXISTS / CREATE OR REPLACE), dans l'ordre chronologique
 for f in SQL/migrations/2026-07-27_scoring_live_tables.sql \
          SQL/migrations/2026-07-29_scoring_display_settings.sql \
          SQL/migrations/2026-07-29_scoring_display_token.sql \
          SQL/migrations/2026-07-29_scoring_live_compat_views.sql \
-         SQL/migrations/2026-11-28_scoring_live_sides.sql; do
+         SQL/migrations/2026-11-28_scoring_live_sides.sql \
+         SQL/migrations/2026-11-28_scoring_live_stat.sql; do
   make db_migrate file=$f || break
 done
 make api2_restart
@@ -60,8 +61,8 @@ make api2_restart
 
 | # | Commande / action | Résultat attendu | ☑ |
 |---|---|---|---|
-| 4 | La boucle ci-dessus | 5 lignes `✔ … appliqué`, aucune erreur (la 5ᵉ, côtés du terrain §0.18, ajoutée le 2026-11-28) | ☐ |
-| 5 | 🗄 `SELECT table_name FROM information_schema.tables WHERE table_schema = DATABASE() AND (table_name LIKE 'scoring%' OR table_name LIKE 'v_match%');` | 8 lignes : `scoring_live_state`, `scoring_live_clock`, `scoring_live_event`, `scoring_outbox`, `scoring_display_token`, `scoring_display_settings`, `v_match_detail`, `v_match_live` | ☑ |
+| 4 | La boucle ci-dessus | 6 lignes `✔ … appliqué`, aucune erreur (5ᵉ : côtés du terrain §0.18 ; 6ᵉ : tirs et arrêts §0.19, ajoutées le 2026-11-28) | ☐ |
+| 5 | 🗄 `SELECT table_name FROM information_schema.tables WHERE table_schema = DATABASE() AND (table_name LIKE 'scoring%' OR table_name LIKE 'v_match%');` | 9 lignes : `scoring_live_state`, `scoring_live_clock`, `scoring_live_event`, `scoring_live_stat`, `scoring_outbox`, `scoring_display_token`, `scoring_display_settings`, `v_match_detail`, `v_match_live` (`scoring_live_stat` ajoutée le 2026-11-28) | ☐ |
 | 6 | 🗄 `SHOW COLUMNS FROM kp_match LIKE 'uid';` | 1 ligne (colonne additive du lot 1) | ☑ |
 
 > ⚠️ **À refaire après chaque rechargement de la base de dev** depuis une sauvegarde de prod (c'est ce qui
@@ -452,6 +453,22 @@ Préalable : la 5ᵉ migration de R0.2 (`2026-11-28_scoring_live_sides.sql`) app
 | 3.114 | Incrustation ouverte (lot 4) pendant 3.108 et 3.109 | **A reste à gauche** (SIDE-07) | | ☐ |
 | 3.115 | Deux consoles sur le même match, inverser les côtés sur l'une | l'autre suit (synchro Mercure) | | ☐ |
 
+#### Tirs et arrêts en deux touches (2026-11-28, spec §0.19)
+
+Préalable : la 6ᵉ migration de R0.2 (`2026-11-28_scoring_live_stat.sql`) appliquée, puis `make api2_restart`.
+
+| # | Test | Attendu | Exécuté le | ☑ |
+|---|---|---|---|---|
+| 3.116 | Match En cours, `/` (ballon à l'équipe de gauche = A), puis `T` | « Tir · A » en tête du journal des tirs, surligné, au temps du chrono ; invite « n° ? » pendant 3 s (SHOT-01) | | ☐ |
+| 3.117 | Même situation, `A` | « Arrêt · B » (l'équipe du gardien) (SHOT-02) | | ☐ |
+| 3.118 | `T` puis `7` `Entrée` ; `A` puis `1` et attendre 3 s ; `T` puis `Échap` | le tir porte « n° 7 » (joueur de A) ; l'arrêt « n° 1 » (joueur de B) ; le dernier tir reste sans numéro (SHOT-05 à 07) | | ☐ |
+| 3.119 | `T` puis `23` (absent de l'effectif) `Entrée` | « n° 23 inconnu », le tir reste sans joueur (SHOT-08) | | ☐ |
+| 3.120 | Début de période, avant tout départ 60 s : `T` | tir « équipe ? » ; totaux « sans équipe : 1 » (SHOT-04) | | ☐ |
+| 3.121 | Armer un carton (`J`), puis cliquer hors du champ et taper `T` | le tir est enregistré, le carton reste armé (SHOT-09) | | ☐ |
+| 3.122 | Corbeille d'un tir, avec une 2ᵉ console ouverte sur le match | il disparaît des deux journaux et des totaux (SHOT-11) | | ☐ |
+| 3.123 | Post-match, score seul, match En attente | ni boutons Tir / Arrêt ni journal ; `T` et `A` sans effet (SHOT-12) | | ☐ |
+| 3.124 | 🗄 Clôturer le match puis `SELECT COUNT(*) FROM kp_match_detail d JOIN scoring_live_stat s ON s.uid = d.Id;` et `SELECT Journal FROM kp_journal WHERE Actions = 'Scoring tir' ORDER BY Id DESC LIMIT 3;` | `0` (aucun tir sur la feuille de match) ; lignes `add SHOT A #7 M1 …` (SHOT-13, SHOT-15) | | ☐ |
+
 ### Lot 4 — Page d'incrustation unique
 
 Les migrations du lot 4 sont dans R0.2. Puis :
@@ -542,7 +559,7 @@ le déploiement preprod est automatique, **pas les migrations SQL** (elles sont 
 |---|---|---|---|---|
 | R3.1 | 🌐 | PR vers `develop`, CI verte (`lint-nuxt (app4)`, `build-nuxt (app4)`, tests api2 unit + integration) | tous les jobs verts | ☐ |
 | R3.2 | 🖥 | `cd /data/kpi_preprod && git log -1 --oneline` après le déploiement auto | le commit fusionné | ☐ |
-| R3.3 | 🖥 | `make db_migrate file=SQL/migrations/<fichier>` pour les **5** migrations, dans l'ordre de R0.2 | 5 × `✔ … appliqué` | ☐ |
+| R3.3 | 🖥 | `make db_migrate file=SQL/migrations/<fichier>` pour les **6** migrations, dans l'ordre de R0.2 | 6 × `✔ … appliqué` | ☐ |
 | R3.4 | 🖥 | `grep -c MERCURE_JWT_SECRET docker/.env sources/api2/.env` puis comparer les valeurs | identiques | ☐ |
 | R3.5 | 🖥 | `make docker_preprod_up` (env du worker) puis `docker logs --tail 50 kpi_preprod_event_cache_worker` | drainage sans erreur 401/403 | ☐ |
 | R3.6 | 🌐 | Rejouer **4.1d** sur `preprod` (incrustation avec jeton, `?debug`) | état SSE `live` **avec `MERCURE_ANONYMOUS=0`** — c'est la validation du lot 0.3 | ☐ |
@@ -554,7 +571,7 @@ le déploiement preprod est automatique, **pas les migrations SQL** (elles sont 
 | # | Où | Commande / action | Résultat attendu | ☑ |
 |---|---|---|---|---|
 | R4.1 | 🌐 | PR `develop` → `main`, déploiement prod manuel (cf. [runbook](../infrastructure/DEPLOYMENT_RUNBOOK.md)) | déploiement OK | ☐ |
-| R4.2 | 🖥 | Les 5 migrations sur `/data/kpi` (comme R3.3) | 5 × `✔` | ☐ |
+| R4.2 | 🖥 | Les 6 migrations sur `/data/kpi` (comme R3.3) | 6 × `✔` | ☐ |
 | R4.3 | 🖥 | Comme R3.4 et R3.5 sur la prod | idem | ☐ |
 | R4.4 | 🌐 | Un **terrain pilote** d'un vrai événement tenu à la console, **en parallèle** du dispositif legacy (FMV3 / WSM sur une autre table) | mêmes scores, même déroulement, aucune perte au rechargement ; feuille PDF identique après clôture | ☐ |
 | R4.5 | 🌐 | Incrustation unique sur ce terrain dans OBS, comparée à l'incrustation legacy (4.13) | mêmes valeurs ; bascule possible terrain par terrain | ☐ |

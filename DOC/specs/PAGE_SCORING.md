@@ -11,7 +11,8 @@
 > raccourcis paramétrables, relais matériel), **du 2026-07-27 en §0.9**, **correctif
 > réglementaire pénalités du 2026-07-29 en §0.10**, **revue UX du 2026-11-05 en §0.11** et
 > **révision de la saisie du 2026-11-06 en §0.12** (§0.12 prime sur §0.11), **côtés du terrain et touches
-> spatiales du chronomètre de tir du 2026-11-27 en §0.18** (prime sur §6.5 pour ces touches).
+> spatiales du chronomètre de tir du 2026-11-27 en §0.18** (prime sur §6.5 pour ces touches), **tirs et arrêts
+> en deux touches du 2026-11-28 en §0.19**.
 > Cible : intégration dans **app4** (Nuxt 4, api2 Symfony)
 > Remplace : `sources/admin/FeuilleMarque2.php`, `sources/admin/FeuilleMarque3.php`
 >            (legacy jQuery) et l'ancien prototype standalone app3 (feuille de marque Nuxt)
@@ -572,6 +573,78 @@ des incrustations ; changement de côté en cours de période (inexistant au rè
   table de vérité a été vérifiée par un script). Tests fonctionnels 3.104 à 3.115 de la checklist.
 - **Non couvert par un test automatique** : le câblage de la page (coup d'envoi → fenêtre, blocage du premier
   démarrage, bandeau de changement de côté, alerte D11) — couvert par les tests fonctionnels 3.104 à 3.113.
+
+### 0.19 Tirs et arrêts : deux touches du secrétaire (2026-11-28)
+
+> **Origine** : étude [SCORING_EXTENDED_STATS_STUDY.md §4.0](../developer/in-progress/SCORING_EXTENDED_STATS_STUDY.md)
+> (réponses Q23–Q26). Concession sur la charge du secrétaire : **deux touches**, l'équipe venant de la
+> possession déclarée par le chronomètre de tir (§0.18). Statistiques **non officielles** : jamais sur la
+> feuille de match, le PDF ni `kp_match_detail`.
+
+#### 0.19.1 Règles
+
+| # | Décision | Pourquoi |
+|---|---|---|
+| T1 | **Deux faits** : **Tir** = tir non marqué **et non arrêté par le gardien** (à côté, sur le cadre, contré par un joueur de champ, Q26) ; **Arrêt** = tir arrêté par le **gardien**. Le but reste le fait `B` existant (un but est aussi un tir) | le minimum qui donne tirs, arrêts, % d'arrêts et efficacité ; le cadre n'a pas de touche (Q25) |
+| T2 | **Touches** : `T` (Tir) et `A` (Arrêt) en français, `S` (*Shot*) et `K` (*Keeper save*) en anglais (Q23), réassignables comme les autres (modale Raccourcis clavier). **Boutons** équivalents dans le panneau de saisie (souris, tactile) | clavier-first, comme les autres faits |
+| T3 | **Un appui = un fait enregistré** : aucune équipe, aucun joueur, aucun temps à choisir, aucune fenêtre, aucune confirmation. Une saisie en cours (fait armé, joueur choisi) **n'est pas touchée** | la concession porte sur deux appuis, rien de plus (C3) |
+| T4 | **Équipe déduite de la possession** : la **dernière commande** du chronomètre de tir de la période (60 s gauche / droite, §0.18 ; maintenue par un 40 s) donne l'équipe en attaque. **Tir** → l'équipe **en possession** ; **Arrêt** → l'**autre** équipe (celle du gardien). **Possession inconnue** (aucun départ 60 s dans la période, ou console rechargée depuis) : fait enregistré **sans équipe**, signalé « équipe ? » | le secrétaire ne désigne rien ; l'attribution d'un fait sans équipe est laissée au calcul des statistiques |
+| T5 | **Numéro facultatif** (Q24) : juste après `T` ou `A`, une invite « n° ? » s'affiche **3 s** ; les **chiffres** tapés pendant ce temps (relancent le délai) désignent le **tireur** (Tir : joueur de l'équipe en possession) ou le **gardien** (Arrêt : joueur de l'autre équipe). `Entrée` valide tout de suite, `Échap` ferme sans numéro, le délai écoulé valide ce qui est tapé. Numéro inconnu dans l'effectif : le fait reste sans joueur (« n° 23 inconnu ») | le joueur quand le secrétaire en a le temps, rien sinon ; l'arrêt est imputé au joueur qui l'a fait, quel qu'il soit (C1) |
+| T6 | **Retour et correction** : un **journal des tirs** sous le panneau de saisie donne les totaux par équipe (Tirs, Arrêts) et les derniers faits (période, temps, équipe, n°), le dernier **surligné** ; chaque ligne a sa **corbeille** (sans confirmation : statistique non officielle). Jamais de son | voir sans chercher, corriger en un clic |
+| T7 | **Où** : mode **direct**, match **En cours**, saisie détaillée ; **inactif** en post-match, en mode score seul et quand la source active n'est pas la console (`HARDWARE`) | la possession n'existe qu'en direct, avec le chronomètre de tir de la console |
+| T8 | **Jamais officiel** : table dédiée `scoring_live_stat`, **hors** `scoring_live_event`, donc hors consolidation `kp_match_detail`, hors PDF et hors vue `v_match_detail` (lue par les médailles, les suspensions, les désignations) | aucune règle existante ne doit voir ces faits |
+
+#### 0.19.2 Données et diffusion
+
+- **`scoring_live_stat`** (migration `SQL/migrations/2026-11-28_scoring_live_stat.sql`, 6ᵉ de la checklist R0.2) :
+  `uid` (client), `id_match`, `kind` (`SHOT` / `SAVE`), `periode`, `temps`, `team` (`A` / `B` / `''` =
+  inconnue), `id_player`, `numero`, `created_at`.
+- **`PUT /admin/scoring/shots/{matchId}`** (`action` = `add` / `update` / `remove`, `uid`, `kind`, `period`,
+  `tpsJeu`, `team`, `player`, `number`) et **`GET /admin/scoring/shots/{matchId}`** ; écriture dans une
+  transaction avec `tick` et dépôt Mercure sur le bloc `…/stat` (les autres consoles du match relisent) ;
+  journal « Scoring tir ».
+- **Calculs et publication** (couverture mesurée par les 40 s, seuil 80 %, stats publiques) : hors de cette
+  section, spec des statistiques étendues à venir (étude §6, lot 2).
+
+#### 0.19.3 Critères d'acceptation
+
+| # | Étant donné | Quand | Alors |
+|---|---|---|---|
+| **SHOT-01** | match En cours, direct ; dernier départ 60 s pour l'équipe de gauche = A | je tape `T` | un **Tir de A** est enregistré au temps du chrono et à la période en cours, sans autre geste ; il apparaît surligné en tête du journal des tirs |
+| **SHOT-02** | même situation | je tape `A` | un **Arrêt de B** (l'équipe du gardien) est enregistré |
+| **SHOT-03** | dernier départ de la période = 40 s après un 60 s pour A | je tape `T` | Tir de A (le 40 s maintient la possession) |
+| **SHOT-04** | aucun départ 60 s dans la période | je tape `T` | Tir enregistré **sans équipe**, affiché « équipe ? » |
+| **SHOT-05** | je viens de taper `T` (Tir de A) | je tape `7` puis `Entrée` (ou j'attends 3 s) | le Tir porte le joueur n° 7 de **A** ; l'invite disparaît |
+| **SHOT-06** | je viens de taper `A` (Arrêt de B) | je tape `1` | après 3 s, l'Arrêt porte le joueur n° 1 de **B** |
+| **SHOT-07** | je viens de taper `T` | je tape `Échap` (ou rien pendant 3 s) | le Tir reste sans joueur |
+| **SHOT-08** | je viens de taper `T` | je tape `23`, absent de l'effectif de l'équipe | le Tir reste sans joueur, l'invite dit « n° 23 inconnu » |
+| **SHOT-09** | un carton armé (`J`), numéro en cours de saisie dans son champ | je tape `T` dans ce champ | rien n'est enregistré (les raccourcis sont neutralisés dans un champ de saisie) ; hors du champ, `T` enregistre le Tir **sans** lever le carton armé |
+| **SHOT-10** | trois tirs de A, un arrêt de B | je regarde le journal des tirs | totaux « A : 3 tirs, 0 arrêt · B : 0 tir, 1 arrêt » et les derniers faits |
+| **SHOT-11** | un Tir dans le journal | je clique sa corbeille | il disparaît du journal et des totaux, sur cette console et sur les autres consoles du match |
+| **SHOT-12** | post-match, score seul, ou match En attente / Terminé | je tape `T` ou `A` | rien n'est enregistré ; les boutons Tir / Arrêt ne sont pas proposés |
+| **SHOT-13** | des tirs et arrêts enregistrés | je clôture le match | ni `kp_match_detail`, ni la feuille de match PDF, ni `v_match_detail` ne les contiennent |
+| **SHOT-14** | modale Raccourcis clavier | je l'ouvre en français, puis « Valeurs par défaut » EN | « Tir » = `T`, « Arrêt » = `A` ; en anglais `S` et `K` ; aucune touche en double |
+| **SHOT-15** | une écriture `PUT /shots` | je consulte le journal | une ligne « Scoring tir » (`add SHOT A #7 M1 06:42`) |
+
+**Tests** : utilitaires purs (`utils/scoringShots.ts` : équipe déduite, joueur par numéro, saisie du numéro ;
+SHOT-01 à 08), raccourcis (SHOT-14), composant du journal des tirs (SHOT-10, 11), PHPUnit `integration` de la
+route et de l'exclusion de la consolidation (SHOT-13, 15). Tests fonctionnels à ajouter à la checklist.
+
+#### 0.19.4 Implémentation (2026-11-28)
+
+- **app4** : `utils/scoringShots.ts` (équipe déduite, saisie et résolution du numéro, totaux), composant
+  `ScoringShotLog` (totaux, derniers faits, invite du numéro, corbeille), store `shots` + `addShot` /
+  `setShotPlayer` / `removeShot`, page `scoring.vue` (touches et boutons Tir / Arrêt, invite « n° ? » 3 s
+  captée avant les autres touches, possession = dernier départ 60 s de la période). Raccourcis `statShot` /
+  `statSave`.
+- **api2** : `ScoringLiveService::writeStat` / `listStats`, `PUT|GET /admin/scoring/shots/{matchId}`, bloc
+  Mercure `…/stat`, journal « Scoring tir ».
+- **Base** : `SQL/migrations/2026-11-28_scoring_live_stat.sql` (6ᵉ migration de la checklist R0.2).
+- **Tests** : Vitest `scoringShots`, `scoringShortcuts`, `scoring-shot-log` (verts) ; PHPUnit
+  `ScoringLiveStatTest` (écrit, **non exécuté** dans l'environnement de rédaction, faute de PHP 8.4). Tests
+  fonctionnels 3.116 à 3.124 de la checklist.
+- **Limite connue** : la possession n'est connue que de la console qui a tapé le départ 60 s ; après un
+  rechargement, ou sur une seconde console, les tirs sont « équipe ? » jusqu'au départ 60 s suivant (T4).
 
 ## 1. Contexte et objectif
 

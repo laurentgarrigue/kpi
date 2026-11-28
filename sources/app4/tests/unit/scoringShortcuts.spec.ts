@@ -62,10 +62,17 @@ describe('shortcutDefaults — touches par défaut selon la langue', () => {
     }
   })
 
+  it('saisit un tir par T et un arrêt par A en français, S et K en anglais (§0.19, SHOT-14)', () => {
+    const fr = shortcutDefaults('fr')
+    const en = shortcutDefaults('en')
+    expect([fr.statShot, fr.statSave]).toEqual(['t', 'a'])
+    expect([en.statShot, en.statSave]).toEqual(['s', 'k'])
+  })
+
   it('n’utilise aucun chiffre pour un fait (les chiffres servent au n° du joueur)', () => {
     for (const locale of ['fr', 'en']) {
       const d = shortcutDefaults(locale)
-      for (const k of [d.factGoal, d.factGreen, d.factYellow, d.factRed, d.factBlack]) expect(k).not.toMatch(/\d/)
+      for (const k of [d.factGoal, d.factGreen, d.factYellow, d.factRed, d.factBlack, d.statShot, d.statSave]) expect(k).not.toMatch(/\d/)
     }
   })
 })

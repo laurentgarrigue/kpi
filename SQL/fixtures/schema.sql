@@ -908,6 +908,21 @@ CREATE TABLE `scoring_live_event` (
   KEY `idx_scoring_event_match` (`id_match`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+DROP TABLE IF EXISTS `scoring_live_stat`;
+CREATE TABLE `scoring_live_stat` (
+  `uid` varchar(32) CHARACTER SET ascii COLLATE ascii_general_ci NOT NULL,
+  `id_match` int(10) UNSIGNED NOT NULL,
+  `kind` enum('SHOT','SAVE') NOT NULL,
+  `periode` varchar(4) DEFAULT NULL,
+  `temps` time DEFAULT NULL,
+  `team` char(1) NOT NULL DEFAULT '',
+  `id_player` varchar(25) DEFAULT NULL,
+  `numero` varchar(4) DEFAULT NULL,
+  `created_at` datetime(3) NOT NULL DEFAULT current_timestamp(3),
+  PRIMARY KEY (`uid`),
+  KEY `idx_scoring_stat_match` (`id_match`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
 DROP TABLE IF EXISTS `scoring_live_clock`;
 CREATE TABLE `scoring_live_clock` (
   `id` char(36) CHARACTER SET ascii COLLATE ascii_general_ci NOT NULL,
