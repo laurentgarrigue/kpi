@@ -754,18 +754,11 @@ appelée par `setChrono.php`, `StatutPeriode.php`, `evt_match.php`, `ajax_update
 
 - Nouveau `composables/useScoringPermissions.ts`, miroir de `usePresencePermissions`,
   signature `(isLocked: Ref<boolean>)`.
-- **Restriction DEV-ONLY (en cours de développement)** : le bouton « Scoring » dans /games
-  n'est visible que pour **le seul login `42054`** (constante `SCORING_DEV_USER` dans
-  `pages/games/index.vue` : `canScoring = authStore.user?.id === '42054' && profile <= 2`).
-  C'est un **masquage UI uniquement** (choix assumé : pas de restriction par login côté serveur).
-  À retirer pour revenir à `profile <= 2` quand la fonctionnalité s'ouvre au bureau.
-- **Accès restreint au profil ≤ 2 pour l'instant** (phase d'expérimentation : réservé aux
-  admins/bureau, pas encore ouvert au profil 9 « Table de marque »). Cohérent avec le bouton V3
-  existant déjà gaté `profile <= 2` dans la vue carte. Seuils :
-  - `canView = profile <= 2` (accès à la console + visibilité du lien « Scoring »)
-  - `canScore = profile <= 2 && !isLocked` (buts/cartons/chrono)
-  - `canManagePlayers = profile <= 2 && !isLocked`
-  - `canValidate / canLock = profile <= 2`
+- **Accès ouvert** : profils **1 à 6 et 9** (« Table de marque »). Les boutons V2/V3 de /games ont été
+  supprimés ; « Scoring » les remplace pour tous ces profils. Côté serveur, `ScoringController` :
+  `ROLE_ORGANIZER` ou niveau 9 (les profils 7-8 héritent de `ROLE_SCORER` et sont donc exclus explicitement).
+  `canValidate` / `canLock` restent réservés au profil ≤ 6.
+- *Historique (phase d'expérimentation, obsolète)* :
 - **Cible post-validation** (à élargir une fois la fonctionnalité validée, non implémenté
   maintenant, **à confirmer dans le point dédié**) : `canScore = (profile <= 6 || profile === 9)`,
   `canValidate = profile <= 6`, **`canLock = profile <= 6` (plafond ferme : le profil 9 ne
