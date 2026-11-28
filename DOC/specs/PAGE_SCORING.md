@@ -470,6 +470,8 @@ le lui retire sans que rien ne le montre : l'opérateur appuie sur `+`, rien ne 
 > **Origine** : étude [SCORING_EXTENDED_STATS_STUDY.md §3.5](../developer/in-progress/SCORING_EXTENDED_STATS_STUDY.md)
 > (réponses Q9–Q19). Utile **sans** les statistiques étendues : la console et le panneau collent à la
 > position réelle des équipes. Prime sur §6.5 pour les touches du chronomètre de tir.
+> **Révisé le 2026-11-28** : mode relatif abandonné (touches gauche / droite seules) ; pavé USB
+> externe à 4 touches en carré (D14).
 
 #### 0.18.1 Règles
 
@@ -481,13 +483,14 @@ le lui retire sans que rien ne le montre : l'opérateur appuie sur `+`, rien ne 
 | D4 | **Inversion manuelle** : bouton **« ⇄ Inverser les côtés »** dans l'en-tête de la console, **avec confirmation** (« Inverser les côtés pour la période M2 ? »), **sans raccourci clavier**. Elle vaut **pour la période en cours seulement** (dérogation mémorisée par période) et s'annule par un second clic | corriger une erreur de côté de départ ou un oubli ; ne doit jamais partir par erreur en plein jeu |
 | D5 | **Ce qui suit les côtés** : la **console** (colonnes d'équipe : noms, scores, effectifs, pénalités ; en-têtes de la chronologie sur PC) et le **tableau de score** plein écran (`games/[id]/scoreboard`). **Ce qui ne les suit pas** : les **incrustations** (A reste à gauche, réponse Q19), l'écran du chronomètre de tir (aucune équipe), le PDF, les données | le public lit le panneau dans le sens du jeu ; le téléspectateur garde le même repère tout le match |
 | D6 | **L'identité A / B ne change jamais** : feuille de match, couleurs, `team` dans `scoring_live_*`, consolidation `kp_*`. Seul l'**affichage** est mis en miroir | aucune donnée ne dépend de l'affichage |
-| D7 | **Touches spatiales du chronomètre de tir** (défaut) : **`/` = départ 60 s, possession à l'équipe de gauche** ; **`*` = départ 60 s, possession à l'équipe de droite** ; **`-` = départ 40 s** (inchangé) ; **`+` = arrêt** (retour à `--`). Les boutons à l'écran suivent : **60 s ◀** à gauche, **60 s ▶** à droite, aux couleurs de l'équipe du côté | `/` et `*` côte à côte sous les doigts, sans regarder l'écran (Q10) ; les coups francs et avantages (Q9) se tapent comme les autres 60 s ; l'engagement est connu |
+| D7 | **Touches spatiales du chronomètre de tir** (seul jeu de touches) : **`/` = départ 60 s, possession à l'équipe de gauche** ; **`*` = départ 60 s, possession à l'équipe de droite** ; **`-` = départ 40 s** (inchangé) ; **`+` = arrêt** (retour à `--`). Les boutons à l'écran suivent : **60 s ◀** à gauche, **60 s ▶** à droite, aux couleurs de l'équipe du côté | `/` et `*` côte à côte sous les doigts, sans regarder l'écran (Q10) ; un 60 s peut suivre un changement de possession **ou** un coup franc / une faute laissée à l'avantage de l'équipe en possession (Q9) : désigner l'équipe évite d'avoir à le décider ; l'engagement est connu |
 | D8 | **Les deux touches 60 s ont exactement le même effet sur le match** : même décompte de 60 s, mêmes affichages. Elles ne diffèrent que par le **côté déclaré**, enregistré avec la commande | une erreur de touche ne gêne jamais le match (seule une statistique est fausse) |
-| D9 | **Mode relatif** en **préférence de poste** (modale Raccourcis clavier) : `+` = 60 s possession à l'autre équipe, `/` = 60 s même équipe, `-` = 40 s, `*` = arrêt | pour l'opérateur qui préfère ; validation comparée au pilote (étude §3.5.4) |
-| D10 | **La commande enregistre le côté, pas l'équipe** : `start60` porte `side = L \| R` (mode spatial) ou `sameTeam = true \| false` (mode relatif) ; l'équipe se déduit des côtés de la période. Une inversion manuelle (D4) **réattribue donc toute la période**, y compris les commandes déjà tapées | une période entière inversée se corrige d'un seul geste |
-| D11 | **Inversion probable détectée** (mode spatial) : quand un **but** de X est saisi alors que la dernière commande 60 s / 40 s de la période attribuait le ballon à l'autre équipe, un **bandeau** s'affiche pour le **secrétaire** : « Ballon attribué à <Y> avant le but de <X> : côtés inversés ? » — **[Inverser les côtés]** (D4, sans seconde confirmation) / **[Ignorer]** (plus de bandeau pour cette période). Jamais bloquant, jamais de son | le secrétaire regarde l'écran, le chronométreur de tir non (Q10) ; une erreur de touche isolée ne doit pas imposer d'inversion |
+| D9 | ~~Mode relatif en préférence de poste~~ — **abandonné le 2026-11-28** : avec deux touches 60 s, on désigne directement l'équipe | YAGNI ; un seul jeu de touches à apprendre et à tester |
+| D10 | **La commande enregistre le côté, pas l'équipe** : `start60` porte `side = L \| R` ; l'équipe se déduit des côtés de la période. Une inversion manuelle (D4) **réattribue donc toute la période**, y compris les commandes déjà tapées | une période entière inversée se corrige d'un seul geste |
+| D11 | **Inversion probable détectée** : quand un **but** de X est saisi alors que la dernière commande 60 s / 40 s de la période attribuait le ballon à l'autre équipe, un **bandeau** s'affiche pour le **secrétaire** : « Ballon attribué à <Y> avant le but de <X> : côtés inversés ? » — **[Inverser les côtés]** (D4, sans seconde confirmation) / **[Ignorer]** (plus de bandeau pour cette période). Jamais bloquant, jamais de son | le secrétaire regarde l'écran, le chronométreur de tir non (Q10) ; une erreur de touche isolée ne doit pas imposer d'inversion |
 | D12 | **Source matériel** (`HARDWARE`) : les côtés et D3 s'appliquent à la console en supervision et au tableau de score KPI (les changements de période reçus du relais déclenchent D3). Le panneau du constructeur garde son propre affichage. Aucune touche spatiale (la saisie est sur la console du constructeur) : les départs reçus n'ont pas de côté. **Score seul** (`SCORE_ONLY`) : côtés d'affichage seulement | la saisie propriétaire passe par le relais (plan lot 5), dont le format n'est pas encore connu (action 0.5) |
 | D13 | **Legacy** : FeuilleMarque V2 / V3 et l'onglet WSM ne changent pas | [ADR-0002](../developer/reference/adr/0002-plus-d-evolution-du-legacy.md) |
+| D14 | **Pavé USB externe à 4 touches en carré** (facultatif), vu du chronométreur de tir : en haut **« 60 ▶ »** (équipe de gauche, qui attaque vers la droite) et **« ◀ 60 »** (équipe de droite, qui attaque vers la gauche) ; en bas **« ARRÊT »** et **« 40 »**. Il **émet les touches de la console** (`/`, `*`, `+`, `-`) : aucun développement côté KPI, il est vu comme un clavier. Macro-pad programmable du commerce ou fabrication maison (étude §3.5.5) | quatre touches de même taille, au toucher ; position = équipe, flèche = sens de l'attaque, comme le geste de l'arbitre |
 
 #### 0.18.2 Données et diffusion
 
@@ -495,7 +498,7 @@ le lui retire sans que rien ne le montre : l'opérateur appuie sur `+`, rien ne 
   périodes inversées à la main, D4). Les côtés courants ne sont **pas stockés** : ils se calculent
   (`sidesFor(sidesStart, période, overrides)`, D3), côté app4 (`utils/scoringSides.ts`) et côté api2
   (`ScoringRules::sidesFor`), même table de vérité testée des deux côtés.
-- **Commandes du chronomètre de tir** : `start60` + `side` ou `sameTeam` (D10), persistés avec le départ
+- **Commandes du chronomètre de tir** : `start60` + `side` (D10), persistés avec le départ
   (`scoring_live_clock` ou fait associé, à fixer à l'implémentation) et journalisés (« Scoring chrono » :
   `SHOTCLOCK run 60 L 1:00`). La machine à états (`ScoringRules::shotclockTransition`) **ne change
   pas**.
@@ -504,9 +507,9 @@ le lui retire sans que rien ne le montre : l'opérateur appuie sur `+`, rien ne 
 - **Diffusion** : les côtés courants rejoignent l'état diffusé (Mercure `…/teams` et l'état complet) et le
   canal local (`teams` porte `sides`). Le tableau de score s'y conforme ; les incrustations l'ignorent
   (D5).
-- **Préférences** : nouvelles actions `shotclockStart60Left`, `shotclockStart60Right`,
-  `shotclockStart60Other`, `shotclockStart60Same` ; le mode (spatial / relatif) est une préférence de
-  poste. Clé `kpi.scoring.shortcuts.v3` : les préférences v2 sont **abandonnées** (le sens de `+` et de
+- **Préférences** : l'action `shotclockStart60` est remplacée par `shotclockStart60Left` et
+  `shotclockStart60Right`, réassignables comme les autres (un pavé qui émet d'autres codes, F13–F16 par
+  exemple, reste utilisable). Clé `kpi.scoring.shortcuts.v3` : les préférences v2 sont **abandonnées** (le sens de `+` et de
   `*` change), comme lors du passage à v2 (§0.13).
 
 #### 0.18.3 Critères d'acceptation
@@ -520,13 +523,13 @@ le lui retire sans que rien ne le montre : l'opérateur appuie sur `+`, rien ne 
 | **SIDE-05** | M2 en cours | je reviens à M1 par le menu de la période | les côtés de M1 reviennent |
 | **SIDE-06** | M2 en cours | je clique « ⇄ Inverser les côtés » | une confirmation nomme la période ; « Annuler » ne change rien ; « Confirmer » inverse la console et le tableau de score, pour M2 seulement (passer en P1 applique la règle D3 sans la dérogation) |
 | **SIDE-07** | un match en cours | une incrustation est affichée | A reste à gauche quelles que soient la période et les inversions |
-| **SIDE-08** | mode spatial, A à gauche, chronomètre de tir à `--` | je tape `/` | le chronomètre de tir part à 60 s, la commande est enregistrée avec `side = L` (équipe A) |
-| **SIDE-09** | mode spatial, A à gauche | je tape `*` | même décompte de 60 s qu'avec `/`, mêmes affichages ; commande enregistrée avec `side = R` (équipe B) |
-| **SIDE-10** | mode spatial | je tape `-`, puis `+` | `-` lance 40 s ; `+` ramène à `--` |
+| **SIDE-08** | A à gauche, chronomètre de tir à `--` | je tape `/` | le chronomètre de tir part à 60 s, la commande est enregistrée avec `side = L` (équipe A) |
+| **SIDE-09** | A à gauche | je tape `*` | même décompte de 60 s qu'avec `/`, mêmes affichages ; commande enregistrée avec `side = R` (équipe B) |
+| **SIDE-10** | chronomètre de tir à `--` | je tape `-`, puis `+` | `-` lance 40 s ; `+` ramène à `--` |
 | **SIDE-11** | M2 en cours avec des départs 60 s déjà tapés | j'inverse les côtés (SIDE-06) | les départs déjà tapés de M2 sont réattribués à l'autre équipe ; ceux de M1 ne bougent pas |
-| **SIDE-12** | mode spatial, dernier départ attribuant le ballon à B | le secrétaire saisit un but de A | le bandeau « côtés inversés ? » s'affiche ; « Inverser les côtés » applique SIDE-06 sans seconde confirmation ; « Ignorer » le masque jusqu'à la fin de la période |
-| **SIDE-13** | mode spatial, dernier départ attribuant le ballon à A | le secrétaire saisit un but de A | aucun bandeau |
-| **SIDE-14** | modale Raccourcis clavier | je choisis le mode relatif | `+` = 60 s autre équipe, `/` = 60 s même équipe, `-` = 40 s, `*` = arrêt ; aucun bandeau D11 dans ce mode |
+| **SIDE-12** | dernier départ attribuant le ballon à B | le secrétaire saisit un but de A | le bandeau « côtés inversés ? » s'affiche ; « Inverser les côtés » applique SIDE-06 sans seconde confirmation ; « Ignorer » le masque jusqu'à la fin de la période |
+| **SIDE-13** | dernier départ attribuant le ballon à A | le secrétaire saisit un but de A | aucun bandeau |
+| **SIDE-14** | modale Raccourcis clavier | je réassigne « 60 s équipe de gauche » à `F13` | `F13` lance 60 s pour l'équipe de gauche, `/` ne fait plus rien ; « Valeurs par défaut » rend `/` |
 | **SIDE-15** | des préférences de touches enregistrées en v2 | j'ouvre la console | les touches par défaut du mode spatial s'appliquent (préférences v2 abandonnées) |
 | **SIDE-16** | une inversion, un réglage du côté de départ | je consulte le journal | une ligne « Scoring côtés » par action, avec période et temps de jeu |
 | **SIDE-17** | source active `HARDWARE` | le relais annonce le passage en M2 | la console en supervision et le tableau de score KPI inversent les côtés |
@@ -999,9 +1002,9 @@ porté par la compétition, en **hydratant `store.config`**).
   | Shotclock : **départ/reset 40 s** (rebond offensif) | `-` |
   | Shotclock : **arrêt** (retour à `--`, état initial) | `*` |
 
-  > **Revu le 2026-11-27** (§0.18) : touches **spatiales** par défaut — `/` 60 s équipe de gauche,
-  > `*` 60 s équipe de droite, `-` 40 s, `+` arrêt ; l'ancien jeu (`+` / `-` / `*`) devient le mode
-  > relatif, enrichi de `/` = 60 s même équipe.
+  > **Revu le 2026-11-27 / 28** (§0.18) : touches **spatiales** — `/` 60 s équipe de gauche,
+  > `*` 60 s équipe de droite, `-` 40 s, `+` arrêt ; pavé USB externe à 4 touches en carré possible
+  > (D14). Le tableau ci-dessus décrit l'état actuel du code, jusqu'à l'implémentation de §0.18.
   | Faits de jeu (but, cartons V/J/R/noir) | FR `B V J R N`, EN `O G Y R B` |
 
   > **Revu le 2026-11-08** (§0.13) : `Entrée` / `.` / `0` abandonnés (`Entrée` valide un fait,

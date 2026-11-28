@@ -18,7 +18,10 @@
 > - **v6 (2026-11-27)** : spec du switch écrite ([PAGE_SCORING §0.18](../../specs/PAGE_SCORING.md),
 >   SIDE-01 à 18) ; **correction** : `app_wsm_dev` est le relais de la console propriétaire (onglet WSM)
 >   et reste jusqu'au lot 5 — seule sa page Stats est supprimée (§7) ; saisie sur console propriétaire
->   (§3.6).
+>   (§3.6) ;
+> - **v7 (2026-11-28)** : un 60 s peut aussi suivre un **avantage** (faute non sifflée, geste
+>   d'avantage) ; **décision : touches gauche / droite seules**, le mode relatif est abandonné ;
+>   **pavé USB externe à 4 touches en carré** (§3.5.5).
 >
 > **Contexte** : console Scoring d'app4 ([PAGE_SCORING.md](../../specs/PAGE_SCORING.md), notamment
 > §0.4 « fait de match extensible », §0.13 touches du chronomètre de tir, §6.5 chronomètre de tir),
@@ -82,7 +85,7 @@ officielle, pour :
 | **Q14** | Délégation par le responsable d'équipe | **Oui.** | §4.1 : lien nominatif limité au match et à la fenêtre de 24 h. |
 | **Q15** | Quand supprimer `kp_stats` | **Avec le premier lot.** | §6, lot 1. |
 | **Q16** | Sens de « gauche » | **L'équipe située sur la moitié gauche du terrain**, vue de l'**arbitre principal et de la table de marque** (même côté, R11 de l'étude afficheurs). | `/` = « possession à l'équipe de gauche », `*` = « à l'équipe de droite ». La touche désigne une **équipe** (par sa moitié de terrain), pas une direction d'attaque (§3.5.2). |
-| **Q17** | Mode des touches | **Pas d'avis arrêté.** | §3.5.4 : recommandation argumentée + critère mesuré au pilote. |
+| **Q17** | Mode des touches | Pas d'avis arrêté (v5), puis **décidé le 2026-11-28 : gauche / droite**, avec un pavé USB à 4 touches en carré. | §3.5.4, §3.5.5 ; mode relatif abandonné. |
 | **Q18** | Changements de côté | **Systématiques** à chaque nouvelle période et prolongation. | Le switch est **automatique** au passage de période (plus seulement « proposé ») ; annulable pour une correction. |
 | **Q19** | Panneau / incrustations | **Le panneau change, pas les incrustations.** | Le côté est diffusé au panneau (scoreboard) ; les incrustations gardent **A à gauche** (identité TV stable). |
 
@@ -130,7 +133,7 @@ match** (Q7) à partir de règles simples et de points d'ancrage déjà connus.
 | Fait | Possession suivante |
 |---|---|
 | Départ **40 s** | **même équipe** (Q2) |
-| Départ **60 s** | **l'autre équipe** — cas général : après but, arrêt récupéré par la défense, interception, sortie, violation |
+| Départ **60 s** | **l'une ou l'autre équipe** : **l'autre** après un changement de possession (but, arrêt récupéré par la défense, interception, sortie, violation) ; **la même** après un **coup franc** ou une **faute non sifflée laissée à l'avantage** de l'équipe en possession (geste d'avantage de l'arbitre, le chronomètre de tir repart à 60 s) |
 | **But** de A (saisi par le secrétaire) | la possession **qui précède** le but est à **A** ; la suivante (engagement) est indéterminée, voir ci-dessous |
 | **Engagement** (début de période, après but) | indéterminée tant qu'aucune ancre ne la fixe |
 
@@ -138,6 +141,11 @@ match** (Q7) à partir de règles simples et de points d'ancrage déjà connus.
 équipe sont connus). La chaîne se déroule **dans les deux sens** à partir de chaque ancre ; deux
 ancres successives doivent être **cohérentes**. Une incohérence signale soit un 60 s qui n'était pas
 un changement de possession (Q9), soit une erreur de manipulation : on la localise entre deux ancres.
+
+**Sans côté déclaré**, un 60 s ne dit donc pas à lui seul qui a le ballon : la reconstruction **suppose
+le changement** de possession, et chaque coup franc ou avantage devient une incohérence entre deux
+ancres. C'est pourquoi les départs 60 s **déclarent le côté** de l'équipe en possession (§3.5) ; les
+règles ci-dessus ne servent seules que là où aucun côté n'est déclaré (console propriétaire, §3.6).
 
 **Ce que ça donne, sans geste en plus** :
 
@@ -153,7 +161,10 @@ connue ; la possession suivante est ancrée **par le but suivant**, en remontant
 sans but (ou la fin de période après le dernier but) reste **non ancrée** : sa possession n'est pas
 publiable sans correction (§3.4) ou sans saisie du banc (§4.1).
 
-### 3.4 Raccourci `/` : « 60 s, même équipe »
+### 3.4 Raccourci `/` : « 60 s, même équipe » — ❌ abandonné (v7)
+
+> **Abandonné le 2026-11-28** au profit des touches gauche / droite (§3.5) : avec deux touches 60 s
+> disponibles, autant désigner directement l'équipe. Conservé pour mémoire.
 
 **Q10** : le chronométreur de tir ne regarde **pas l'écran**. Une touche de *correction* (« basculer
 l'équipe présumée ») serait donc **aveugle** : il ne sait pas ce que la machine a présumé. La touche doit
@@ -228,10 +239,10 @@ Avec des côtés connus, le chronométreur de tir n'a plus à décider « même 
 désigne **l'équipe qui a le ballon par sa moitié de terrain** (Q16 : l'équipe de gauche ou de droite,
 vue de la table). La console traduit le côté en A / B grâce au switch.
 
-> **Point de vigilance** : la touche désigne une **équipe**, pas une **direction**. L'équipe de gauche
-> attaque vers la **droite** ; si l'arbitre signale un coup franc **en montrant la direction de
-> l'attaque**, son bras pointe à l'opposé de la touche. À vérifier au pilote : si ça trouble les
-> opérateurs, la convention peut s'inverser par préférence de poste, sans rien changer aux données.
+> **Point de vigilance** : la touche désigne une **équipe** par sa position ; l'équipe de gauche attaque
+> vers la **droite**. Les étiquettes portent donc **les deux** informations : position de la touche =
+> moitié de terrain, flèche = sens de l'attaque (« 60 ▶ » à gauche, « ◀ 60 » à droite, §3.5.5). Le
+> geste de l'arbitre (direction de l'attaque) se lit sur la flèche.
 
 | | Relatif (§3.4) | **Spatial (switch)** |
 |---|---|---|
@@ -257,7 +268,6 @@ vue de la table). La console traduit le côté en A / B grâce au switch.
 - **Coût du changement faible maintenant** : les touches actuelles n'ont été essayées qu'en dev, aucun
   match réel n'a été tenu à la console (SCORING_ROLLOUT_CHECKLIST). Après le pilote, ce sera plus cher.
 - Sur un **boîtier** (étude afficheurs, R9) : deux boutons physiquement à gauche et à droite.
-- Le mode **relatif** (§3.4) reste disponible par préférence de poste, pour qui le préfère.
 
 #### 3.5.3 Le risque d'oubli du switch, et pourquoi il est maîtrisable
 
@@ -283,10 +293,10 @@ pas une suite d'erreurs dispersées.
 Résultat : l'oubli du switch coûte au pire **une période non publiée** quand elle n'a aucun but ; il ne
 publie **jamais** une possession inversée.
 
-#### 3.5.4 Spatial ou relatif ? Recommandation (Q17)
+#### 3.5.4 Spatial ou relatif ? Décision (Q17)
 
-**Recommandation : touches spatiales** (`/` équipe de gauche, `*` équipe de droite, `-` 40 s, `+` arrêt),
-le mode relatif restant une **préférence de poste**.
+**Décidé le 2026-11-28 : touches spatiales seules** (`/` équipe de gauche, `*` équipe de droite, `-` 40 s,
+`+` arrêt). Le mode relatif n'est pas développé (YAGNI). Arguments qui ont tranché :
 
 | Argument | Pourquoi il penche vers le spatial |
 |---|---|
@@ -297,16 +307,50 @@ le mode relatif restant une **préférence de poste**.
 | Nature des erreurs | spatial : au pire **une période entière**, détectée par les buts et corrigée (§3.5.3) ; relatif : erreurs **dispersées**, une par coup franc mal tapé, que les ancres situent mal |
 | Coût de changement | nul maintenant (touches jamais utilisées en match réel), réel après le pilote |
 
-**Ce que le relatif garde pour lui** : il ne dépend d'aucun réglage (côté de départ) et la grande touche
-`+` reste le 60 s, geste le plus fréquent. C'est la seule vraie objection : en spatial, le 60 s se
-répartit sur deux touches plus petites (`/`, `*`).
+**Seule objection** : le 60 s, geste le plus fréquent, quitte la grande touche `+` pour deux touches plus
+petites. Le pavé externe (§3.5.5) la lève : quatre touches de même taille.
 
-**Validation au pilote** (mesurable, sans ressenti) : la reconstruction compte les **conflits** (but
-dont la possession précédente est attribuée à l'autre équipe, hors période inversée en bloc).
-- critère : **≤ 1 conflit par période** en moyenne sur le tournoi pilote, et retour des chronométreurs
-  de tir (gêne, hésitation) ;
-- si le critère n'est pas tenu, essayer le mode relatif sur un tournoi suivant et comparer le même
-  indicateur.
+**Indicateur de qualité au pilote** (mesurable, sans ressenti) : la reconstruction compte les
+**conflits** (but dont la possession précédente est attribuée à l'autre équipe, hors période inversée en
+bloc). Cible : **≤ 1 conflit par période** en moyenne, et retour des chronométreurs de tir (gêne,
+hésitation).
+
+#### 3.5.5 Pavé USB externe à 4 touches en carré
+
+Un **petit clavier USB à 4 touches**, posé devant le chronométreur de tir, qu'il utilise **au toucher**
+sans regarder (Q10). Disposition (vue de l'opérateur, qui est du côté de la table) :
+
+```
+┌──────────────────┬──────────────────┐
+│      60 ▶        │       ◀ 60       │
+│ équipe de gauche │ équipe de droite │
+│ attaque → droite │ attaque → gauche │
+├──────────────────┼──────────────────┤
+│      ARRÊT       │        40        │
+│    (retour --)   │  rebond offensif │
+└──────────────────┴──────────────────┘
+```
+
+- **Rangée du haut** = les deux 60 s, chacun **du côté de son équipe**, flèche = sens de l'attaque ;
+  **rangée du bas** = arrêt (gauche) et 40 s (droite).
+- **Ce qu'il envoie** : les touches de la console (`/`, `*`, `+`, `-`), **rien à développer** côté KPI :
+  la console voit un clavier. Les quatre touches restent réassignables dans la modale Raccourcis clavier
+  si un pavé ne peut émettre que d'autres codes (F13–F16, par exemple).
+- **Trouver** : les **macro-pads USB 4 touches programmables** du commerce (firmware QMK / VIA ou logiciel
+  du fabricant, de l'ordre de 10 à 40 €) se programment **une fois** pour émettre ces touches, mémorisées
+  dans le pavé (aucun logiciel sur le PC de la table). À vérifier à l'achat : programmation stockée dans
+  le pavé, câble d'au moins 1,5 m, touches assez grosses et espacées.
+- **Créer** : 4 boutons type arcade (gros, robustes) + un microcontrôleur qui se présente en clavier USB
+  (Raspberry Pi Pico ou Arduino Pro Micro), dans un boîtier imprimé ou du commerce : quelques dizaines
+  d'euros, utilisable en extérieur (IP54 avec des boutons étanches). Le même boîtier peut converger avec
+  la base des afficheurs déportés (étude afficheurs §5.2), qui prévoit déjà des boutons pour le
+  chronométreur de tir.
+- **Étiquettes** : couleur neutre (les couleurs des équipes changent à chaque match), flèches et « 60 » /
+  « 40 » / « ARRÊT » en gros ; repère tactile sur les deux touches du haut.
+- **Sans pavé** : le pavé numérique du PC ou un pavé numérique déporté (`/` et `*` côte à côte en haut,
+  `-` à droite, `+` en dessous) fait le même travail.
+
+
 
 ### 3.6 Terrains équipés d'une console propriétaire
 
@@ -465,10 +509,10 @@ Colonnes indicatives : `uid`, `id_match`, `kind` (`SHOT` / `SAVE` / `POSSESSION`
   que renseigner `player` (et `outcome` pour une perte).
 - **Possession** : calculée, pas saisie — une vue ou une table de résultats recalculable, comme les
   médailles (recalcul saison par saison).
-- **Touches du chronomètre de tir** : la commande `start60` porte la **possession déclarée** (`team =
-  A | B` en mode spatial, traduite du côté par la console ; `sameTeam = true | false` en mode relatif),
-  persistée avec le départ dans `scoring_live_*` et le journal ; la machine à états du chronomètre de
-  tir (`ScoringRules::shotclockTransition`) ne change pas.
+- **Touches du chronomètre de tir** : la commande `start60` porte le **côté déclaré** (`side = L | R`),
+  l'équipe se déduisant des côtés de la période (PAGE_SCORING §0.18, D10), persistée avec le départ dans
+  `scoring_live_*` et le journal ; la machine à états du chronomètre de tir
+  (`ScoringRules::shotclockTransition`) ne change pas.
 - **Côtés** : `sides` (`A_LEFT` / `A_RIGHT`) dans `scoring_live_state`, chaque changement horodaté
   (période, temps) pour que la reconstruction sache quel côté valait à chaque départ.
 - **`kp_stats` (2022) : supprimé (Q13), avec le lot 1 (Q15)** — migration de suppression de la
@@ -476,14 +520,15 @@ Colonnes indicatives : `uid`, `id_match`, `kind` (`SHOT` / `SAVE` / `POSSESSION`
   (**le reste de l'app, relais WSM, est conservé jusqu'au lot 5**), de `PUT /api/wsm/stats/` (legacy,
   `wsmControllers.php`) et de `PUT /api2/admin/scoring/stats` (`ScoringController::putStats`).
 
-## 8. Questions ouvertes (v5)
+## 8. Questions ouvertes (v7)
 
-Plus de question bloquante pour l'étude. Restent à trancher **au pilote** :
+Plus de question bloquante pour l'étude. Restent à vérifier **au pilote** :
 
 | # | Question |
 |---|---|
-| **Q20** | Le bras de l'arbitre (direction de l'attaque) trouble-t-il les opérateurs avec une touche qui désigne une équipe (§3.5.2, point de vigilance) ? |
-| **Q21** | Le taux de conflits tient-il le critère (≤ 1 par période, §3.5.4) ? Sinon, essai du mode relatif. |
+| **Q20** | Les étiquettes du pavé (position = équipe, flèche = sens de l'attaque, §3.5.5) suffisent-elles pour que le geste de l'arbitre ne trouble pas les opérateurs ? |
+| **Q21** | Le taux de conflits tient-il la cible (≤ 1 par période, §3.5.4) ? |
+| **Q22** | Pavé : macro-pad du commerce ou fabrication maison (§3.5.5) ? Un modèle à tester avant le pilote. |
 
-Prochaine étape proposée : **spec du switch des côtés et des touches spatiales** dans PAGE_SCORING
-(critères d'acceptation testables), puis spec des lots 1 et 3 (`FEATURE_EXTENDED_STATS.md`).
+Prochaine étape : spec des statistiques étendues (lots 1 et 3, `FEATURE_EXTENDED_STATS.md`), ou
+implémentation du switch des côtés (PAGE_SCORING §0.18).
