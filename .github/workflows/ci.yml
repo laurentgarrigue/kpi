@@ -769,7 +769,10 @@ jobs:
     # les deux jobs tournant en parallèle sur les mêmes fichiers (package-lock.json)
     # créeraient une course. Un bump n'aurait de toute façon aucun sens sémantique
     # pour une PR de dépendances (ni feat, ni nouveauté de code applicatif).
+    # `pull_request` seulement : le bump est commité sur la branche de la PR et lit `github.head_ref`,
+    # vide sur un lancement manuel (workflow_dispatch), qui échouait donc à la validation du nom.
     if: >-
+      github.event_name == 'pull_request' &&
       github.actor != 'dependabot[bot]' &&
       (needs.changes.outputs.app2 == 'true' ||
        needs.changes.outputs.app3 == 'true' ||
