@@ -18,7 +18,7 @@ Index complet : [WORKFLOW_AI/README.md](WORKFLOW_AI/README.md)
 - Suivre la convention **PSR-12** pour le code PHP.
 - Ne jamais exposer de credentials dans les fichiers versionnés.
 - Api maison dans **sources/api**
-- Pour le frontend : 3 applications **Vue 3** dans `sources/app_dev` (compilé dans `sources/app`), `sources/app_live_dev` (compilé dans `sources/app_live`) et `sources/app_wsm_dev` (compilé dans `sources/app_wsm`).
+- Les 3 applications **Vue 3** legacy (`sources/app_dev`, `sources/app_live_dev`, `sources/app_wsm_dev`) ont été supprimées le 28/11/2026 (tag git `archive/vue-cli-sources`) ; leurs builds (`sources/app`, `sources/app_live`, `sources/app_wsm`, non versionnés) restent sur les serveurs.
 - un wordpress sert pour la page d'accueil du site, dossier `wordpress/`
 - Les fichiers générés (`vendor/`, `node_modules/`, `dist/`) ne doivent pas être modifiés.
 - Les fichiers `sources/commun/MyParams.php` ne doivent jamais être modifiés ni commités.

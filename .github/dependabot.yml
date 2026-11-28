@@ -21,21 +21,11 @@ updates:
       - "/sources/app3"
       - "/sources/app4"
       - "/sources"
-      # `/sources/app_dev`, `/sources/app_live_dev`, `/sources/app_wsm_dev` sont
-      # volontairement ABSENTS : ces
-      # applications Vue.js legacy ne sont ni buildées, ni testées, ni déployées
-      # par le CI/CD. Aucun job de `ci.yml` ne les couvre (matrices `[app2, app4]`),
-      # donc leurs PR de bump ne peuvent pas être validées — elles n'apportaient
-      # que du bruit et des lockfiles à arbitrer à la main.
-    # Les *security updates* ignorent `directories:` et scannent tout le dépôt.
-    # Ces manifestes portent des vulnérabilités sans correctif possible
-    # (elliptic, @intlify 9.x figé par @intlify/vue-i18n-loader, vue-cli…) :
-    # une seule suffit à faire échouer tout le groupe `npm_and_yarn`, et aucune
-    # PR n'est alors créée, même pour app2/app3/app4. On les sort du périmètre.
+    # Les sources Vue CLI legacy (app_dev, app_live_dev, app_wsm_dev) ont été supprimées le
+    # 2026-11-28 (tag git archive/vue-cli-sources) : leurs vulnérabilités sans correctif (elliptic,
+    # webpack-dev-server figé par @vue/cli-service) faisaient échouer tout le groupe de sécurité npm,
+    # et les *security updates* ignorent `exclude-paths`.
     exclude-paths:
-      - "sources/app_dev/**"
-      - "sources/app_live_dev/**"
-      - "sources/app_wsm_dev/**"
       - "DOC/communication/visuels/reels/**"
     schedule:
       interval: "weekly"

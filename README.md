@@ -8,7 +8,7 @@ Le projet combine plusieurs technologies :
 - **Backend PHP** : ✅ PHP 8.4 (migration depuis PHP 7.4 terminée en novembre 2025) avec API REST
 - **Bibliothèques PHP modernes** : mPDF v8.2+, OpenSpout v4.32.0, Smarty v4
 - **Frontend moderne** : Nuxt 4 (Vue 3 + TypeScript + Tailwind CSS) dans `sources/app2/`
-- **Applications legacy** : Vue.js dans `sources/app_dev/`, `app_live_dev/`, `app_wsm_dev/`
+- **Applications legacy** : sources Vue CLI (`app_dev/`, `app_live_dev/`, `app_wsm_dev/`) supprimées le 28/11/2026, conservées au tag git `archive/vue-cli-sources`
 - **CMS** : WordPress pour le contenu éditorial (compatible PHP 8.4)
 - **Infrastructure** : Docker Compose avec Traefik pour le reverse proxy
 - **Base de données** : MySQL/MariaDB 10.4 (2 bases : KPI + WordPress)
@@ -170,9 +170,6 @@ kpi/
 │   └── config/                  # Dockerfiles et configurations
 ├── sources/
 │   ├── app2/                    # Application Nuxt 4 (principale)
-│   ├── app_dev/                 # Application Vue.js legacy
-│   ├── app_live_dev/            # Application live Vue.js
-│   ├── app_wsm_dev/             # Application WSM Vue.js
 │   ├── api/                     # API REST PHP
 │   ├── commun/                  # Classes PHP partagées
 │   └── wordpress_archive/       # Archive WordPress

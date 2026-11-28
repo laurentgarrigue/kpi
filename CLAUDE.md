@@ -244,7 +244,8 @@ For multiple environments on the same server, use different `APPLICATION_NAME` v
   - `app2/` - Nuxt 4 application (public results/charts PWA, no authentication)
   - `app3/` - Public website (Nuxt 4 SSR, beta) - see [DOC/specs/public/](DOC/specs/public/README.md)
   - `kpi-layer/` - Shared Nuxt layer (charter, fonts, api2 client), used by app3
-  - `app_dev/`, `app_live_dev/`, `app_wsm_dev/` - Legacy Vue.js applications
+  - `app_dev/`, `app_live_dev/`, `app_wsm_dev/` - Legacy Vue CLI sources, **removed on 2026-11-28** (kept at git tag
+    `archive/vue-cli-sources`); their builds `app/`, `app_live/`, `app_wsm/` (git-ignored) stay on the servers
   - `commun/` - Shared PHP utilities and database classes
   - `api/` - Legacy PHP REST API endpoints
   - `api2/` - Modern REST API (Symfony 7.4 LTS + API Platform 4.3, served by FrankenPHP)
@@ -424,7 +425,9 @@ Traefik terminates TLS and routes between them. See the API2 section above for w
   ⚠️ Lots 1–3 were tried in dev (Aug/Oct 2026) but never validated end to end; lot 4 never ran in OBS.
   **Reloading the dev database from a prod dump drops the `scoring_live_*` tables** — re-run the 4
   scoring migrations (checklist R0.2) or the console answers 500. Do not open a new lot before R1/R2.
-- Legacy Vue.js applications in `app_dev/`, `app_live_dev/`, `app_wsm_dev/` are maintained but not primary focus
+- Legacy Vue CLI sources (`app_dev/`, `app_live_dev/`, `app_wsm_dev/`) were removed on 2026-11-28 (git tag
+  `archive/vue-cli-sources`), and `connector/` and `live/` are closed over HTTP: see
+  [LEGACY_ARCHIVED_ENDPOINTS.md](DOC/developer/reference/LEGACY_ARCHIVED_ENDPOINTS.md)
 - Configuration files are mounted from Docker directory to avoid committing sensitive data
 - The project uses Traefik for reverse proxy in production environments
 - ESLint configuration is managed by Nuxt for app2 and app4

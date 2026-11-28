@@ -33,14 +33,18 @@ documenté publiquement) :
 
 Ce matériel n'équipe **pas tous les terrains** — voir les modes alternatifs et dégradés en **§14**.
 
+> **28/11/2026** : les sources `app_wsm_dev/` et `app_live_dev/` ont été supprimées du dépôt et sont conservées au
+> git tag `archive/vue-cli-sources` (liens ci-dessous) ; leurs builds restent servis sur les serveurs. Voir
+> [LEGACY_ARCHIVED_ENDPOINTS.md](LEGACY_ARCHIVED_ENDPOINTS.md).
+
 - **Code concerné** :
   - `sources/app_wsm_dev/` — application **WSM** (WebSocket Manager)
   - `sources/app_live_dev/` — application **Live** (incrustation)
   - `sources/api/` (endpoints `/api/wsm/...`) — écritures base de données
 - **Fichiers clés** :
-  - [`app_wsm_dev/src/mixins/wsMixin.js`](../../../sources/app_wsm_dev/src/mixins/wsMixin.js) — cœur du manager
-  - [`app_live_dev/src/mixins/wsMixin.js`](../../../sources/app_live_dev/src/mixins/wsMixin.js) — abonnements côté incrustation
-  - [`app_wsm_dev/src/network/liveApi.js`](../../../sources/app_wsm_dev/src/network/liveApi.js) — écritures DB (fetch/AJAX)
+  - [`app_wsm_dev/src/mixins/wsMixin.js`](https://github.com/laurentgarrigue/kpi/blob/archive/vue-cli-sources/sources/app_wsm_dev/src/mixins/wsMixin.js) — cœur du manager
+  - [`app_live_dev/src/mixins/wsMixin.js`](https://github.com/laurentgarrigue/kpi/blob/archive/vue-cli-sources/sources/app_live_dev/src/mixins/wsMixin.js) — abonnements côté incrustation
+  - [`app_wsm_dev/src/network/liveApi.js`](https://github.com/laurentgarrigue/kpi/blob/archive/vue-cli-sources/sources/app_wsm_dev/src/network/liveApi.js) — écritures DB (fetch/AJAX)
 
 ---
 
@@ -358,7 +362,7 @@ cours après un rechargement de page ou une coupure.
 ## 9. Référence des messages STOMP (passerelle → app_wsm)
 
 Tous les payloads ci-dessous sont extraits des exemples réels utilisés par le **Faker** de
-[`app_wsm_dev/src/views/Manager.vue`](../../../sources/app_wsm_dev/src/views/Manager.vue)
+[`app_wsm_dev/src/views/Manager.vue`](https://github.com/laurentgarrigue/kpi/blob/archive/vue-cli-sources/sources/app_wsm_dev/src/views/Manager.vue)
 (méthode `fake()`), qui reproduit fidèlement le format émis par la passerelle. Chaque message est un
 **corps JSON** publié sur une destination STOMP `/game/*` ; WSM le parse dans `stompSubscribe()`.
 

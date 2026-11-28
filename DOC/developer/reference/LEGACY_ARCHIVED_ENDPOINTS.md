@@ -52,12 +52,22 @@ Les failles du code conservé sont aussi corrigées, car `replace_evenement.php`
 | ARCH-05 | `connector/.htaccess` refuse tout, `live/.htaccess` refuse `*.php` | idem (contrôle statique) |
 | ARCH-06 | Aucune requête du code conservé n'interpole de valeur venant de la requête ou du JSON importé | relecture + `grep` (le legacy n'a pas de banc de test base) |
 
-## 4. Réactiver un script (dépannage ponctuel)
+## 4. Sources Vue CLI legacy supprimées
+
+Les sources `sources/app_dev/`, `app_live_dev/` et `app_wsm_dev/` (Vue CLI 5) sont **supprimées** du dépôt le
+28/11/2026 et conservées au tag git **`archive/vue-cli-sources`**, avec les cibles `make app_wsm_generate_*` et
+`app_live_generate_*`, le service de dev `node_wsm` et `vetur.config.js`. Leurs vulnérabilités sans correctif
+(`elliptic`, `webpack-dev-server` figé en v4 par `@vue/cli-service`) faisaient échouer le groupe de sécurité npm de
+Dependabot, qui ignore `exclude-paths`. Les builds `sources/app/`, `app_live/` et `app_wsm/` ne sont pas versionnés :
+ils restent servis sur les serveurs, mais ne peuvent plus être recompilés qu'à partir du tag
+(`git worktree add ../vue-cli archive/vue-cli-sources`).
+
+## 5. Réactiver un script (dépannage ponctuel)
 
 À éviter : préférer l'équivalent api2/app4. En cas de besoin, retirer la garde du **seul** script concerné et ajouter
 une exception dans le `.htaccess` du dossier, après lui avoir ajouté un contrôle de session et de profil.
 
-## 5. Impact connu
+## 6. Impact connu
 
 - **app4, module TV** (`composables/useTvUrl.ts`, `components/admin/tv/*`, `pages/tv/index.vue`) : il génère encore
   des liens vers `live/tv2.php`, `live/score*.php`, `live/spliturl.php`, `live/scenario.php`,

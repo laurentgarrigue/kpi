@@ -813,7 +813,7 @@ KPI est un **système complet de gestion sportive** pour le Kayak-Polo, comprena
 
 ### 2. App Dev (Vue 3) - Application Legacy Principale
 
-**Localisation** : `sources/app_dev/`
+**Localisation** : `sources/app_dev/` (supprimé le 28/11/2026, tag git `archive/vue-cli-sources`)
 **Framework** : Vue 3
 **Usage** : Application principale historique
 
@@ -823,7 +823,7 @@ KPI est un **système complet de gestion sportive** pour le Kayak-Polo, comprena
 
 ### 3. App Live Dev (Vue 3) - Scores Live
 
-**Localisation** : `sources/app_live_dev/`
+**Localisation** : `sources/app_live_dev/` (supprimé le 28/11/2026, tag git `archive/vue-cli-sources`)
 **Framework** : Vue 3
 **Usage** : Affichage scores en direct
 **Communication** : WebSocket avec app_wsm_dev
@@ -840,7 +840,7 @@ KPI est un **système complet de gestion sportive** pour le Kayak-Polo, comprena
 
 ### 4. App WSM Dev (Vue 3) - Saisie Matchs
 
-**Localisation** : `sources/app_wsm_dev/`
+**Localisation** : `sources/app_wsm_dev/` (supprimé le 28/11/2026, tag git `archive/vue-cli-sources`)
 **Framework** : Vue 3
 **Usage** : Saisie scores (Web Score Manager)
 **Communication** : WebSocket broadcaster
